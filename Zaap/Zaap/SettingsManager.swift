@@ -12,6 +12,7 @@ final class SettingsManager {
         case webhookURL = "settings.webhookURL"
         case authToken = "settings.authToken"
         case locationTrackingEnabled = "settings.locationTrackingEnabled"
+        case sleepTrackingEnabled = "settings.sleepTrackingEnabled"
     }
 
     private let defaults: UserDefaults
@@ -30,6 +31,10 @@ final class SettingsManager {
         didSet { defaults.set(locationTrackingEnabled, forKey: Key.locationTrackingEnabled.rawValue) }
     }
 
+    var sleepTrackingEnabled: Bool {
+        didSet { defaults.set(sleepTrackingEnabled, forKey: Key.sleepTrackingEnabled.rawValue) }
+    }
+
     // MARK: - Init
 
     init(defaults: UserDefaults = .standard) {
@@ -37,6 +42,7 @@ final class SettingsManager {
         self.webhookURL = defaults.string(forKey: Key.webhookURL.rawValue) ?? ""
         self.authToken = defaults.string(forKey: Key.authToken.rawValue) ?? ""
         self.locationTrackingEnabled = defaults.bool(forKey: Key.locationTrackingEnabled.rawValue)
+        self.sleepTrackingEnabled = defaults.bool(forKey: Key.sleepTrackingEnabled.rawValue)
     }
 
     // MARK: - Convenience

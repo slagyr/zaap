@@ -6,6 +6,8 @@
 	<string>Zaap uses your location to relay position updates to your configured webhook endpoint.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Zaap uses background location monitoring to send significant location changes to your configured webhook endpoint.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Zaap reads your sleep data to send a daily summary to your configured webhook endpoint.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
