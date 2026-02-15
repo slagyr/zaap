@@ -1,6 +1,6 @@
 # Iteration 001
 
-- **Status:** planning
+- **Status:** active
 
 ## Stories
 - zaap-7xm: Xcode project scaffolding
