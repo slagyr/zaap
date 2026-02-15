@@ -1,11 +1,12 @@
 import SwiftUI
 
 struct ContentView: View {
+
+    @State private var settings = SettingsManager.shared
+
     var body: some View {
         NavigationStack {
-            Text("Zaap")
-                .font(.largeTitle)
-                .navigationTitle("Zaap")
+            SettingsView(settings: settings)
         }
     }
 }

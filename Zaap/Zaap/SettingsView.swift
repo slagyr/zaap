@@ -1,0 +1,77 @@
+import SwiftUI
+
+struct SettingsView: View {
+
+    @Bindable var settings: SettingsManager
+
+    @State private var isTokenVisible = false
+
+    var body: some View {
+        Form {
+            Section {
+                TextField("Webhook URL", text: $settings.webhookURL)
+                    .keyboardType(.URL)
+                    .textContentType(.URL)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+
+                HStack {
+                    Group {
+                        if isTokenVisible {
+                            TextField("Bearer Token", text: $settings.authToken)
+                        } else {
+                            SecureField("Bearer Token", text: $settings.authToken)
+                        }
+                    }
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+
+                    Button {
+                        isTokenVisible.toggle()
+                    } label: {
+                        Image(systemName: isTokenVisible ? "eye.slash" : "eye")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            } header: {
+                Text("Webhook")
+            } footer: {
+                Text("Location data is sent as a POST request with a Bearer authorization header.")
+            }
+
+            Section {
+                Toggle("Location Tracking", isOn: $settings.locationTrackingEnabled)
+            } header: {
+                Text("Data Sources")
+            } footer: {
+                if !settings.isConfigured && settings.locationTrackingEnabled {
+                    Text("⚠️ Configure a valid webhook URL and token above to start sending data.")
+                        .foregroundStyle(.orange)
+                }
+            }
+
+            if settings.isConfigured {
+                Section {
+                    LabeledContent("Endpoint", value: settings.webhookURL)
+                    LabeledContent("Status") {
+                        Label(
+                            settings.locationTrackingEnabled ? "Active" : "Inactive",
+                            systemImage: settings.locationTrackingEnabled ? "location.fill" : "location.slash"
+                        )
+                        .foregroundStyle(settings.locationTrackingEnabled ? .green : .secondary)
+                    }
+                } header: {
+                    Text("Summary")
+                }
+            }
+        }
+        .navigationTitle("Settings")
+    }
+}
+
+#Preview {
+    NavigationStack {
+        SettingsView(settings: SettingsManager(defaults: .init(suiteName: "preview")!))
+    }
+}
