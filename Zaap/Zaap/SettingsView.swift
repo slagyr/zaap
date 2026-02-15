@@ -42,6 +42,9 @@ struct SettingsView: View {
 
             Section {
                 Toggle("Location Tracking", isOn: $settings.locationTrackingEnabled)
+                    .onChange(of: settings.locationTrackingEnabled) { _, enabled in
+                        LocationDeliveryService.shared.setTracking(enabled: enabled)
+                    }
             } header: {
                 Text("Data Sources")
             } footer: {

@@ -53,15 +53,13 @@ final class WebhookClient: NSObject, Sendable {
 
     // MARK: - Public
 
-    /// Load configuration from UserDefaults.
+    /// Load configuration from SettingsManager.
     func loadConfiguration() -> Configuration? {
-        guard let urlString = UserDefaults.standard.string(forKey: "webhookURL"),
-              let url = URL(string: urlString),
-              let token = UserDefaults.standard.string(forKey: "webhookToken"),
-              !token.isEmpty else {
+        let settings = SettingsManager.shared
+        guard let url = settings.webhookURLValue, settings.isConfigured else {
             return nil
         }
-        return Configuration(url: url, bearerToken: token)
+        return Configuration(url: url, bearerToken: settings.authToken)
     }
 
     /// POST an Encodable payload to the configured webhook endpoint.
