@@ -10,8 +10,10 @@ protocol WebhookPosting: Sendable {
 extension WebhookClient: WebhookPosting {}
 
 /// Protocol for publishing location updates.
-protocol LocationPublishing: AnyObject, Observable {
+protocol LocationPublishing: AnyObject {
     var locationPublisher: PassthroughSubject<CLLocation, Never> { get }
+    var authorizationStatus: CLAuthorizationStatus { get }
+    var isMonitoring: Bool { get }
     func startMonitoring()
     func stopMonitoring()
 }
@@ -47,3 +49,11 @@ protocol ActivityReading {
 }
 
 extension ActivityReader: ActivityReading {}
+
+/// Protocol for reading workout data.
+protocol WorkoutReading {
+    func requestAuthorization() async throws
+    func fetchRecentSessions(from startDate: Date?, to endDate: Date?) async throws -> [WorkoutReader.WorkoutSession]
+}
+
+extension WorkoutReader: WorkoutReading {}
