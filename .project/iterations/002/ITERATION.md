@@ -1,6 +1,6 @@
 # Iteration 002
 
-- **Status:** active
+- **Status:** complete
 
 ## Stories
 - zaap-1b3: Sleep webhook delivery — wire SleepDataReader to WebhookClient POST
