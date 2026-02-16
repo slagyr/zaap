@@ -12,15 +12,18 @@ final class WorkoutDeliveryService {
     private let workoutReader: any WorkoutReading
     private let webhookClient: any WebhookPosting
     private let settings: SettingsManager
+    private let deliveryLog: any DeliveryLogging
 
     init(
         workoutReader: any WorkoutReading = WorkoutReader.shared,
         webhookClient: any WebhookPosting = WebhookClient.shared,
-        settings: SettingsManager = .shared
+        settings: SettingsManager = .shared,
+        deliveryLog: any DeliveryLogging = NullDeliveryLog()
     ) {
         self.workoutReader = workoutReader
         self.webhookClient = webhookClient
         self.settings = settings
+        self.deliveryLog = deliveryLog
     }
 
     // MARK: - Public
@@ -56,8 +59,10 @@ final class WorkoutDeliveryService {
                 let sessions = try await workoutReader.fetchRecentSessions(from: nil, to: nil)
                 try await webhookClient.post(sessions, to: "/workouts")
                 logger.info("Delivered \(sessions.count) workout(s)")
+                deliveryLog.record(dataType: .workout, timestamp: Date(), success: true, errorMessage: nil)
             } catch {
                 logger.error("Workout delivery failed: \(error.localizedDescription, privacy: .public)")
+                deliveryLog.record(dataType: .workout, timestamp: Date(), success: false, errorMessage: error.localizedDescription)
             }
         }
     }

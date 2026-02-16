@@ -1,12 +1,21 @@
 import Foundation
 import SwiftData
 
+protocol DeliveryLogging {
+    func record(dataType: DeliveryDataType, timestamp: Date, success: Bool, errorMessage: String?)
+}
+
+/// No-op implementation used as default when no log is injected.
+struct NullDeliveryLog: DeliveryLogging {
+    func record(dataType: DeliveryDataType, timestamp: Date, success: Bool, errorMessage: String?) {}
+}
+
 struct DeliveryGroupKey: Hashable {
     let dataType: DeliveryDataType
     let day: DateComponents // year, month, day
 }
 
-class DeliveryLogService {
+class DeliveryLogService: DeliveryLogging {
     private let context: ModelContext
 
     init(context: ModelContext) {

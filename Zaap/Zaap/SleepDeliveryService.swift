@@ -12,15 +12,18 @@ final class SleepDeliveryService {
     private let sleepReader: any SleepReading
     private let webhookClient: any WebhookPosting
     private let settings: SettingsManager
+    private let deliveryLog: any DeliveryLogging
 
     init(
         sleepReader: any SleepReading = SleepDataReader.shared,
         webhookClient: any WebhookPosting = WebhookClient.shared,
-        settings: SettingsManager = .shared
+        settings: SettingsManager = .shared,
+        deliveryLog: any DeliveryLogging = NullDeliveryLog()
     ) {
         self.sleepReader = sleepReader
         self.webhookClient = webhookClient
         self.settings = settings
+        self.deliveryLog = deliveryLog
     }
 
     // MARK: - Public
@@ -56,8 +59,10 @@ final class SleepDeliveryService {
                 let summary = try await sleepReader.fetchLastNightSummary()
                 try await webhookClient.post(summary, to: "/sleep")
                 logger.info("Sleep summary delivered for \(summary.date, privacy: .public)")
+                deliveryLog.record(dataType: .sleep, timestamp: Date(), success: true, errorMessage: nil)
             } catch {
                 logger.error("Sleep delivery failed: \(error.localizedDescription, privacy: .public)")
+                deliveryLog.record(dataType: .sleep, timestamp: Date(), success: false, errorMessage: error.localizedDescription)
             }
         }
     }

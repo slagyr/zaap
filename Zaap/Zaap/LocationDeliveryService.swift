@@ -16,15 +16,18 @@ final class LocationDeliveryService {
     private let locationManager: any LocationPublishing
     private let webhookClient: any WebhookPosting
     private let settings: SettingsManager
+    private let deliveryLog: any DeliveryLogging
 
     init(
         locationManager: any LocationPublishing = LocationManager(),
         webhookClient: any WebhookPosting = WebhookClient.shared,
-        settings: SettingsManager = .shared
+        settings: SettingsManager = .shared,
+        deliveryLog: any DeliveryLogging = NullDeliveryLog()
     ) {
         self.locationManager = locationManager
         self.webhookClient = webhookClient
         self.settings = settings
+        self.deliveryLog = deliveryLog
     }
 
     // MARK: - Public
@@ -81,8 +84,10 @@ final class LocationDeliveryService {
             do {
                 try await webhookClient.post(payload, to: nil)
                 logger.info("Location delivered: \(payload.latitude), \(payload.longitude)")
+                deliveryLog.record(dataType: .location, timestamp: Date(), success: true, errorMessage: nil)
             } catch {
                 logger.error("Location delivery failed: \(error.localizedDescription, privacy: .public)")
+                deliveryLog.record(dataType: .location, timestamp: Date(), success: false, errorMessage: error.localizedDescription)
             }
         }
     }

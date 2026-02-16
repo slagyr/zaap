@@ -12,15 +12,18 @@ final class ActivityDeliveryService {
     private let activityReader: any ActivityReading
     private let webhookClient: any WebhookPosting
     private let settings: SettingsManager
+    private let deliveryLog: any DeliveryLogging
 
     init(
         activityReader: any ActivityReading = ActivityReader.shared,
         webhookClient: any WebhookPosting = WebhookClient.shared,
-        settings: SettingsManager = .shared
+        settings: SettingsManager = .shared,
+        deliveryLog: any DeliveryLogging = NullDeliveryLog()
     ) {
         self.activityReader = activityReader
         self.webhookClient = webhookClient
         self.settings = settings
+        self.deliveryLog = deliveryLog
     }
 
     // MARK: - Public
@@ -56,8 +59,10 @@ final class ActivityDeliveryService {
                 let summary = try await activityReader.fetchTodaySummary()
                 try await webhookClient.post(summary, to: "/activity")
                 logger.info("Activity delivered: \(summary.steps) steps, \(String(format: "%.0f", summary.distanceMeters))m")
+                deliveryLog.record(dataType: .activity, timestamp: Date(), success: true, errorMessage: nil)
             } catch {
                 logger.error("Activity delivery failed: \(error.localizedDescription, privacy: .public)")
+                deliveryLog.record(dataType: .activity, timestamp: Date(), success: false, errorMessage: error.localizedDescription)
             }
         }
     }

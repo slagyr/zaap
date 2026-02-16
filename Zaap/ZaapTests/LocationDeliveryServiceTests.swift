@@ -7,15 +7,16 @@ final class LocationDeliveryServiceTests: XCTestCase {
     private func makeService(
         locationManager: MockLocationPublishing = MockLocationPublishing(),
         webhook: MockWebhookClient = MockWebhookClient(),
-        settings: SettingsManager? = nil
-    ) -> (LocationDeliveryService, MockLocationPublishing, MockWebhookClient, SettingsManager) {
+        settings: SettingsManager? = nil,
+        deliveryLog: MockDeliveryLogService = MockDeliveryLogService()
+    ) -> (LocationDeliveryService, MockLocationPublishing, MockWebhookClient, SettingsManager, MockDeliveryLogService) {
         let s = settings ?? SettingsManager(defaults: UserDefaults(suiteName: UUID().uuidString)!)
-        let service = LocationDeliveryService(locationManager: locationManager, webhookClient: webhook, settings: s)
-        return (service, locationManager, webhook, s)
+        let service = LocationDeliveryService(locationManager: locationManager, webhookClient: webhook, settings: s, deliveryLog: deliveryLog)
+        return (service, locationManager, webhook, s, deliveryLog)
     }
 
     func testStartResumesMonitoringWhenEnabled() {
-        let (service, locMgr, _, settings) = makeService()
+        let (service, locMgr, _, settings, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.locationTrackingEnabled = true
@@ -26,25 +27,25 @@ final class LocationDeliveryServiceTests: XCTestCase {
     }
 
     func testStartDoesNotMonitorWhenDisabled() {
-        let (service, locMgr, _, _) = makeService()
+        let (service, locMgr, _, _, _) = makeService()
         service.start()
         XCTAssertEqual(locMgr.startMonitoringCallCount, 0)
     }
 
     func testSetTrackingEnabledStartsMonitoring() {
-        let (service, locMgr, _, _) = makeService()
+        let (service, locMgr, _, _, _) = makeService()
         service.setTracking(enabled: true)
         XCTAssertEqual(locMgr.startMonitoringCallCount, 1)
     }
 
     func testSetTrackingDisabledStopsMonitoring() {
-        let (service, locMgr, _, _) = makeService()
+        let (service, locMgr, _, _, _) = makeService()
         service.setTracking(enabled: false)
         XCTAssertEqual(locMgr.stopMonitoringCallCount, 1)
     }
 
     func testLocationUpdateDeliversPayloadWhenConfigured() {
-        let (service, locMgr, webhook, settings) = makeService()
+        let (service, locMgr, webhook, settings, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.locationTrackingEnabled = true
@@ -66,7 +67,7 @@ final class LocationDeliveryServiceTests: XCTestCase {
     }
 
     func testLocationUpdateSkipsDeliveryWhenNotConfigured() {
-        let (service, locMgr, webhook, _) = makeService()
+        let (service, locMgr, webhook, _, _) = makeService()
         service.start()
 
         let location = CLLocation(latitude: 33.45, longitude: -112.07)
@@ -77,5 +78,49 @@ final class LocationDeliveryServiceTests: XCTestCase {
         waitForExpectations(timeout: 1)
 
         XCTAssertEqual(webhook.postCallCount, 0)
+    }
+
+    func testLocationDeliveryLogsSuccessOnPost() {
+        let (service, locMgr, _, settings, log) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.locationTrackingEnabled = true
+
+        service.start()
+
+        let location = CLLocation(latitude: 33.45, longitude: -112.07)
+        locMgr.locationPublisher.send(location)
+
+        let exp = expectation(description: "logged")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { exp.fulfill() }
+        waitForExpectations(timeout: 2)
+
+        XCTAssertEqual(log.records.count, 1)
+        XCTAssertEqual(log.records[0].dataType, .location)
+        XCTAssertTrue(log.records[0].success)
+        XCTAssertNil(log.records[0].errorMessage)
+    }
+
+    func testLocationDeliveryLogsFailureOnPostError() {
+        let webhook = MockWebhookClient()
+        webhook.shouldThrow = NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "network down"])
+        let (service, locMgr, _, settings, log) = makeService(webhook: webhook)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.locationTrackingEnabled = true
+
+        service.start()
+
+        let location = CLLocation(latitude: 33.45, longitude: -112.07)
+        locMgr.locationPublisher.send(location)
+
+        let exp = expectation(description: "logged")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { exp.fulfill() }
+        waitForExpectations(timeout: 2)
+
+        XCTAssertEqual(log.records.count, 1)
+        XCTAssertEqual(log.records[0].dataType, .location)
+        XCTAssertFalse(log.records[0].success)
+        XCTAssertNotNil(log.records[0].errorMessage)
     }
 }

@@ -107,6 +107,16 @@ final class MockActivityReader: ActivityReading {
     }
 }
 
+// MARK: - Mock Delivery Log
+
+final class MockDeliveryLogService: DeliveryLogging {
+    var records: [(dataType: DeliveryDataType, timestamp: Date, success: Bool, errorMessage: String?)] = []
+
+    func record(dataType: DeliveryDataType, timestamp: Date, success: Bool, errorMessage: String?) {
+        records.append((dataType: dataType, timestamp: timestamp, success: success, errorMessage: errorMessage))
+    }
+}
+
 // MARK: - Mock Workout Reader
 
 final class MockWorkoutReader: WorkoutReading {

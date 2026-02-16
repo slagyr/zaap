@@ -6,7 +6,11 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            SettingsView(settings: settings)
+            VStack(spacing: 0) {
+                DashboardView()
+                Divider()
+                SettingsView(settings: settings)
+            }
         }
     }
 }
