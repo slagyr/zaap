@@ -13,6 +13,10 @@
 		A10004 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20004 /* Preview Assets.xcassets */; };
 		A10005 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20007 /* LocationManager.swift */; };
 		A10006 /* SleepDataReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20008 /* SleepDataReader.swift */; };
+		A10007 /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20010 /* SettingsManager.swift */; };
+		A10008 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20011 /* SettingsView.swift */; };
+		A10009 /* WebhookClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20012 /* WebhookClient.swift */; };
+		A10010 /* LocationDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20013 /* LocationDeliveryService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,6 +29,10 @@
 		A20007 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		A20008 /* SleepDataReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepDataReader.swift; sourceTree = "<group>"; };
 		A20009 /* Zaap.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Zaap.entitlements; sourceTree = "<group>"; };
+		A20010 /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
+		A20011 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A20012 /* WebhookClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebhookClient.swift; sourceTree = "<group>"; };
+		A20013 /* LocationDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationDeliveryService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,6 +61,10 @@
 				A20002 /* ContentView.swift */,
 				A20007 /* LocationManager.swift */,
 				A20008 /* SleepDataReader.swift */,
+				A20010 /* SettingsManager.swift */,
+				A20011 /* SettingsView.swift */,
+				A20012 /* WebhookClient.swift */,
+				A20013 /* LocationDeliveryService.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -151,6 +163,10 @@
 				A10005 /* LocationManager.swift in Sources */,
 				A10006 /* SleepDataReader.swift in Sources */,
 				A10001 /* ZaapApp.swift in Sources */,
+				A10007 /* SettingsManager.swift in Sources */,
+				A10008 /* SettingsView.swift in Sources */,
+				A10009 /* WebhookClient.swift in Sources */,
+				A10010 /* LocationDeliveryService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
