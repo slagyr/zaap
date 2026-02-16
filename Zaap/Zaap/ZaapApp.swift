@@ -3,16 +3,18 @@ import SwiftUI
 @main
 struct ZaapApp: App {
 
-    @State private var deliveryService = LocationDeliveryService.shared
+    @State private var locationManager = LocationDeliveryService.shared.location as! LocationManager
 
     init() {
         LocationDeliveryService.shared.start()
+        SleepDeliveryService.shared.start()
+        ActivityDeliveryService.shared.start()
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environment(deliveryService.location)
+                .environment(locationManager)
         }
     }
 }

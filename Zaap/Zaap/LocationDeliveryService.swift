@@ -13,13 +13,13 @@ final class LocationDeliveryService {
     private let logger = Logger(subsystem: "com.zaap.app", category: "LocationDelivery")
     private var cancellables = Set<AnyCancellable>()
 
-    private let locationManager: LocationManager
-    private let webhookClient: WebhookClient
+    private let locationManager: any LocationPublishing
+    private let webhookClient: any WebhookPosting
     private let settings: SettingsManager
 
     init(
-        locationManager: LocationManager = .init(),
-        webhookClient: WebhookClient = .shared,
+        locationManager: any LocationPublishing = LocationManager(),
+        webhookClient: any WebhookPosting = WebhookClient.shared,
         settings: SettingsManager = .shared
     ) {
         self.locationManager = locationManager
@@ -30,7 +30,7 @@ final class LocationDeliveryService {
     // MARK: - Public
 
     /// The location manager used by this service (for UI binding).
-    var location: LocationManager { locationManager }
+    var location: any LocationPublishing { locationManager }
 
     /// Start observing location updates and delivering them via webhook.
     /// Call once at app launch.

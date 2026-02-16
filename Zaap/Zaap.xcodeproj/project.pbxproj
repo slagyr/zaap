@@ -44,6 +44,7 @@
 		B20001 /* HeartRateReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateReader.swift; sourceTree = "<group>"; };
 		B20002 /* HeartRateDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateDeliveryService.swift; sourceTree = "<group>"; };
 		A20014 /* SleepDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepDeliveryService.swift; sourceTree = "<group>"; };
+		A20020 /* Protocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
 		D20001 /* WorkoutReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutReader.swift; sourceTree = "<group>"; };
 		D20002 /* WorkoutDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDeliveryService.swift; sourceTree = "<group>"; };
 		C20001 /* ActivityReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityReader.swift; sourceTree = "<group>"; };
@@ -87,6 +88,7 @@
 				D20002 /* WorkoutDeliveryService.swift */,
 				C20001 /* ActivityReader.swift */,
 				C20002 /* ActivityDeliveryService.swift */,
+				A20020 /* Protocols.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -194,6 +196,9 @@
 				D10002 /* WorkoutDeliveryService.swift in Sources */,
 				C10001 /* ActivityReader.swift in Sources */,
 				C10002 /* ActivityDeliveryService.swift in Sources */,
+				B10001 /* HeartRateReader.swift in Sources */,
+				B10002 /* HeartRateDeliveryService.swift in Sources */,
+				A10017 /* Protocols.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

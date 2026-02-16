@@ -9,13 +9,13 @@ final class SleepDeliveryService {
 
     private let logger = Logger(subsystem: "com.zaap.app", category: "SleepDelivery")
 
-    private let sleepReader: SleepDataReader
-    private let webhookClient: WebhookClient
+    private let sleepReader: any SleepReading
+    private let webhookClient: any WebhookPosting
     private let settings: SettingsManager
 
     init(
-        sleepReader: SleepDataReader = .shared,
-        webhookClient: WebhookClient = .shared,
+        sleepReader: any SleepReading = SleepDataReader.shared,
+        webhookClient: any WebhookPosting = WebhookClient.shared,
         settings: SettingsManager = .shared
     ) {
         self.sleepReader = sleepReader

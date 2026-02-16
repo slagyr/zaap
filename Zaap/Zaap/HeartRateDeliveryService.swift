@@ -9,13 +9,13 @@ final class HeartRateDeliveryService {
 
     private let logger = Logger(subsystem: "com.zaap.app", category: "HeartRateDelivery")
 
-    private let heartRateReader: HeartRateReader
-    private let webhookClient: WebhookClient
+    private let heartRateReader: any HeartRateReading
+    private let webhookClient: any WebhookPosting
     private let settings: SettingsManager
 
     init(
-        heartRateReader: HeartRateReader = .shared,
-        webhookClient: WebhookClient = .shared,
+        heartRateReader: any HeartRateReading = HeartRateReader.shared,
+        webhookClient: any WebhookPosting = WebhookClient.shared,
         settings: SettingsManager = .shared
     ) {
         self.heartRateReader = heartRateReader
@@ -26,7 +26,7 @@ final class HeartRateDeliveryService {
     // MARK: - Public
 
     /// The heart rate reader used by this service (for UI binding).
-    var reader: HeartRateReader { heartRateReader }
+    var reader: any HeartRateReading { heartRateReader }
 
     /// Start the heart rate delivery service.
     /// Requests HealthKit authorization and delivers an initial summary if enabled.
