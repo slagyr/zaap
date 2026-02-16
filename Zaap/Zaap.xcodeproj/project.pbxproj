@@ -17,6 +17,11 @@
 		A10008 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20011 /* SettingsView.swift */; };
 		A10009 /* WebhookClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20012 /* WebhookClient.swift */; };
 		A10010 /* LocationDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20013 /* LocationDeliveryService.swift */; };
+		B10001 /* HeartRateReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20001 /* HeartRateReader.swift */; };
+		B10002 /* HeartRateDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20002 /* HeartRateDeliveryService.swift */; };
+		A10011 /* SleepDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20014 /* SleepDeliveryService.swift */; };
+		D10001 /* WorkoutReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20001 /* WorkoutReader.swift */; };
+		D10002 /* WorkoutDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20002 /* WorkoutDeliveryService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,6 +38,9 @@
 		A20011 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A20012 /* WebhookClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebhookClient.swift; sourceTree = "<group>"; };
 		A20013 /* LocationDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationDeliveryService.swift; sourceTree = "<group>"; };
+		B20001 /* HeartRateReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateReader.swift; sourceTree = "<group>"; };
+		B20002 /* HeartRateDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateDeliveryService.swift; sourceTree = "<group>"; };
+		A20014 /* SleepDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepDeliveryService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,6 +73,9 @@
 				A20011 /* SettingsView.swift */,
 				A20012 /* WebhookClient.swift */,
 				A20013 /* LocationDeliveryService.swift */,
+				B20001 /* HeartRateReader.swift */,
+				B20002 /* HeartRateDeliveryService.swift */,
+				A20014 /* SleepDeliveryService.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -167,6 +178,7 @@
 				A10008 /* SettingsView.swift in Sources */,
 				A10009 /* WebhookClient.swift in Sources */,
 				A10010 /* LocationDeliveryService.swift in Sources */,
+				A10011 /* SleepDeliveryService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

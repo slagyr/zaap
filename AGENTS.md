@@ -2,6 +2,13 @@
 
 This project is managed by the **projects** skill. Read `.project/PROJECT.md` for goals, guardrails, and settings.
 
+## Development Practice
+
+**This project follows TDD (Test-Driven Development).** Before writing any implementation code, read and follow the TDD skill:
+→ `~/.openclaw/skills/tdd/SKILL.md`
+
+All new features must have tests written first. Red → Green → Refactor.
+
 ## How to Work on This Project
 
 **If you were spawned by the orchestrator** (your task message includes `Project:` and `Bead:` fields):

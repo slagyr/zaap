@@ -13,6 +13,9 @@ final class SettingsManager {
         case authToken = "settings.authToken"
         case locationTrackingEnabled = "settings.locationTrackingEnabled"
         case sleepTrackingEnabled = "settings.sleepTrackingEnabled"
+        case workoutTrackingEnabled = "settings.workoutTrackingEnabled"
+        case activityTrackingEnabled = "settings.activityTrackingEnabled"
+        case heartRateTrackingEnabled = "settings.heartRateTrackingEnabled"
     }
 
     private let defaults: UserDefaults
@@ -35,6 +38,18 @@ final class SettingsManager {
         didSet { defaults.set(sleepTrackingEnabled, forKey: Key.sleepTrackingEnabled.rawValue) }
     }
 
+    var workoutTrackingEnabled: Bool {
+        didSet { defaults.set(workoutTrackingEnabled, forKey: Key.workoutTrackingEnabled.rawValue) }
+    }
+
+    var activityTrackingEnabled: Bool {
+        didSet { defaults.set(activityTrackingEnabled, forKey: Key.activityTrackingEnabled.rawValue) }
+    }
+
+    var heartRateTrackingEnabled: Bool {
+        didSet { defaults.set(heartRateTrackingEnabled, forKey: Key.heartRateTrackingEnabled.rawValue) }
+    }
+
     // MARK: - Init
 
     init(defaults: UserDefaults = .standard) {
@@ -43,6 +58,9 @@ final class SettingsManager {
         self.authToken = defaults.string(forKey: Key.authToken.rawValue) ?? ""
         self.locationTrackingEnabled = defaults.bool(forKey: Key.locationTrackingEnabled.rawValue)
         self.sleepTrackingEnabled = defaults.bool(forKey: Key.sleepTrackingEnabled.rawValue)
+        self.workoutTrackingEnabled = defaults.bool(forKey: Key.workoutTrackingEnabled.rawValue)
+        self.activityTrackingEnabled = defaults.bool(forKey: Key.activityTrackingEnabled.rawValue)
+        self.heartRateTrackingEnabled = defaults.bool(forKey: Key.heartRateTrackingEnabled.rawValue)
     }
 
     // MARK: - Convenience
