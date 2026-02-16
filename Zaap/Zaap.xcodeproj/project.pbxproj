@@ -38,6 +38,9 @@
 		F10011 /* ActivityDeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20011 /* ActivityDeliveryServiceTests.swift */; };
 		F10012 /* WorkoutReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20012 /* WorkoutReaderTests.swift */; };
 		F10013 /* WorkoutDeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20013 /* WorkoutDeliveryServiceTests.swift */; };
+		G10001 /* DeliveryRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = G20001 /* DeliveryRecord.swift */; };
+		G10002 /* DeliveryLogService.swift in Sources */ = {isa = PBXBuildFile; fileRef = G20002 /* DeliveryLogService.swift */; };
+		G10003 /* DeliveryLogServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = G20003 /* DeliveryLogServiceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -76,6 +79,9 @@
 		F20011 /* ActivityDeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityDeliveryServiceTests.swift; sourceTree = "<group>"; };
 		F20012 /* WorkoutReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutReaderTests.swift; sourceTree = "<group>"; };
 		F20013 /* WorkoutDeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDeliveryServiceTests.swift; sourceTree = "<group>"; };
+		G20001 /* DeliveryRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryRecord.swift; sourceTree = "<group>"; };
+		G20002 /* DeliveryLogService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryLogService.swift; sourceTree = "<group>"; };
+		G20003 /* DeliveryLogServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryLogServiceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,6 +130,8 @@
 				C20001 /* ActivityReader.swift */,
 				C20002 /* ActivityDeliveryService.swift */,
 				A20020 /* Protocols.swift */,
+				G20001 /* DeliveryRecord.swift */,
+				G20002 /* DeliveryLogService.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -165,6 +173,7 @@
 				F20011 /* ActivityDeliveryServiceTests.swift */,
 				F20012 /* WorkoutReaderTests.swift */,
 				F20013 /* WorkoutDeliveryServiceTests.swift */,
+				G20003 /* DeliveryLogServiceTests.swift */,
 			);
 			path = ZaapTests;
 			sourceTree = "<group>";
