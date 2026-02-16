@@ -84,6 +84,24 @@
 		G20003 /* DeliveryLogServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryLogServiceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXContainerItemProxy section */
+		E10001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A80001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A50001;
+			remoteInfo = Zaap;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		E10002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A50001 /* Zaap */;
+			targetProxy = E10001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		A30001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
