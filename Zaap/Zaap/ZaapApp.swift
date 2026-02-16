@@ -13,7 +13,7 @@ struct ZaapApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView()
                 .environment(locationManager)
         }
     }
