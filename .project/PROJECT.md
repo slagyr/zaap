@@ -5,7 +5,7 @@
 - **Autonomy:** full
 - **Checkin:** on-demand
 - **Channel:** 1472667753080160308
-- **MaxWorkers:** 1
+- **MaxWorkers:** 4
 - **WorkerTimeout:** 3600
 
 ## Notifications
