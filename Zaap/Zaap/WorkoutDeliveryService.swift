@@ -9,13 +9,13 @@ final class WorkoutDeliveryService {
 
     private let logger = Logger(subsystem: "com.zaap.app", category: "WorkoutDelivery")
 
-    private let workoutReader: WorkoutReader
-    private let webhookClient: WebhookClient
+    private let workoutReader: any WorkoutReading
+    private let webhookClient: any WebhookPosting
     private let settings: SettingsManager
 
     init(
-        workoutReader: WorkoutReader = .shared,
-        webhookClient: WebhookClient = .shared,
+        workoutReader: any WorkoutReading = WorkoutReader.shared,
+        webhookClient: any WebhookPosting = WebhookClient.shared,
         settings: SettingsManager = .shared
     ) {
         self.workoutReader = workoutReader
@@ -53,7 +53,7 @@ final class WorkoutDeliveryService {
         Task {
             do {
                 try await workoutReader.requestAuthorization()
-                let sessions = try await workoutReader.fetchRecentSessions()
+                let sessions = try await workoutReader.fetchRecentSessions(from: nil, to: nil)
                 try await webhookClient.post(sessions, to: "/workouts")
                 logger.info("Delivered \(sessions.count) workout(s)")
             } catch {

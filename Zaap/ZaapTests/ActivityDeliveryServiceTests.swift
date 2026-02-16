@@ -11,7 +11,7 @@ final class ActivityDeliveryServiceTests: XCTestCase {
         return (service, reader, webhook, settings)
     }
 
-    func testDeliverCurrentActivityPostsToActivityPath() async {
+    func testDeliverLatestPostsToActivityPath() {
         let (service, reader, webhook, settings) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
@@ -23,15 +23,24 @@ final class ActivityDeliveryServiceTests: XCTestCase {
             timestamp: Date()
         )
 
-        await service.deliverCurrentActivity()
+        service.deliverLatest()
+
+        let exp = expectation(description: "delivery")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { exp.fulfill() }
+        waitForExpectations(timeout: 2)
 
         XCTAssertEqual(webhook.postCallCount, 1)
         XCTAssertEqual(webhook.lastPath, "/activity")
     }
 
-    func testDeliverSkipsWhenNotConfigured() async {
+    func testDeliverSkipsWhenNotConfigured() {
         let (service, _, webhook, _) = makeService()
-        await service.deliverCurrentActivity()
+        service.deliverLatest()
+
+        let exp = expectation(description: "no delivery")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { exp.fulfill() }
+        waitForExpectations(timeout: 2)
+
         XCTAssertEqual(webhook.postCallCount, 0)
     }
 
