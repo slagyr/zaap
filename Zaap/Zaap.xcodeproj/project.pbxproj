@@ -219,6 +219,10 @@
 					A50001 = {
 						CreatedOnToolsVersion = 15.2;
 					};
+					E50001 = {
+						CreatedOnToolsVersion = 15.2;
+						TestTargetID = A50001;
+					};
 				};
 			};
 			buildConfigurationList = A70001 /* Build configuration list for PBXProject "Zaap" */;
@@ -235,6 +239,7 @@
 			projectRoot = "";
 			targets = (
 				A50001 /* Zaap */,
+				E50001 /* ZaapTests */,
 			);
 		};
 /* End PBXProject section */
@@ -272,6 +277,26 @@
 				B10001 /* HeartRateReader.swift in Sources */,
 				B10002 /* HeartRateDeliveryService.swift in Sources */,
 				A10017 /* Protocols.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E60001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F10001 /* TestDoubles.swift in Sources */,
+				F10002 /* SettingsManagerTests.swift in Sources */,
+				F10003 /* WebhookClientTests.swift in Sources */,
+				F10004 /* LocationManagerTests.swift in Sources */,
+				F10005 /* LocationDeliveryServiceTests.swift in Sources */,
+				F10006 /* SleepDataReaderTests.swift in Sources */,
+				F10007 /* SleepDeliveryServiceTests.swift in Sources */,
+				F10008 /* HeartRateReaderTests.swift in Sources */,
+				F10009 /* HeartRateDeliveryServiceTests.swift in Sources */,
+				F10010 /* ActivityReaderTests.swift in Sources */,
+				F10011 /* ActivityDeliveryServiceTests.swift in Sources */,
+				F10012 /* WorkoutReaderTests.swift in Sources */,
+				F10013 /* WorkoutDeliveryServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -457,6 +482,42 @@
 			};
 			name = Release;
 		};
+		E90001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.openclaw.zaap.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Zaap.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Zaap";
+			};
+			name = Debug;
+		};
+		E90002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.openclaw.zaap.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Zaap.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Zaap";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -474,6 +535,15 @@
 			buildConfigurations = (
 				A90003 /* Debug */,
 				A90004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E70001 /* Build configuration list for PBXNativeTarget "ZaapTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E90001 /* Debug */,
+				E90002 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
