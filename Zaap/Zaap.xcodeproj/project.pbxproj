@@ -44,6 +44,8 @@
 		I10001 /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = I20001 /* DashboardViewModel.swift */; };
 		I10002 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = I20002 /* DashboardView.swift */; };
 		I10003 /* DashboardViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = I20003 /* DashboardViewModelTests.swift */; };
+		J10001 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = J20001 /* MainTabView.swift */; };
+		J10002 /* MainTabViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = J20002 /* MainTabViewTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -88,6 +90,8 @@
 		I20001 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
 		I20002 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		I20003 /* DashboardViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModelTests.swift; sourceTree = "<group>"; };
+		J20001 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		J20002 /* MainTabViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabViewTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
@@ -158,6 +162,7 @@
 				G20002 /* DeliveryLogService.swift */,
 				I20001 /* DashboardViewModel.swift */,
 				I20002 /* DashboardView.swift */,
+				J20001 /* MainTabView.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -201,6 +206,7 @@
 				F20013 /* WorkoutDeliveryServiceTests.swift */,
 				G20003 /* DeliveryLogServiceTests.swift */,
 				I20003 /* DashboardViewModelTests.swift */,
+				J20002 /* MainTabViewTests.swift */,
 			);
 			path = ZaapTests;
 			sourceTree = "<group>";
@@ -317,6 +323,7 @@
 				G10002 /* DeliveryLogService.swift in Sources */,
 				I10001 /* DashboardViewModel.swift in Sources */,
 				I10002 /* DashboardView.swift in Sources */,
+				J10001 /* MainTabView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -339,6 +346,7 @@
 				F10013 /* WorkoutDeliveryServiceTests.swift in Sources */,
 				G10003 /* DeliveryLogServiceTests.swift in Sources */,
 				I10003 /* DashboardViewModelTests.swift in Sources */,
+				J10002 /* MainTabViewTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
