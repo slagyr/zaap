@@ -286,6 +286,8 @@
 				B10001 /* HeartRateReader.swift in Sources */,
 				B10002 /* HeartRateDeliveryService.swift in Sources */,
 				A10017 /* Protocols.swift in Sources */,
+				G10001 /* DeliveryRecord.swift in Sources */,
+				G10002 /* DeliveryLogService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -306,6 +308,7 @@
 				F10011 /* ActivityDeliveryServiceTests.swift in Sources */,
 				F10012 /* WorkoutReaderTests.swift in Sources */,
 				F10013 /* WorkoutDeliveryServiceTests.swift in Sources */,
+				G10003 /* DeliveryLogServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
