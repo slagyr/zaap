@@ -29,7 +29,13 @@ extension SleepDataReader: SleepReading {}
 /// Protocol for reading heart rate data.
 protocol HeartRateReading {
     func requestAuthorization() async throws
-    func fetchDailySummary() async throws -> HeartRateReader.DailyHeartRateSummary
+    func fetchDailySummary(for date: Date) async throws -> HeartRateReader.DailyHeartRateSummary
+}
+
+extension HeartRateReading {
+    func fetchDailySummary() async throws -> HeartRateReader.DailyHeartRateSummary {
+        try await fetchDailySummary(for: Date())
+    }
 }
 
 extension HeartRateReader: HeartRateReading {}

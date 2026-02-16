@@ -63,7 +63,7 @@ final class HeartRateDeliveryService {
         }
 
         do {
-            let summary = try await heartRateReader.fetchDailySummary()
+            let summary = try await heartRateReader.fetchDailySummary(for: Date())
             try await webhookClient.post(summary, to: "/heart-rate")
             logger.info("Heart rate summary delivered: \(summary.sampleCount) samples, avg=\(summary.avgBPM)")
         } catch {

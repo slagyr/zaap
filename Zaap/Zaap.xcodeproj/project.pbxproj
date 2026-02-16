@@ -25,6 +25,19 @@
 		D10002 /* WorkoutDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20002 /* WorkoutDeliveryService.swift */; };
 		C10001 /* ActivityReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20001 /* ActivityReader.swift */; };
 		C10002 /* ActivityDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20002 /* ActivityDeliveryService.swift */; };
+		F10001 /* TestDoubles.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20001 /* TestDoubles.swift */; };
+		F10002 /* SettingsManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20002 /* SettingsManagerTests.swift */; };
+		F10003 /* WebhookClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20003 /* WebhookClientTests.swift */; };
+		F10004 /* LocationManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20004 /* LocationManagerTests.swift */; };
+		F10005 /* LocationDeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20005 /* LocationDeliveryServiceTests.swift */; };
+		F10006 /* SleepDataReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20006 /* SleepDataReaderTests.swift */; };
+		F10007 /* SleepDeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20007 /* SleepDeliveryServiceTests.swift */; };
+		F10008 /* HeartRateReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20008 /* HeartRateReaderTests.swift */; };
+		F10009 /* HeartRateDeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20009 /* HeartRateDeliveryServiceTests.swift */; };
+		F10010 /* ActivityReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20010 /* ActivityReaderTests.swift */; };
+		F10011 /* ActivityDeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20011 /* ActivityDeliveryServiceTests.swift */; };
+		F10012 /* WorkoutReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20012 /* WorkoutReaderTests.swift */; };
+		F10013 /* WorkoutDeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20013 /* WorkoutDeliveryServiceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,10 +62,31 @@
 		D20002 /* WorkoutDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDeliveryService.swift; sourceTree = "<group>"; };
 		C20001 /* ActivityReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityReader.swift; sourceTree = "<group>"; };
 		C20002 /* ActivityDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityDeliveryService.swift; sourceTree = "<group>"; };
+		E20020 /* ZaapTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZaapTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F20001 /* TestDoubles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDoubles.swift; sourceTree = "<group>"; };
+		F20002 /* SettingsManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManagerTests.swift; sourceTree = "<group>"; };
+		F20003 /* WebhookClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebhookClientTests.swift; sourceTree = "<group>"; };
+		F20004 /* LocationManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManagerTests.swift; sourceTree = "<group>"; };
+		F20005 /* LocationDeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationDeliveryServiceTests.swift; sourceTree = "<group>"; };
+		F20006 /* SleepDataReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepDataReaderTests.swift; sourceTree = "<group>"; };
+		F20007 /* SleepDeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepDeliveryServiceTests.swift; sourceTree = "<group>"; };
+		F20008 /* HeartRateReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateReaderTests.swift; sourceTree = "<group>"; };
+		F20009 /* HeartRateDeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateDeliveryServiceTests.swift; sourceTree = "<group>"; };
+		F20010 /* ActivityReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityReaderTests.swift; sourceTree = "<group>"; };
+		F20011 /* ActivityDeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityDeliveryServiceTests.swift; sourceTree = "<group>"; };
+		F20012 /* WorkoutReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutReaderTests.swift; sourceTree = "<group>"; };
+		F20013 /* WorkoutDeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDeliveryServiceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A30001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E30001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -66,6 +100,7 @@
 			isa = PBXGroup;
 			children = (
 				A40002 /* Zaap */,
+				E40001 /* ZaapTests */,
 				A40004 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -109,8 +144,29 @@
 			isa = PBXGroup;
 			children = (
 				A20006 /* Zaap.app */,
+				E20020 /* ZaapTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		E40001 /* ZaapTests */ = {
+			isa = PBXGroup;
+			children = (
+				F20001 /* TestDoubles.swift */,
+				F20002 /* SettingsManagerTests.swift */,
+				F20003 /* WebhookClientTests.swift */,
+				F20004 /* LocationManagerTests.swift */,
+				F20005 /* LocationDeliveryServiceTests.swift */,
+				F20006 /* SleepDataReaderTests.swift */,
+				F20007 /* SleepDeliveryServiceTests.swift */,
+				F20008 /* HeartRateReaderTests.swift */,
+				F20009 /* HeartRateDeliveryServiceTests.swift */,
+				F20010 /* ActivityReaderTests.swift */,
+				F20011 /* ActivityDeliveryServiceTests.swift */,
+				F20012 /* WorkoutReaderTests.swift */,
+				F20013 /* WorkoutDeliveryServiceTests.swift */,
+			);
+			path = ZaapTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -132,6 +188,23 @@
 			productName = Zaap;
 			productReference = A20006 /* Zaap.app */;
 			productType = "com.apple.product-type.application";
+		};
+		E50001 /* ZaapTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E70001 /* Build configuration list for PBXNativeTarget "ZaapTests" */;
+			buildPhases = (
+				E60001 /* Sources */,
+				E30001 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E10002 /* PBXTargetDependency */,
+			);
+			name = ZaapTests;
+			productName = ZaapTests;
+			productReference = E20020 /* ZaapTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 

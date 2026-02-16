@@ -149,7 +149,13 @@ final class HeartRateReader {
     }
 
     /// Build a daily summary with min/max/avg, resting HR, and all samples.
-    func fetchDailySummary(for date: Date = Date()) async throws -> DailyHeartRateSummary {
+    /// Fetch daily summary for today (protocol conformance).
+    func fetchDailySummary() async throws -> DailyHeartRateSummary {
+        try await fetchDailySummary(for: Date())
+    }
+
+    /// Build a daily summary with min/max/avg, resting HR, and all samples.
+    func fetchDailySummary(for date: Date) async throws -> DailyHeartRateSummary {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
