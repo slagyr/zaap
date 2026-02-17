@@ -2,15 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Zaap uses your location to relay position updates to your configured webhook endpoint.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Zaap uses background location monitoring to send significant location changes to your configured webhook endpoint.</string>
-	<key>NSHealthShareUsageDescription</key>
-	<string>Zaap reads your sleep data to send a daily summary to your configured webhook endpoint.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Zaap uses your location to relay position updates to your configured webhook endpoint.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Zaap uses your location in the background to relay position updates to your configured webhook endpoint.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Zaap reads your health data (sleep, heart rate, steps, workouts) to relay summaries to your configured webhook endpoint.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Zaap requests write access to HealthKit as required by the framework. No health data is written by this app.</string>
 </dict>
 </plist>

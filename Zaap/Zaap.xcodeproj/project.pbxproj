@@ -17,14 +17,14 @@
 		A10008 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20011 /* SettingsView.swift */; };
 		A10009 /* WebhookClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20012 /* WebhookClient.swift */; };
 		A10010 /* LocationDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20013 /* LocationDeliveryService.swift */; };
-		B10001 /* HeartRateReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20001 /* HeartRateReader.swift */; };
-		B10002 /* HeartRateDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20002 /* HeartRateDeliveryService.swift */; };
 		A10011 /* SleepDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20014 /* SleepDeliveryService.swift */; };
 		A10017 /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20020 /* Protocols.swift */; };
-		D10001 /* WorkoutReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20001 /* WorkoutReader.swift */; };
-		D10002 /* WorkoutDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20002 /* WorkoutDeliveryService.swift */; };
+		B10001 /* HeartRateReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20001 /* HeartRateReader.swift */; };
+		B10002 /* HeartRateDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20002 /* HeartRateDeliveryService.swift */; };
 		C10001 /* ActivityReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20001 /* ActivityReader.swift */; };
 		C10002 /* ActivityDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20002 /* ActivityDeliveryService.swift */; };
+		D10001 /* WorkoutReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20001 /* WorkoutReader.swift */; };
+		D10002 /* WorkoutDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20002 /* WorkoutDeliveryService.swift */; };
 		F10001 /* TestDoubles.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20001 /* TestDoubles.swift */; };
 		F10002 /* SettingsManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20002 /* SettingsManagerTests.swift */; };
 		F10003 /* WebhookClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20003 /* WebhookClientTests.swift */; };
@@ -48,6 +48,16 @@
 		J10002 /* MainTabViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = J20002 /* MainTabViewTests.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		E10001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A80001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A50001;
+			remoteInfo = Zaap;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		A20001 /* ZaapApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZaapApp.swift; sourceTree = "<group>"; };
 		A20002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -62,14 +72,14 @@
 		A20011 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A20012 /* WebhookClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebhookClient.swift; sourceTree = "<group>"; };
 		A20013 /* LocationDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationDeliveryService.swift; sourceTree = "<group>"; };
-		B20001 /* HeartRateReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateReader.swift; sourceTree = "<group>"; };
-		B20002 /* HeartRateDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateDeliveryService.swift; sourceTree = "<group>"; };
 		A20014 /* SleepDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepDeliveryService.swift; sourceTree = "<group>"; };
 		A20020 /* Protocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
-		D20001 /* WorkoutReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutReader.swift; sourceTree = "<group>"; };
-		D20002 /* WorkoutDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDeliveryService.swift; sourceTree = "<group>"; };
+		B20001 /* HeartRateReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateReader.swift; sourceTree = "<group>"; };
+		B20002 /* HeartRateDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateDeliveryService.swift; sourceTree = "<group>"; };
 		C20001 /* ActivityReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityReader.swift; sourceTree = "<group>"; };
 		C20002 /* ActivityDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityDeliveryService.swift; sourceTree = "<group>"; };
+		D20001 /* WorkoutReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutReader.swift; sourceTree = "<group>"; };
+		D20002 /* WorkoutDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDeliveryService.swift; sourceTree = "<group>"; };
 		E20020 /* ZaapTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZaapTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F20001 /* TestDoubles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDoubles.swift; sourceTree = "<group>"; };
 		F20002 /* SettingsManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManagerTests.swift; sourceTree = "<group>"; };
@@ -93,24 +103,6 @@
 		J20001 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		J20002 /* MainTabViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabViewTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXContainerItemProxy section */
-		E10001 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = A80001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = A50001;
-			remoteInfo = Zaap;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXTargetDependency section */
-		E10002 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = A50001 /* Zaap */;
-			targetProxy = E10001 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A30001 /* Frameworks */ = {
@@ -352,6 +344,14 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		E10002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A50001 /* Zaap */;
+			targetProxy = E10001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
 		A90001 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -479,10 +479,14 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Zaap/Preview Content\"";
+				DEVELOPMENT_TEAM = PJTG44YLX5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Zaap/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Zaap;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Zaap reads your sleep data to send a daily summary to your configured webhook endpoint.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Zaap uses background location monitoring to send significant location changes to your configured webhook endpoint.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Zaap uses your location to relay position updates to your configured webhook endpoint.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -493,7 +497,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.openclaw.zaap;
+				PRODUCT_BUNDLE_IDENTIFIER = co.airworthy.zaap;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -510,10 +514,14 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Zaap/Preview Content\"";
+				DEVELOPMENT_TEAM = PJTG44YLX5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Zaap/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Zaap;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Zaap reads your sleep data to send a daily summary to your configured webhook endpoint.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Zaap uses background location monitoring to send significant location changes to your configured webhook endpoint.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Zaap uses your location to relay position updates to your configured webhook endpoint.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -524,7 +532,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.openclaw.zaap;
+				PRODUCT_BUNDLE_IDENTIFIER = co.airworthy.zaap;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -599,7 +607,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
 	};
 	rootObject = A80001 /* Project object */;
 }
