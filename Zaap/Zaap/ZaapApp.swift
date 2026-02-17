@@ -7,11 +7,14 @@ struct ZaapApp: App {
     @State private var locationManager: LocationManager
 
     init() {
-        let service = LocationDeliveryService.shared
-        self._locationManager = State(initialValue: (service.location as? LocationManager) ?? LocationManager())
-        service.start()
-        SleepDeliveryService.shared.start()
-        ActivityDeliveryService.shared.start()
+        // Safe initialization — never crash on launch
+        let manager: LocationManager
+        if let lm = LocationDeliveryService.shared.location as? LocationManager {
+            manager = lm
+        } else {
+            manager = LocationManager()
+        }
+        self._locationManager = State(initialValue: manager)
     }
 
     var body: some Scene {
@@ -19,6 +22,12 @@ struct ZaapApp: App {
             MainTabView()
                 .environment(locationManager)
                 .modelContainer(for: DeliveryRecord.self)
+                .task {
+                    // Deferred start — runs after UI is up, won't crash launch
+                    LocationDeliveryService.shared.start()
+                    SleepDeliveryService.shared.start()
+                    ActivityDeliveryService.shared.start()
+                }
         }
     }
 }
