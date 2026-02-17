@@ -38,7 +38,7 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
         waitForExpectations(timeout: 2)
 
         XCTAssertEqual(webhook.postCallCount, 1)
-        XCTAssertEqual(webhook.lastPath, "/workouts")
+        XCTAssertEqual(webhook.lastPath, "/workout")
     }
 
     func testSetTrackingUpdatesSettings() {

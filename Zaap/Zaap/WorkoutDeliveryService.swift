@@ -57,7 +57,7 @@ final class WorkoutDeliveryService {
             do {
                 try await workoutReader.requestAuthorization()
                 let sessions = try await workoutReader.fetchRecentSessions(from: nil, to: nil)
-                try await webhookClient.post(sessions, to: "/workouts")
+                try await webhookClient.post(sessions, to: "/workout")
                 logger.info("Delivered \(sessions.count) workout(s)")
                 deliveryLog.record(dataType: .workout, timestamp: Date(), success: true, errorMessage: nil)
             } catch {

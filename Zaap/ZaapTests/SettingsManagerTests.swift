@@ -96,4 +96,29 @@ final class SettingsManagerTests: XCTestCase {
         settings.authToken = "token"
         XCTAssertTrue(settings.isConfigured)
     }
+
+    func testIsConfiguredReturnsFalseForInvalidURL() {
+        let settings = makeSettings()
+        settings.webhookURL = "not a valid url"
+        settings.authToken = "token"
+        XCTAssertFalse(settings.isConfigured)
+    }
+
+    func testWebhookURLValueReturnsNilForInvalidURL() {
+        let settings = makeSettings()
+        settings.webhookURL = "not a valid url"
+        XCTAssertNil(settings.webhookURLValue)
+    }
+
+    func testWebhookURLValueReturnsNilForMissingScheme() {
+        let settings = makeSettings()
+        settings.webhookURL = "example.com/hooks"
+        XCTAssertNil(settings.webhookURLValue)
+    }
+
+    func testWebhookURLValueAcceptsHTTPSWithHost() {
+        let settings = makeSettings()
+        settings.webhookURL = "https://example.com/hooks"
+        XCTAssertNotNil(settings.webhookURLValue)
+    }
 }

@@ -82,7 +82,7 @@ final class LocationDeliveryService {
 
         Task {
             do {
-                try await webhookClient.post(payload, to: nil)
+                try await webhookClient.post(payload, to: "/location")
                 logger.info("Location delivered: \(payload.latitude), \(payload.longitude)")
                 deliveryLog.record(dataType: .location, timestamp: Date(), success: true, errorMessage: nil)
             } catch {

@@ -66,8 +66,15 @@ final class SettingsManager {
     // MARK: - Convenience
 
     /// Returns the webhook URL as a valid URL, or nil if empty/invalid.
+    /// Requires an http/https scheme and a host to be considered valid.
     var webhookURLValue: URL? {
-        URL(string: webhookURL)
+        guard let url = URL(string: webhookURL),
+              let scheme = url.scheme,
+              ["http", "https"].contains(scheme.lowercased()),
+              url.host != nil else {
+            return nil
+        }
+        return url
     }
 
     /// True when minimum configuration is present (valid URL + non-empty token).

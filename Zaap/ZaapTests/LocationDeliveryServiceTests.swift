@@ -63,7 +63,7 @@ final class LocationDeliveryServiceTests: XCTestCase {
         waitForExpectations(timeout: 2)
 
         XCTAssertEqual(webhook.postCallCount, 1)
-        XCTAssertNil(webhook.lastPath) // posts to root
+        XCTAssertEqual(webhook.lastPath, "/location")
     }
 
     func testLocationUpdateSkipsDeliveryWhenNotConfigured() {

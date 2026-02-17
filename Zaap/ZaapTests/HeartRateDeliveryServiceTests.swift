@@ -31,7 +31,7 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
         await service.deliverDailySummary()
 
         XCTAssertEqual(webhook.postCallCount, 1)
-        XCTAssertEqual(webhook.lastPath, "/heart-rate")
+        XCTAssertEqual(webhook.lastPath, "/heartrate")
     }
 
     func testDeliverSkipsWhenNotConfigured() async {
