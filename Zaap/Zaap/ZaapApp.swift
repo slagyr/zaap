@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct ZaapApp: App {
@@ -17,6 +18,7 @@ struct ZaapApp: App {
         WindowGroup {
             MainTabView()
                 .environment(locationManager)
+                .modelContainer(for: DeliveryRecord.self)
         }
     }
 }
