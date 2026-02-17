@@ -101,7 +101,7 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
         try await service.sendNow()
 
         XCTAssertEqual(webhook.postCallCount, 1)
-        XCTAssertEqual(webhook.lastPath, "/heart-rate")
+        XCTAssertEqual(webhook.lastPath, "/heartrate")
     }
 
     func testSendNowThrowsWhenNotConfigured() async {

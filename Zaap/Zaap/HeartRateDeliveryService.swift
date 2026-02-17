@@ -64,7 +64,7 @@ final class HeartRateDeliveryService {
         guard settings.isConfigured else { throw SendNowError.notConfigured }
         try await heartRateReader.requestAuthorization()
         let summary = try await heartRateReader.fetchDailySummary(for: Date())
-        try await webhookClient.post(summary, to: "/heart-rate")
+        try await webhookClient.post(summary, to: "/heartrate")
         logger.info("Send Now: Heart rate summary delivered")
         deliveryLog.record(dataType: .heartRate, timestamp: Date(), success: true, errorMessage: nil)
     }

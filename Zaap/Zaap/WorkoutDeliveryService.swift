@@ -52,7 +52,7 @@ final class WorkoutDeliveryService {
         guard settings.isConfigured else { throw SendNowError.notConfigured }
         try await workoutReader.requestAuthorization()
         let sessions = try await workoutReader.fetchRecentSessions(from: nil, to: nil)
-        try await webhookClient.post(sessions, to: "/workouts")
+        try await webhookClient.post(sessions, to: "/workout")
         logger.info("Send Now: Workout data delivered")
         deliveryLog.record(dataType: .workout, timestamp: Date(), success: true, errorMessage: nil)
     }

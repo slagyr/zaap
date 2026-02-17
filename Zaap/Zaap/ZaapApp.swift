@@ -3,10 +3,12 @@ import SwiftUI
 @main
 struct ZaapApp: App {
 
-    @State private var locationManager = LocationDeliveryService.shared.location as! LocationManager
+    @State private var locationManager: LocationManager
 
     init() {
-        LocationDeliveryService.shared.start()
+        let service = LocationDeliveryService.shared
+        self._locationManager = State(initialValue: (service.location as? LocationManager) ?? LocationManager())
+        service.start()
         SleepDeliveryService.shared.start()
         ActivityDeliveryService.shared.start()
     }

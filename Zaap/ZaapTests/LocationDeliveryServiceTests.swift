@@ -135,6 +135,7 @@ final class LocationDeliveryServiceTests: XCTestCase {
         try await service.sendNow()
 
         XCTAssertEqual(webhook.postCallCount, 1)
+        XCTAssertEqual(webhook.lastPath, "/location")
     }
 
     func testSendNowThrowsWhenNotConfigured() async {

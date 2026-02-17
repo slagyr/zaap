@@ -124,7 +124,7 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
         try await service.sendNow()
 
         XCTAssertEqual(webhook.postCallCount, 1)
-        XCTAssertEqual(webhook.lastPath, "/workouts")
+        XCTAssertEqual(webhook.lastPath, "/workout")
     }
 
     func testSendNowThrowsWhenNotConfigured() async {
