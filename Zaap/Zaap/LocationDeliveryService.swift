@@ -61,6 +61,28 @@ final class LocationDeliveryService {
         }
     }
 
+
+    /// Immediately read the current location and POST it to the webhook.
+    /// Does not require tracking to be enabled, but does require configuration.
+    func sendNow() async throws {
+        guard settings.isConfigured else { throw SendNowError.notConfigured }
+        guard let location = locationManager.currentLocation else {
+            throw SendNowError.noData("No current location available.")
+        }
+        let payload = LocationPayload(
+            latitude: location.coordinate.latitude,
+            longitude: location.coordinate.longitude,
+            altitude: location.altitude,
+            horizontalAccuracy: location.horizontalAccuracy,
+            verticalAccuracy: location.verticalAccuracy,
+            speed: location.speed,
+            course: location.course,
+            timestamp: location.timestamp
+        )
+        try await webhookClient.post(payload, to: nil)
+        logger.info("Send Now: Location delivered")
+        deliveryLog.record(dataType: .location, timestamp: Date(), success: true, errorMessage: nil)
+    }
     // MARK: - Private
 
     private func deliver(_ location: CLLocation) {

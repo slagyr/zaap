@@ -112,4 +112,41 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
         XCTAssertFalse(log.records[0].success)
         XCTAssertNotNil(log.records[0].errorMessage)
     }
+
+    // MARK: - Send Now
+
+    func testSendNowDeliversWorkoutData() async throws {
+        let (service, reader, webhook, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.sessionsToReturn = []
+
+        try await service.sendNow()
+
+        XCTAssertEqual(webhook.postCallCount, 1)
+        XCTAssertEqual(webhook.lastPath, "/workouts")
+    }
+
+    func testSendNowThrowsWhenNotConfigured() async {
+        let (service, _, _, _, _) = makeService()
+
+        do {
+            try await service.sendNow()
+            XCTFail("Expected error")
+        } catch {
+            XCTAssertTrue(error is SendNowError)
+        }
+    }
+
+    func testSendNowWorksWhenTrackingDisabled() async throws {
+        let (service, reader, webhook, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.workoutTrackingEnabled = false
+        reader.sessionsToReturn = []
+
+        try await service.sendNow()
+
+        XCTAssertEqual(webhook.postCallCount, 1)
+    }
 }

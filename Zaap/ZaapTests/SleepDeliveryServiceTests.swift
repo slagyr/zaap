@@ -113,4 +113,51 @@ final class SleepDeliveryServiceTests: XCTestCase {
         XCTAssertFalse(log.records[0].success)
         XCTAssertNotNil(log.records[0].errorMessage)
     }
+
+    // MARK: - Send Now
+
+    func testSendNowDeliversSleepData() async throws {
+        let (service, reader, webhook, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.summaryToReturn = SleepDataReader.SleepSummary(
+            date: "2026-02-15", bedtime: nil, wakeTime: nil,
+            totalInBedMinutes: 480, totalAsleepMinutes: 420,
+            deepSleepMinutes: 90, remSleepMinutes: 120, coreSleepMinutes: 210,
+            awakeMinutes: 30, sessions: []
+        )
+
+        try await service.sendNow()
+
+        XCTAssertEqual(webhook.postCallCount, 1)
+        XCTAssertEqual(webhook.lastPath, "/sleep")
+    }
+
+    func testSendNowThrowsWhenNotConfigured() async {
+        let (service, _, _, _, _) = makeService()
+
+        do {
+            try await service.sendNow()
+            XCTFail("Expected error")
+        } catch {
+            XCTAssertTrue(error is SendNowError)
+        }
+    }
+
+    func testSendNowWorksWhenTrackingDisabled() async throws {
+        let (service, reader, webhook, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.sleepTrackingEnabled = false
+        reader.summaryToReturn = SleepDataReader.SleepSummary(
+            date: "2026-02-15", bedtime: nil, wakeTime: nil,
+            totalInBedMinutes: 480, totalAsleepMinutes: 420,
+            deepSleepMinutes: 90, remSleepMinutes: 120, coreSleepMinutes: 210,
+            awakeMinutes: 30, sessions: []
+        )
+
+        try await service.sendNow()
+
+        XCTAssertEqual(webhook.postCallCount, 1)
+    }
 }

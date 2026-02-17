@@ -2,6 +2,21 @@ import Foundation
 import CoreLocation
 import Combine
 
+/// Errors thrown by sendNow() on delivery services.
+enum SendNowError: LocalizedError {
+    case notConfigured
+    case noData(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .notConfigured:
+            return "Webhook URL and auth token must be configured."
+        case .noData(let detail):
+            return "No data available: \(detail)"
+        }
+    }
+}
+
 /// Protocol for posting webhook payloads.
 protocol WebhookPosting: Sendable {
     func post<T: Encodable>(_ payload: T, to path: String?) async throws
@@ -14,6 +29,7 @@ protocol LocationPublishing: AnyObject {
     var locationPublisher: PassthroughSubject<CLLocation, Never> { get }
     var authorizationStatus: CLAuthorizationStatus { get }
     var isMonitoring: Bool { get }
+    var currentLocation: CLLocation? { get }
     func startMonitoring()
     func stopMonitoring()
 }

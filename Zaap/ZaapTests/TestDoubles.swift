@@ -27,6 +27,7 @@ final class MockLocationPublishing: LocationPublishing {
     let locationPublisher = PassthroughSubject<CLLocation, Never>()
     var authorizationStatus: CLAuthorizationStatus = .authorizedAlways
     var isMonitoring = false
+    var currentLocation: CLLocation?
     var startMonitoringCallCount = 0
     var stopMonitoringCallCount = 0
 

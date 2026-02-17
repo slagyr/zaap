@@ -86,4 +86,51 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
         XCTAssertFalse(log.records[0].success)
         XCTAssertNotNil(log.records[0].errorMessage)
     }
+
+    // MARK: - Send Now
+
+    func testSendNowDeliversHeartRateData() async throws {
+        let (service, reader, webhook, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
+            date: "2026-02-16", minBPM: 55, maxBPM: 120, avgBPM: 72,
+            restingBPM: 60, sampleCount: 10, samples: []
+        )
+
+        try await service.sendNow()
+
+        XCTAssertEqual(webhook.postCallCount, 1)
+        XCTAssertEqual(webhook.lastPath, "/heart-rate")
+    }
+
+    func testSendNowThrowsWhenNotConfigured() async {
+        let (service, reader, _, _, _) = makeService()
+        reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
+            date: "2026-02-16", minBPM: 55, maxBPM: 120, avgBPM: 72,
+            restingBPM: 60, sampleCount: 10, samples: []
+        )
+
+        do {
+            try await service.sendNow()
+            XCTFail("Expected error")
+        } catch {
+            XCTAssertTrue(error is SendNowError)
+        }
+    }
+
+    func testSendNowWorksWhenTrackingDisabled() async throws {
+        let (service, reader, webhook, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.heartRateTrackingEnabled = false
+        reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
+            date: "2026-02-16", minBPM: 55, maxBPM: 120, avgBPM: 72,
+            restingBPM: 60, sampleCount: 10, samples: []
+        )
+
+        try await service.sendNow()
+
+        XCTAssertEqual(webhook.postCallCount, 1)
+    }
 }

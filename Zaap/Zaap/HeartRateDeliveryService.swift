@@ -58,6 +58,16 @@ final class HeartRateDeliveryService {
         }
     }
 
+
+    /// Immediately fetch and POST heart rate data. Does not require tracking to be enabled.
+    func sendNow() async throws {
+        guard settings.isConfigured else { throw SendNowError.notConfigured }
+        try await heartRateReader.requestAuthorization()
+        let summary = try await heartRateReader.fetchDailySummary(for: Date())
+        try await webhookClient.post(summary, to: "/heart-rate")
+        logger.info("Send Now: Heart rate summary delivered")
+        deliveryLog.record(dataType: .heartRate, timestamp: Date(), success: true, errorMessage: nil)
+    }
     /// Fetch and deliver the daily heart rate summary.
     func deliverDailySummary() async {
         guard settings.isConfigured && settings.heartRateTrackingEnabled else {

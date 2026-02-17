@@ -47,6 +47,16 @@ final class SleepDeliveryService {
     }
 
     /// Fetch the latest sleep summary and POST it to the webhook.
+
+    /// Immediately fetch and POST sleep data. Does not require tracking to be enabled.
+    func sendNow() async throws {
+        guard settings.isConfigured else { throw SendNowError.notConfigured }
+        try await sleepReader.requestAuthorization()
+        let summary = try await sleepReader.fetchLastNightSummary()
+        try await webhookClient.post(summary, to: "/sleep")
+        logger.info("Send Now: Sleep summary delivered")
+        deliveryLog.record(dataType: .sleep, timestamp: Date(), success: true, errorMessage: nil)
+    }
     func deliverLatest() {
         guard settings.isConfigured && settings.sleepTrackingEnabled else {
             logger.info("Skipping sleep delivery — not configured or tracking disabled")

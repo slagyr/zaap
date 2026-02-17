@@ -46,6 +46,16 @@ final class ActivityDeliveryService {
         }
     }
 
+
+    /// Immediately fetch and POST activity data. Does not require tracking to be enabled.
+    func sendNow() async throws {
+        guard settings.isConfigured else { throw SendNowError.notConfigured }
+        try await activityReader.requestAuthorization()
+        let summary = try await activityReader.fetchTodaySummary()
+        try await webhookClient.post(summary, to: "/activity")
+        logger.info("Send Now: Activity data delivered")
+        deliveryLog.record(dataType: .activity, timestamp: Date(), success: true, errorMessage: nil)
+    }
     /// Fetch the latest activity summary and POST it to the webhook.
     func deliverLatest() {
         guard settings.isConfigured && settings.activityTrackingEnabled else {

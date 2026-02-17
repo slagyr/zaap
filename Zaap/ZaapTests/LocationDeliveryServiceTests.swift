@@ -123,4 +123,54 @@ final class LocationDeliveryServiceTests: XCTestCase {
         XCTAssertFalse(log.records[0].success)
         XCTAssertNotNil(log.records[0].errorMessage)
     }
+
+    // MARK: - Send Now
+
+    func testSendNowDeliversCurrentLocation() async throws {
+        let (service, locMgr, webhook, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        locMgr.currentLocation = CLLocation(latitude: 33.45, longitude: -112.07)
+
+        try await service.sendNow()
+
+        XCTAssertEqual(webhook.postCallCount, 1)
+    }
+
+    func testSendNowThrowsWhenNotConfigured() async {
+        let (service, locMgr, _, _, _) = makeService()
+        locMgr.currentLocation = CLLocation(latitude: 33.45, longitude: -112.07)
+
+        do {
+            try await service.sendNow()
+            XCTFail("Expected error")
+        } catch {
+            XCTAssertTrue(error is SendNowError)
+        }
+    }
+
+    func testSendNowThrowsWhenNoCurrentLocation() async {
+        let (service, _, _, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+
+        do {
+            try await service.sendNow()
+            XCTFail("Expected error")
+        } catch {
+            XCTAssertTrue(error is SendNowError)
+        }
+    }
+
+    func testSendNowWorksEvenWhenTrackingDisabled() async throws {
+        let (service, locMgr, webhook, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.locationTrackingEnabled = false
+        locMgr.currentLocation = CLLocation(latitude: 33.45, longitude: -112.07)
+
+        try await service.sendNow()
+
+        XCTAssertEqual(webhook.postCallCount, 1)
+    }
 }

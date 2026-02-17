@@ -46,6 +46,16 @@ final class WorkoutDeliveryService {
         }
     }
 
+
+    /// Immediately fetch and POST workout data. Does not require tracking to be enabled.
+    func sendNow() async throws {
+        guard settings.isConfigured else { throw SendNowError.notConfigured }
+        try await workoutReader.requestAuthorization()
+        let sessions = try await workoutReader.fetchRecentSessions(from: nil, to: nil)
+        try await webhookClient.post(sessions, to: "/workouts")
+        logger.info("Send Now: Workout data delivered")
+        deliveryLog.record(dataType: .workout, timestamp: Date(), success: true, errorMessage: nil)
+    }
     /// Fetch the latest workouts and POST them to the webhook.
     func deliverLatest() {
         guard settings.isConfigured && settings.workoutTrackingEnabled else {
