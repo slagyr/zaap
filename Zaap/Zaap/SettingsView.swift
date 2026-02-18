@@ -24,7 +24,7 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section {
-                TextField("Webhook URL", text: $settings.webhookURL)
+                TextField("Hostname", text: $settings.webhookURL)
                     .keyboardType(.URL)
                     .textContentType(.URL)
                     .textInputAutocapitalization(.never)
@@ -50,9 +50,13 @@ struct SettingsView: View {
                     .buttonStyle(.plain)
                 }
             } header: {
-                Text("Webhook")
+                Text("Server")
             } footer: {
-                Text("Location data is sent as a POST request with a Bearer authorization header.")
+                if settings.hostname.isEmpty {
+                    Text("Enter your OpenClaw gateway hostname (e.g. myhost.ts.net)")
+                } else {
+                    Text("Sends to: https://\(settings.hostname)/hooks/…")
+                }
             }
 
             Section {
@@ -134,7 +138,7 @@ struct SettingsView: View {
 
             if settings.isConfigured {
                 Section {
-                    LabeledContent("Endpoint", value: settings.webhookURL)
+                    LabeledContent("Endpoint", value: "https://\(settings.hostname)/hooks")
                     LabeledContent("Status") {
                         Label(
                             settings.locationTrackingEnabled ? "Active" : "Inactive",

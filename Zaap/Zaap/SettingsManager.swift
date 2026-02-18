@@ -9,7 +9,7 @@ final class SettingsManager {
     // MARK: - UserDefaults Keys
 
     private enum Key: String {
-        case webhookURL = "settings.webhookURL"
+        case webhookURL = "settings.webhookURL"  // legacy key, now stores hostname
         case authToken = "settings.authToken"
         case locationTrackingEnabled = "settings.locationTrackingEnabled"
         case sleepTrackingEnabled = "settings.sleepTrackingEnabled"
@@ -65,19 +65,30 @@ final class SettingsManager {
 
     // MARK: - Convenience
 
-    /// Returns the webhook URL as a valid URL, or nil if empty/invalid.
-    /// Requires an http/https scheme and a host to be considered valid.
-    var webhookURLValue: URL? {
-        guard let url = URL(string: webhookURL),
-              let scheme = url.scheme,
-              ["http", "https"].contains(scheme.lowercased()),
-              url.host != nil else {
-            return nil
-        }
-        return url
+    /// The cleaned hostname (strips protocol, trailing slashes, paths).
+    var hostname: String {
+        var h = webhookURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Strip protocol if user pastes a full URL
+        if h.lowercased().hasPrefix("https://") { h = String(h.dropFirst(8)) }
+        if h.lowercased().hasPrefix("http://") { h = String(h.dropFirst(7)) }
+        // Strip trailing slashes and paths
+        if let slashIndex = h.firstIndex(of: "/") { h = String(h[..<slashIndex]) }
+        return h
     }
 
-    /// True when minimum configuration is present (valid URL + non-empty token).
+    /// Returns the base webhook URL built from the hostname, or nil if empty.
+    var webhookURLValue: URL? {
+        let h = hostname
+        guard !h.isEmpty else { return nil }
+        return URL(string: "https://\(h)/hooks")
+    }
+
+    /// Build a full URL for a specific service path (e.g. "/location").
+    func serviceURL(path: String) -> URL? {
+        webhookURLValue?.appending(path: path)
+    }
+
+    /// True when minimum configuration is present (valid hostname + non-empty token).
     var isConfigured: Bool {
         webhookURLValue != nil && !authToken.isEmpty
     }
