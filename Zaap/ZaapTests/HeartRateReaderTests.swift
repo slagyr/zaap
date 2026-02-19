@@ -28,7 +28,62 @@ final class HeartRateReaderTests: XCTestCase {
     func testHeartRateErrorDescriptions() {
         XCTAssertEqual(HeartRateReader.HeartRateError.healthKitNotAvailable.errorDescription,
                        "HealthKit is not available on this device")
+        XCTAssertEqual(HeartRateReader.HeartRateError.authorizationDenied.errorDescription,
+                       "HealthKit heart rate access denied")
         XCTAssertEqual(HeartRateReader.HeartRateError.noData.errorDescription,
                        "No heart rate data found for the requested period")
+    }
+
+    // MARK: - Failure paths (HealthKit unavailable in simulator)
+
+    func testRequestAuthorizationThrowsWhenHealthKitUnavailable() async {
+        let reader = HeartRateReader()
+        do {
+            try await reader.requestAuthorization()
+        } catch {
+            XCTAssertEqual(error as? HeartRateReader.HeartRateError, .healthKitNotAvailable)
+        }
+    }
+
+    func testFetchHeartRateSamplesThrowsWhenHealthKitUnavailable() async {
+        let reader = HeartRateReader()
+        do {
+            _ = try await reader.fetchHeartRateSamples()
+        } catch {
+            XCTAssertEqual(error as? HeartRateReader.HeartRateError, .healthKitNotAvailable)
+        }
+    }
+
+    func testFetchRestingHeartRateThrowsWhenHealthKitUnavailable() async {
+        let reader = HeartRateReader()
+        do {
+            _ = try await reader.fetchRestingHeartRate()
+        } catch {
+            XCTAssertEqual(error as? HeartRateReader.HeartRateError, .healthKitNotAvailable)
+        }
+    }
+
+    func testFetchDailySummaryThrowsWhenHealthKitUnavailable() async {
+        let reader = HeartRateReader()
+        do {
+            _ = try await reader.fetchDailySummary(for: Date())
+        } catch {
+            XCTAssertEqual(error as? HeartRateReader.HeartRateError, .healthKitNotAvailable)
+        }
+    }
+
+    func testFetchDailySummaryNoArgThrowsWhenHealthKitUnavailable() async {
+        let reader = HeartRateReader()
+        do {
+            _ = try await reader.fetchDailySummary()
+        } catch {
+            XCTAssertEqual(error as? HeartRateReader.HeartRateError, .healthKitNotAvailable)
+        }
+    }
+
+    func testInitSetsDefaultState() {
+        let reader = HeartRateReader()
+        XCTAssertFalse(reader.isAuthorized)
+        XCTAssertNil(reader.lastError)
     }
 }

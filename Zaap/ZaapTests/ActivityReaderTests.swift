@@ -20,7 +20,29 @@ final class ActivityReaderTests: XCTestCase {
     func testActivityErrorDescriptions() {
         XCTAssertEqual(ActivityReader.ActivityError.healthKitNotAvailable.errorDescription,
                        "HealthKit is not available on this device")
+        XCTAssertEqual(ActivityReader.ActivityError.authorizationDenied.errorDescription,
+                       "HealthKit activity data access denied")
         XCTAssertEqual(ActivityReader.ActivityError.noData.errorDescription,
                        "No activity data found for the requested period")
+    }
+
+    func testInitSetsDefaultState() {
+        let reader = ActivityReader()
+        XCTAssertFalse(reader.isAuthorized)
+        XCTAssertNil(reader.lastError)
+    }
+
+    func testActivitySummaryFieldValues() {
+        let ts = Date(timeIntervalSince1970: 1000)
+        let summary = ActivityReader.ActivitySummary(
+            date: "2026-02-19", steps: 0,
+            distanceMeters: 0, activeEnergyKcal: 0,
+            timestamp: ts
+        )
+        XCTAssertEqual(summary.date, "2026-02-19")
+        XCTAssertEqual(summary.steps, 0)
+        XCTAssertEqual(summary.distanceMeters, 0)
+        XCTAssertEqual(summary.activeEnergyKcal, 0)
+        XCTAssertEqual(summary.timestamp, ts)
     }
 }

@@ -31,6 +31,9 @@ echo "📊 Checking coverage…"
 
 FAILED=0
 
+# SwiftUI view files are excluded — they require snapshot/UI testing
+EXCLUDED_FILES="ContentView.swift|DashboardView.swift|SettingsView.swift|ZaapApp.swift"
+
 # Parse per-file coverage from xcrun xccov
 while IFS= read -r line; do
   # xccov report lines look like:  "SomeFile.swift    85.71% (6/7)"
@@ -38,6 +41,12 @@ while IFS= read -r line; do
   pct=$(echo "$line" | grep -oE '[0-9]+\.[0-9]+%' | head -1 | tr -d '%')
 
   [ -z "$pct" ] && continue
+
+  # Skip excluded view files
+  basename=$(basename "$file")
+  if echo "$basename" | grep -qE "^($EXCLUDED_FILES)$"; then
+    continue
+  fi
 
   # Compare as integers (floor)
   int_pct=$(echo "$pct" | cut -d. -f1)

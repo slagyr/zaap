@@ -46,4 +46,29 @@ final class LocationManagerTests: XCTestCase {
         manager.locationManager(CLLocationManager(), didFailWithError: error)
         XCTAssertNotNil(manager.lastError)
     }
+
+    func testDidUpdateLocationsIgnoresEmptyArray() {
+        let manager = LocationManager()
+        manager.locationManager(CLLocationManager(), didUpdateLocations: [])
+        XCTAssertNil(manager.currentLocation)
+    }
+
+    func testAuthorizationChangeUpdatesStatus() {
+        let manager = LocationManager()
+        let clManager = CLLocationManager()
+        manager.locationManagerDidChangeAuthorization(clManager)
+        // Just verifies it doesn't crash and updates the status
+        XCTAssertEqual(manager.authorizationStatus, clManager.authorizationStatus)
+    }
+
+    func testStopMonitoringSetsIsMonitoringFalse() {
+        let manager = LocationManager()
+        manager.stopMonitoring()
+        XCTAssertFalse(manager.isMonitoring)
+    }
+
+    func testLastErrorInitiallyNil() {
+        let manager = LocationManager()
+        XCTAssertNil(manager.lastError)
+    }
 }

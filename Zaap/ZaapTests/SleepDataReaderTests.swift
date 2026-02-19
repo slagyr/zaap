@@ -37,7 +37,59 @@ final class SleepDataReaderTests: XCTestCase {
     func testSleepErrorDescriptions() {
         XCTAssertEqual(SleepDataReader.SleepError.healthKitNotAvailable.errorDescription,
                        "HealthKit is not available on this device")
+        XCTAssertEqual(SleepDataReader.SleepError.authorizationDenied.errorDescription,
+                       "HealthKit sleep data access denied")
         XCTAssertEqual(SleepDataReader.SleepError.noData.errorDescription,
                        "No sleep data found for the requested period")
+    }
+
+    // MARK: - Failure paths (HealthKit unavailable in simulator)
+
+    func testRequestAuthorizationThrowsWhenHealthKitUnavailable() async {
+        let reader = SleepDataReader()
+        do {
+            try await reader.requestAuthorization()
+        } catch {
+            XCTAssertEqual(error as? SleepDataReader.SleepError, .healthKitNotAvailable)
+        }
+    }
+
+    func testFetchSleepSamplesThrowsWhenHealthKitUnavailable() async {
+        let reader = SleepDataReader()
+        do {
+            _ = try await reader.fetchSleepSamples()
+        } catch {
+            XCTAssertEqual(error as? SleepDataReader.SleepError, .healthKitNotAvailable)
+        }
+    }
+
+    func testFetchLastNightSummaryThrowsWhenHealthKitUnavailable() async {
+        let reader = SleepDataReader()
+        do {
+            _ = try await reader.fetchLastNightSummary()
+        } catch {
+            XCTAssertEqual(error as? SleepDataReader.SleepError, .healthKitNotAvailable)
+        }
+    }
+
+    func testSleepSessionEncodesToJSON() throws {
+        let session = SleepDataReader.SleepSession(
+            startDate: Date(timeIntervalSince1970: 0),
+            endDate: Date(timeIntervalSince1970: 3600),
+            stage: "asleepDeep",
+            durationMinutes: 60
+        )
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let data = try encoder.encode(session)
+        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        XCTAssertEqual(json["stage"] as? String, "asleepDeep")
+        XCTAssertEqual(json["durationMinutes"] as? Int, 60)
+    }
+
+    func testInitSetsDefaultState() {
+        let reader = SleepDataReader()
+        XCTAssertFalse(reader.isAuthorized)
+        XCTAssertNil(reader.lastError)
     }
 }

@@ -1,6 +1,7 @@
 {:number "005"
  :status :active
- :stories [{:id "zaap-biq" :title "Pre-push git hook: 90% code coverage minimum"}
+ :stories [{:id "zaap-l06" :title "CRASH FIX: Replace background URLSession async/await with standard URLSession"}
+           {:id "zaap-biq" :title "Pre-push git hook: 90% code coverage minimum"}
            {:id "zaap-jod" :title "Crash hardening — failure-path tests for all readers and services"}
            {:id "zaap-bom" :title "README — app overview and OpenClaw webhook setup guide"}]
  :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"

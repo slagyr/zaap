@@ -17,6 +17,47 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
         XCTAssertEqual(webhook.postCallCount, 0)
     }
 
+    func testStartDeliversWhenEnabled() async {
+        let (service, reader, webhook, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.heartRateTrackingEnabled = true
+
+        reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
+            date: "2026-02-15", minBPM: 55, maxBPM: 150, avgBPM: 72,
+            restingBPM: 58, sampleCount: 10, samples: []
+        )
+
+        service.start()
+
+        // Wait for the Task inside start() to complete
+        try? await Task.sleep(nanoseconds: 500_000_000)
+
+        XCTAssertTrue(reader.authorizationRequested)
+        XCTAssertEqual(webhook.postCallCount, 1)
+    }
+
+    func testStartLogsErrorOnAuthorizationFailure() async {
+        let (service, reader, webhook, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.heartRateTrackingEnabled = true
+
+        reader.shouldThrow = HeartRateReader.HeartRateError.healthKitNotAvailable
+
+        service.start()
+
+        try? await Task.sleep(nanoseconds: 500_000_000)
+
+        XCTAssertEqual(webhook.postCallCount, 0)
+    }
+
+    func testReaderPropertyReturnsInjectedReader() {
+        let (service, reader, _, _, _) = makeService()
+        // reader property should be accessible
+        XCTAssertNotNil(service.reader)
+    }
+
     func testDeliverDailySummaryPostsToHeartRatePath() async {
         let (service, reader, webhook, settings, _) = makeService()
         settings.webhookURL = "https://example.com"
