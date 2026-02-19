@@ -1,0 +1,13 @@
+{:number "006"
+ :status :active
+ :stories [{:id "zaap-3sj" :title "Hook session routing — location data should persist to memory"}
+           {:id "zaap-ho4" :title "Funnel persistence — gateway restart kills funnel"}
+           {:id "zaap-h24" :title "Pre-push hook simulator auto-detection"}]
+ :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
+              "90% code coverage minimum on all source files"
+              "No force unwraps (!) anywhere in codebase"
+              "All new Swift files must be added to project.pbxproj"]
+ :notes ["Theme: Reliability & Integration"
+         "3sj is highest priority — Zaap data must actually reach Zane's memory"
+         "ho4 may be a config/script fix rather than Swift code"
+         "h24 is quality-of-life for the dev pipeline"]}
