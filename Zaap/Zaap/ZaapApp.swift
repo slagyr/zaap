@@ -1,33 +1,53 @@
 import SwiftUI
 import SwiftData
+import os
+
+private let logger = Logger(subsystem: "com.zaap.app", category: "AppLaunch")
 
 @main
 struct ZaapApp: App {
 
-    @State private var locationManager: LocationManager
+    let modelContainer: ModelContainer?
 
     init() {
-        // Safe initialization — never crash on launch
-        let manager: LocationManager
-        if let lm = LocationDeliveryService.shared.location as? LocationManager {
-            manager = lm
-        } else {
-            manager = LocationManager()
+        // SwiftData container — can fail on device if schema migration breaks
+        do {
+            modelContainer = try ModelContainer(for: DeliveryRecord.self)
+            logger.info("ModelContainer initialized")
+        } catch {
+            logger.error("ModelContainer failed: \(error.localizedDescription, privacy: .public)")
+            modelContainer = nil
         }
-        self._locationManager = State(initialValue: manager)
     }
 
     var body: some Scene {
         WindowGroup {
-            MainTabView()
-                .environment(locationManager)
-                .modelContainer(for: DeliveryRecord.self)
-                .task {
-                    // Deferred start — runs after UI is up, won't crash launch
-                    LocationDeliveryService.shared.start()
-                    SleepDeliveryService.shared.start()
-                    ActivityDeliveryService.shared.start()
+            if let modelContainer {
+                MainTabView()
+                    .modelContainer(modelContainer)
+                    .task {
+                        startServices()
+                    }
+            } else {
+                // Fallback UI if SwiftData fails — app still launches
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.largeTitle)
+                    Text("Database Error")
+                        .font(.headline)
+                    Text("Please delete and reinstall the app.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
+                .padding()
+            }
         }
+    }
+
+    private func startServices() {
+        logger.info("Starting delivery services")
+        LocationDeliveryService.shared.start()
+        SleepDeliveryService.shared.start()
+        ActivityDeliveryService.shared.start()
     }
 }
