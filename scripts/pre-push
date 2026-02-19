@@ -10,6 +10,29 @@ PROJECT_DIR="$(git rev-parse --show-toplevel)/Zaap"
 SCHEME="Zaap"
 RESULT_BUNDLE="/tmp/zaap-coverage-$$.xcresult"
 
+# Simulator device: check env var, then .zaap-simulator file, then auto-detect
+if [ -n "${ZAAP_SIMULATOR:-}" ]; then
+  SIMULATOR_NAME="$ZAAP_SIMULATOR"
+elif [ -f "$(git rev-parse --show-toplevel)/.zaap-simulator" ]; then
+  SIMULATOR_NAME="$(cat "$(git rev-parse --show-toplevel)/.zaap-simulator" | tr -d '[:space:]')"
+else
+  # Auto-detect first available iPhone simulator
+  SIMULATOR_NAME=$(xcrun simctl list devices available -j 2>/dev/null \
+    | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+for runtime, devices in data.get('devices', {}).items():
+    for d in devices:
+        if 'iPhone' in d['name'] and d['isAvailable']:
+            print(d['name']); sys.exit(0)
+" 2>/dev/null)
+  if [ -z "$SIMULATOR_NAME" ]; then
+    echo "❌ No available iPhone simulator found. Set ZAAP_SIMULATOR or create .zaap-simulator file."
+    exit 1
+  fi
+  echo "ℹ️  Auto-detected simulator: $SIMULATOR_NAME"
+fi
+
 cleanup() { rm -rf "$RESULT_BUNDLE"; }
 trap cleanup EXIT
 
@@ -17,7 +40,7 @@ echo "🔍 Running tests with coverage…"
 xcodebuild test \
   -project "$PROJECT_DIR/Zaap.xcodeproj" \
   -scheme "$SCHEME" \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -destination "platform=iOS Simulator,name=$SIMULATOR_NAME" \
   -enableCodeCoverage YES \
   -resultBundlePath "$RESULT_BUNDLE" \
   -quiet 2>&1
