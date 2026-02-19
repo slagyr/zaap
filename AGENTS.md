@@ -33,6 +33,16 @@ bd list               # List all tasks
 bd dep list <id>      # List dependencies
 ```
 
+## Git Hooks Setup
+
+After cloning, symlink the pre-push hook to enable coverage enforcement:
+
+```bash
+ln -sf ../../scripts/pre-push .git/hooks/pre-push
+```
+
+This runs tests with coverage on every `git push` and blocks if any source file falls below 90% coverage.
+
 ## Session Completion
 
 Work is NOT complete until `git push` succeeds.

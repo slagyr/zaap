@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+#
+# Pre-push hook: enforce 90% code coverage on every source file.
+# Symlink into .git/hooks/pre-push to activate.
+#
+set -euo pipefail
+
+MINIMUM_COVERAGE=90
+PROJECT_DIR="$(git rev-parse --show-toplevel)/Zaap"
+SCHEME="Zaap"
+RESULT_BUNDLE="/tmp/zaap-coverage-$$.xcresult"
+
+cleanup() { rm -rf "$RESULT_BUNDLE"; }
+trap cleanup EXIT
+
+echo "🔍 Running tests with coverage…"
+xcodebuild test \
+  -project "$PROJECT_DIR/Zaap.xcodeproj" \
+  -scheme "$SCHEME" \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -enableCodeCoverage YES \
+  -resultBundlePath "$RESULT_BUNDLE" \
+  -quiet 2>&1
+
+if [ ! -d "$RESULT_BUNDLE" ]; then
+  echo "❌ Tests failed or result bundle not found. Push aborted."
+  exit 1
+fi
+
+echo "📊 Checking coverage…"
+
+FAILED=0
+
+# Parse per-file coverage from xcrun xccov
+while IFS= read -r line; do
+  # xccov report lines look like:  "SomeFile.swift    85.71% (6/7)"
+  file=$(echo "$line" | sed 's/[[:space:]]*[0-9].*$//')
+  pct=$(echo "$line" | grep -oE '[0-9]+\.[0-9]+%' | head -1 | tr -d '%')
+
+  [ -z "$pct" ] && continue
+
+  # Compare as integers (floor)
+  int_pct=$(echo "$pct" | cut -d. -f1)
+
+  if [ "$int_pct" -lt "$MINIMUM_COVERAGE" ]; then
+    echo "  ⚠️  ${file}: ${pct}% (minimum ${MINIMUM_COVERAGE}%)"
+    FAILED=1
+  fi
+done < <(xcrun xccov view --report --files-for-target Zaap "$RESULT_BUNDLE" 2>/dev/null \
+         || xcrun xccov view --report "$RESULT_BUNDLE" | grep '\.swift')
+
+if [ "$FAILED" -eq 1 ]; then
+  echo ""
+  echo "❌ Coverage below ${MINIMUM_COVERAGE}% on one or more files. Push aborted."
+  exit 1
+fi
+
+echo "✅ All source files meet ${MINIMUM_COVERAGE}% coverage. Pushing…"
+exit 0
