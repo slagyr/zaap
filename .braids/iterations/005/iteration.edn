@@ -1,0 +1,13 @@
+{:number "005"
+ :status :active
+ :stories [{:id "zaap-biq" :title "Pre-push git hook: 90% code coverage minimum"}
+           {:id "zaap-jod" :title "Crash hardening — failure-path tests for all readers and services"}
+           {:id "zaap-bom" :title "README — app overview and OpenClaw webhook setup guide"}]
+ :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
+              "90% code coverage minimum on all source files"
+              "No force unwraps (!) anywhere in codebase"
+              "All new Swift files must be added to project.pbxproj"]
+ :notes ["Theme: Quality & Documentation"
+         "biq must land first — it gates jod (tests must pass coverage)"
+         "jod covers failure paths: denied permissions, nil data, network errors, HealthKit unavailable"
+         "bom documents all 6 webhook mappings (ping, location, sleep, heartrate, activity, workout)"]}

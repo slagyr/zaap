@@ -1,0 +1,18 @@
+{:name "Zaap"
+ :status :active
+ :priority :normal
+ :autonomy :full
+ :checkin :on-demand
+ :channel "1472667753080160308"
+ :max-workers 4
+ :worker-timeout 3600
+ :notifications {:iteration-start true
+                 :bead-start true
+                 :bead-complete true
+                 :iteration-complete true
+                 :no-ready-beads true
+                 :question true
+                 :blocker true}
+ :notification-mentions {:iteration-complete ["<@274692642116337664>"]
+                         :question ["<@274692642116337664>"]
+                         :blocker ["<@274692642116337664>"]}}
