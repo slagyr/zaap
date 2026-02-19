@@ -5,7 +5,7 @@ import os
 
 /// Subscribes to LocationManager's location updates and POSTs them via WebhookClient.
 /// Designed to work in the background — uses Combine to react to location events
-/// and the background URLSession in WebhookClient for delivery.
+/// and WebhookClient for delivery.
 @MainActor
 final class LocationDeliveryService {
 
