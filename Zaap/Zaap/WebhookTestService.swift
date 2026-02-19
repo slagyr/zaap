@@ -24,7 +24,7 @@ final class WebhookTestService {
 
         do {
             let ping = PingPayload(type: "ping", timestamp: Date())
-            try await webhookClient.post(ping, to: "/ping")
+            try await webhookClient.postForeground(ping, to: "/ping")
             return TestResult(success: true, errorMessage: nil)
         } catch {
             return TestResult(success: false, errorMessage: error.localizedDescription)

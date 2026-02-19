@@ -53,7 +53,7 @@ final class SleepDeliveryService {
         guard settings.isConfigured else { throw SendNowError.notConfigured }
         try await sleepReader.requestAuthorization()
         let summary = try await sleepReader.fetchLastNightSummary()
-        try await webhookClient.post(summary, to: "/sleep")
+        try await webhookClient.postForeground(summary, to: "/sleep")
         logger.info("Send Now: Sleep summary delivered")
         deliveryLog.record(dataType: .sleep, timestamp: Date(), success: true, errorMessage: nil)
     }

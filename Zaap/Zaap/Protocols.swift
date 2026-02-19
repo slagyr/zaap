@@ -20,6 +20,7 @@ enum SendNowError: LocalizedError {
 /// Protocol for posting webhook payloads.
 protocol WebhookPosting: Sendable {
     func post<T: Encodable>(_ payload: T, to path: String?) async throws
+    func postForeground<T: Encodable>(_ payload: T, to path: String?) async throws
 }
 
 extension WebhookClient: WebhookPosting {}

@@ -2,7 +2,8 @@ import Foundation
 import os
 
 /// Posts JSON payloads to a configured webhook endpoint with Bearer token auth.
-/// Uses a background URLSession so requests complete even when the app is suspended.
+/// Uses a background URLSession for automatic deliveries (survives app suspension)
+/// and a standard URLSession for interactive requests (Test Connection, Send Now).
 final class WebhookClient: NSObject, Sendable {
 
     // MARK: - Types
@@ -38,16 +39,18 @@ final class WebhookClient: NSObject, Sendable {
 
     private let logger = Logger(subsystem: "com.zaap.app", category: "WebhookClient")
     private let backgroundSession: URLSession
+    private let foregroundSession: URLSession
 
     // MARK: - Init
 
     override init() {
-        let config = URLSessionConfiguration.background(withIdentifier: "com.zaap.webhook")
-        config.isDiscretionary = false
-        config.sessionSendsLaunchEvents = true
-        config.shouldUseExtendedBackgroundIdleMode = true
+        let bgConfig = URLSessionConfiguration.background(withIdentifier: "com.zaap.webhook")
+        bgConfig.isDiscretionary = false
+        bgConfig.sessionSendsLaunchEvents = true
+        bgConfig.shouldUseExtendedBackgroundIdleMode = true
         let delegate = SessionDelegate()
-        backgroundSession = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
+        backgroundSession = URLSession(configuration: bgConfig, delegate: delegate, delegateQueue: nil)
+        foregroundSession = URLSession(configuration: .default)
         super.init()
     }
 
@@ -65,6 +68,18 @@ final class WebhookClient: NSObject, Sendable {
     /// POST an Encodable payload to the configured webhook endpoint.
     /// Uses the background session so delivery succeeds even if the app is suspended.
     func post<T: Encodable>(_ payload: T, to path: String? = nil) async throws {
+        try await send(payload, to: path, useBackground: true)
+    }
+
+    /// POST an Encodable payload using the foreground session.
+    /// Use for interactive requests (Test Connection, Send Now) that need immediate response.
+    func postForeground<T: Encodable>(_ payload: T, to path: String? = nil) async throws {
+        try await send(payload, to: path, useBackground: false)
+    }
+
+    // MARK: - Private
+
+    private func send<T: Encodable>(_ payload: T, to path: String?, useBackground: Bool) async throws {
         guard let config = loadConfiguration() else {
             throw WebhookError.noConfiguration
         }
@@ -85,39 +100,54 @@ final class WebhookClient: NSObject, Sendable {
             throw WebhookError.encodingFailed(error)
         }
 
-        // Write to a temp file — background sessions require upload tasks from file.
-        let tempDir = FileManager.default.temporaryDirectory
-        let tempFile = tempDir.appendingPathComponent(UUID().uuidString + ".json")
-        try data.write(to: tempFile)
-
         var request = URLRequest(url: targetURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(config.bearerToken)", forHTTPHeaderField: "Authorization")
 
-        logger.info("POST \(targetURL.absoluteString, privacy: .public)")
+        logger.info("POST \(targetURL.absoluteString, privacy: .public) [bg=\(useBackground)]")
 
-        do {
-            let (responseData, response) = try await backgroundSession.upload(for: request, fromFile: tempFile)
-            try? FileManager.default.removeItem(at: tempFile)
+        if useBackground {
+            // Background sessions require upload from file
+            let tempDir = FileManager.default.temporaryDirectory
+            let tempFile = tempDir.appendingPathComponent(UUID().uuidString + ".json")
+            try data.write(to: tempFile)
 
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw WebhookError.invalidResponse(statusCode: 0)
+            do {
+                let (responseData, response) = try await backgroundSession.upload(for: request, fromFile: tempFile)
+                try? FileManager.default.removeItem(at: tempFile)
+                try validateResponse(responseData, response)
+            } catch let error as WebhookError {
+                throw error
+            } catch {
+                try? FileManager.default.removeItem(at: tempFile)
+                throw WebhookError.networkError(error)
             }
-
-            guard (200...299).contains(httpResponse.statusCode) else {
-                let body = String(data: responseData, encoding: .utf8) ?? ""
-                logger.error("HTTP \(httpResponse.statusCode): \(body, privacy: .public)")
-                throw WebhookError.invalidResponse(statusCode: httpResponse.statusCode)
+        } else {
+            // Foreground session — standard data upload, safe with async/await
+            do {
+                let (responseData, response) = try await foregroundSession.upload(for: request, from: data)
+                try validateResponse(responseData, response)
+            } catch let error as WebhookError {
+                throw error
+            } catch {
+                throw WebhookError.networkError(error)
             }
-
-            logger.info("Webhook delivered successfully (HTTP \(httpResponse.statusCode))")
-        } catch let error as WebhookError {
-            throw error
-        } catch {
-            try? FileManager.default.removeItem(at: tempFile)
-            throw WebhookError.networkError(error)
         }
+    }
+
+    private func validateResponse(_ responseData: Data, _ response: URLResponse) throws {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw WebhookError.invalidResponse(statusCode: 0)
+        }
+
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let body = String(data: responseData, encoding: .utf8) ?? ""
+            logger.error("HTTP \(httpResponse.statusCode): \(body, privacy: .public)")
+            throw WebhookError.invalidResponse(statusCode: httpResponse.statusCode)
+        }
+
+        logger.info("Webhook delivered successfully (HTTP \(httpResponse.statusCode))")
     }
 }
 
@@ -144,7 +174,5 @@ private final class SessionDelegate: NSObject, URLSessionDelegate, URLSessionDat
 
     func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
         logger.info("Background session finished events")
-        // The app delegate should store and call the completion handler here.
-        // That wiring will be done in the background delivery bead (zaap-0a2).
     }
 }

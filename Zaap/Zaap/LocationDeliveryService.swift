@@ -79,7 +79,7 @@ final class LocationDeliveryService {
             course: location.course,
             timestamp: location.timestamp
         )
-        try await webhookClient.post(payload, to: "/location")
+        try await webhookClient.postForeground(payload, to: "/location")
         logger.info("Send Now: Location delivered")
         deliveryLog.record(dataType: .location, timestamp: Date(), success: true, errorMessage: nil)
     }

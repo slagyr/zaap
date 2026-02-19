@@ -19,6 +19,10 @@ final class MockWebhookClient: WebhookPosting, @unchecked Sendable {
             throw error
         }
     }
+
+    func postForeground<T: Encodable>(_ payload: T, to path: String? = nil) async throws {
+        try await post(payload, to: path)
+    }
 }
 
 // MARK: - Mock Location Publisher

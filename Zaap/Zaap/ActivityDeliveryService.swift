@@ -52,7 +52,7 @@ final class ActivityDeliveryService {
         guard settings.isConfigured else { throw SendNowError.notConfigured }
         try await activityReader.requestAuthorization()
         let summary = try await activityReader.fetchTodaySummary()
-        try await webhookClient.post(summary, to: "/activity")
+        try await webhookClient.postForeground(summary, to: "/activity")
         logger.info("Send Now: Activity data delivered")
         deliveryLog.record(dataType: .activity, timestamp: Date(), success: true, errorMessage: nil)
     }
