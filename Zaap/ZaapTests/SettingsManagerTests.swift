@@ -74,8 +74,8 @@ final class SettingsManagerTests: XCTestCase {
 
     func testWebhookURLValueReturnsURLForValidString() {
         let settings = makeSettings()
-        settings.webhookURL = "https://example.com"
-        XCTAssertEqual(settings.webhookURLValue?.absoluteString, "https://example.com")
+        settings.webhookURL = "example.com"
+        XCTAssertEqual(settings.webhookURLValue?.absoluteString, "https://example.com/hooks")
     }
 
     func testIsConfiguredReturnsFalseWhenURLEmpty() {
@@ -110,15 +110,22 @@ final class SettingsManagerTests: XCTestCase {
         XCTAssertNil(settings.webhookURLValue)
     }
 
-    func testWebhookURLValueReturnsNilForMissingScheme() {
-        let settings = makeSettings()
-        settings.webhookURL = "example.com/hooks"
-        XCTAssertNil(settings.webhookURLValue)
-    }
-
-    func testWebhookURLValueAcceptsHTTPSWithHost() {
+    func testWebhookURLValueStripsProtocolAndPath() {
         let settings = makeSettings()
         settings.webhookURL = "https://example.com/hooks"
-        XCTAssertNotNil(settings.webhookURLValue)
+        XCTAssertEqual(settings.hostname, "example.com")
+        XCTAssertEqual(settings.webhookURLValue?.absoluteString, "https://example.com/hooks")
+    }
+
+    func testWebhookURLValueBuildsFromBarHostname() {
+        let settings = makeSettings()
+        settings.webhookURL = "myhost.ts.net"
+        XCTAssertEqual(settings.webhookURLValue?.absoluteString, "https://myhost.ts.net/hooks")
+    }
+
+    func testWebhookURLValueReturnsNilForEmpty() {
+        let settings = makeSettings()
+        settings.webhookURL = ""
+        XCTAssertNil(settings.webhookURLValue)
     }
 }

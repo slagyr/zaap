@@ -232,6 +232,6 @@ struct SettingsView: View {
 
 #Preview {
     NavigationStack {
-        SettingsView(settings: SettingsManager(defaults: .init(suiteName: "preview")!), testService: nil)
+        SettingsView(settings: SettingsManager(defaults: UserDefaults(suiteName: "preview") ?? .standard), testService: nil)
     }
 }

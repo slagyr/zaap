@@ -27,6 +27,7 @@ final class MockWebhookClient: WebhookPosting, @unchecked Sendable {
 
 // MARK: - Mock Location Publisher
 
+@MainActor
 final class MockLocationPublishing: LocationPublishing {
     let locationPublisher = PassthroughSubject<CLLocation, Never>()
     var authorizationStatus: CLAuthorizationStatus = .authorizedAlways
@@ -64,7 +65,10 @@ final class MockSleepReader: SleepReading {
         if let error = shouldThrow {
             throw error
         }
-        return summaryToReturn!
+        guard let summary = summaryToReturn else {
+            throw SleepDataReader.SleepError.noData
+        }
+        return summary
     }
 }
 
@@ -86,7 +90,10 @@ final class MockHeartRateReader: HeartRateReading {
         if let error = shouldThrow {
             throw error
         }
-        return summaryToReturn!
+        guard let summary = summaryToReturn else {
+            throw HeartRateReader.HeartRateError.noData
+        }
+        return summary
     }
 }
 
@@ -108,7 +115,10 @@ final class MockActivityReader: ActivityReading {
         if let error = shouldThrow {
             throw error
         }
-        return summaryToReturn!
+        guard let summary = summaryToReturn else {
+            throw ActivityReader.ActivityError.noData
+        }
+        return summary
     }
 }
 

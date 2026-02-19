@@ -6,6 +6,7 @@ import os
 /// Subscribes to LocationManager's location updates and POSTs them via WebhookClient.
 /// Designed to work in the background — uses Combine to react to location events
 /// and the background URLSession in WebhookClient for delivery.
+@MainActor
 final class LocationDeliveryService {
 
     static let shared = LocationDeliveryService()
@@ -19,12 +20,12 @@ final class LocationDeliveryService {
     private let deliveryLog: any DeliveryLogging
 
     init(
-        locationManager: any LocationPublishing = LocationManager(),
+        locationManager: (any LocationPublishing)? = nil,
         webhookClient: any WebhookPosting = WebhookClient.shared,
         settings: SettingsManager = .shared,
         deliveryLog: any DeliveryLogging = NullDeliveryLog()
     ) {
-        self.locationManager = locationManager
+        self.locationManager = locationManager ?? LocationManager()
         self.webhookClient = webhookClient
         self.settings = settings
         self.deliveryLog = deliveryLog

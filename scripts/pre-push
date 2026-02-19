@@ -17,7 +17,7 @@ echo "🔍 Running tests with coverage…"
 xcodebuild test \
   -project "$PROJECT_DIR/Zaap.xcodeproj" \
   -scheme "$SCHEME" \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -enableCodeCoverage YES \
   -resultBundlePath "$RESULT_BUNDLE" \
   -quiet 2>&1

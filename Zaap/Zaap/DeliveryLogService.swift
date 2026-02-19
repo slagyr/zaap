@@ -29,7 +29,10 @@ class DeliveryLogService: DeliveryLogging {
 
     func recordsGroupedByTypeAndDay(lastDays: Int) throws -> [DeliveryGroupKey: [DeliveryRecord]] {
         let calendar = Calendar.current
-        let cutoff = calendar.startOfDay(for: calendar.date(byAdding: .day, value: -(lastDays), to: Date())!)
+        guard let cutoffDate = calendar.date(byAdding: .day, value: -(lastDays), to: Date()) else {
+            return [:]
+        }
+        let cutoff = calendar.startOfDay(for: cutoffDate)
 
         var descriptor = FetchDescriptor<DeliveryRecord>(
             predicate: #Predicate<DeliveryRecord> { record in

@@ -2,6 +2,7 @@ import XCTest
 import CoreLocation
 @testable import Zaap
 
+@MainActor
 final class LocationManagerTests: XCTestCase {
 
     func testInitialStateIsNotMonitoring() {

@@ -4,6 +4,7 @@ import Combine
 
 /// Manages significant location change monitoring via CLLocationManager.
 /// Publishes location updates as a Combine publisher and via async stream.
+@MainActor
 @Observable
 final class LocationManager: NSObject {
 

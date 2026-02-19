@@ -26,6 +26,7 @@ protocol WebhookPosting: Sendable {
 extension WebhookClient: WebhookPosting {}
 
 /// Protocol for publishing location updates.
+@MainActor
 protocol LocationPublishing: AnyObject {
     var locationPublisher: PassthroughSubject<CLLocation, Never> { get }
     var authorizationStatus: CLAuthorizationStatus { get }

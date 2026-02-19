@@ -2,17 +2,19 @@ import XCTest
 import CoreLocation
 @testable import Zaap
 
+@MainActor
 final class LocationDeliveryServiceTests: XCTestCase {
 
     private func makeService(
-        locationManager: MockLocationPublishing = MockLocationPublishing(),
+        locationManager: MockLocationPublishing? = nil,
         webhook: MockWebhookClient = MockWebhookClient(),
         settings: SettingsManager? = nil,
         deliveryLog: MockDeliveryLogService = MockDeliveryLogService()
     ) -> (LocationDeliveryService, MockLocationPublishing, MockWebhookClient, SettingsManager, MockDeliveryLogService) {
-        let s = settings ?? SettingsManager(defaults: UserDefaults(suiteName: UUID().uuidString)!)
-        let service = LocationDeliveryService(locationManager: locationManager, webhookClient: webhook, settings: s, deliveryLog: deliveryLog)
-        return (service, locationManager, webhook, s, deliveryLog)
+        let locMgr = locationManager ?? MockLocationPublishing()
+        let s = settings ?? SettingsManager(defaults: UserDefaults(suiteName: UUID().uuidString) ?? .standard)
+        let service = LocationDeliveryService(locationManager: locMgr, webhookClient: webhook, settings: s, deliveryLog: deliveryLog)
+        return (service, locMgr, webhook, s, deliveryLog)
     }
 
     func testStartResumesMonitoringWhenEnabled() {
