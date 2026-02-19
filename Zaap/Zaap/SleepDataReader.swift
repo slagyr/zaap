@@ -76,7 +76,9 @@ final class SleepDataReader {
             throw SleepError.healthKitNotAvailable
         }
 
-        let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
+        guard let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
+            throw SleepError.healthKitNotAvailable
+        }
 
         try await healthStore.requestAuthorization(toShare: [], read: [sleepType])
         isAuthorized = true
@@ -91,14 +93,16 @@ final class SleepDataReader {
             throw SleepError.healthKitNotAvailable
         }
 
-        let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
+        guard let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
+            throw SleepError.healthKitNotAvailable
+        }
 
         let calendar = Calendar.current
         let now = Date()
 
         // Default window: 6 PM yesterday to noon today — covers a typical night.
-        let queryEnd = endDate ?? calendar.date(bySettingHour: 12, minute: 0, second: 0, of: now)!
-        let queryStart = startDate ?? calendar.date(byAdding: .hour, value: -18, to: queryEnd)!
+        let queryEnd = endDate ?? calendar.date(bySettingHour: 12, minute: 0, second: 0, of: now) ?? now
+        let queryStart = startDate ?? calendar.date(byAdding: .hour, value: -18, to: queryEnd) ?? now.addingTimeInterval(-64800)
 
         let predicate = HKQuery.predicateForSamples(withStart: queryStart, end: queryEnd, options: .strictStartDate)
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)

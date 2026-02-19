@@ -76,7 +76,7 @@ final class ActivityReader {
     func fetchTodaySummary() async throws -> ActivitySummary {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: Date())
-        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) ?? startOfDay.addingTimeInterval(86400)
 
         let steps = try await querySum(type: HKQuantityType(.stepCount), start: startOfDay, end: endOfDay, unit: .count())
         let distance = try await querySum(type: HKQuantityType(.distanceWalkingRunning), start: startOfDay, end: endOfDay, unit: .meter())

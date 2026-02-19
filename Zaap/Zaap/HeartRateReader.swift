@@ -59,14 +59,15 @@ final class HeartRateReader {
 
     // MARK: - Authorization
 
-    /// Request read access to heart rate and resting heart rate data.
     func requestAuthorization() async throws {
         guard let healthStore else {
             throw HeartRateError.healthKitNotAvailable
         }
 
-        let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate)!
-        let restingHRType = HKQuantityType.quantityType(forIdentifier: .restingHeartRate)!
+        guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate),
+              let restingHRType = HKQuantityType.quantityType(forIdentifier: .restingHeartRate) else {
+            throw HeartRateError.healthKitNotAvailable
+        }
 
         try await healthStore.requestAuthorization(toShare: [], read: [heartRateType, restingHRType])
         isAuthorized = true
@@ -75,16 +76,18 @@ final class HeartRateReader {
 
     // MARK: - Querying
 
-    /// Fetch heart rate samples for a date range. Defaults to the last 24 hours.
     func fetchHeartRateSamples(from startDate: Date? = nil, to endDate: Date? = nil) async throws -> [HeartRateSample] {
         guard let healthStore else {
             throw HeartRateError.healthKitNotAvailable
         }
 
-        let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate)!
+        guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
+            throw HeartRateError.healthKitNotAvailable
+        }
+
         let now = Date()
         let queryEnd = endDate ?? now
-        let queryStart = startDate ?? Calendar.current.date(byAdding: .hour, value: -24, to: queryEnd)!
+        let queryStart = startDate ?? Calendar.current.date(byAdding: .hour, value: -24, to: queryEnd) ?? now.addingTimeInterval(-86400)
 
         let predicate = HKQuery.predicateForSamples(withStart: queryStart, end: queryEnd, options: .strictStartDate)
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
@@ -114,13 +117,15 @@ final class HeartRateReader {
         }
     }
 
-    /// Fetch today's resting heart rate.
     func fetchRestingHeartRate() async throws -> Double? {
         guard let healthStore else {
             throw HeartRateError.healthKitNotAvailable
         }
 
-        let restingHRType = HKQuantityType.quantityType(forIdentifier: .restingHeartRate)!
+        guard let restingHRType = HKQuantityType.quantityType(forIdentifier: .restingHeartRate) else {
+            throw HeartRateError.healthKitNotAvailable
+        }
+
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: Date())
 
@@ -148,17 +153,14 @@ final class HeartRateReader {
         return latest.quantity.doubleValue(for: bpmUnit)
     }
 
-    /// Build a daily summary with min/max/avg, resting HR, and all samples.
-    /// Fetch daily summary for today (protocol conformance).
     func fetchDailySummary() async throws -> DailyHeartRateSummary {
         try await fetchDailySummary(for: Date())
     }
 
-    /// Build a daily summary with min/max/avg, resting HR, and all samples.
     func fetchDailySummary(for date: Date) async throws -> DailyHeartRateSummary {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
-        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) ?? startOfDay.addingTimeInterval(86400)
 
         let samples = try await fetchHeartRateSamples(from: startOfDay, to: endOfDay)
 
@@ -167,8 +169,8 @@ final class HeartRateReader {
         }
 
         let bpms = samples.map(\.bpm)
-        let minBPM = bpms.min()!
-        let maxBPM = bpms.max()!
+        let minBPM = bpms.min() ?? 0
+        let maxBPM = bpms.max() ?? 0
         let avgBPM = bpms.reduce(0, +) / Double(bpms.count)
 
         let restingBPM = try? await fetchRestingHeartRate()

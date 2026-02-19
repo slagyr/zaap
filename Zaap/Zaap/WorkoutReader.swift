@@ -77,7 +77,7 @@ final class WorkoutReader {
 
         let now = Date()
         let queryEnd = endDate ?? now
-        let queryStart = startDate ?? Calendar.current.date(byAdding: .hour, value: -24, to: now)!
+        let queryStart = startDate ?? Calendar.current.date(byAdding: .hour, value: -24, to: now) ?? now.addingTimeInterval(-86400)
 
         let predicate = HKQuery.predicateForSamples(withStart: queryStart, end: queryEnd, options: .strictStartDate)
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
