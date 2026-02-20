@@ -33,6 +33,15 @@ struct DashboardView: View {
                     "Activity": Color.green,
                     "Workouts": Color.orange,
                 ])
+                .chartYAxis {
+                    AxisMarks(position: .leading) { value in
+                        AxisGridLine()
+                            .foregroundStyle(Color.primary.opacity(0.3))
+                        AxisTick()
+                            .foregroundStyle(Color.primary.opacity(0.3))
+                        AxisValueLabel()
+                    }
+                }
                 .frame(height: 250)
                 .padding(.horizontal)
             }
