@@ -1,5 +1,5 @@
 {:number "005"
- :status :active
+ :status :complete
  :stories [{:id "zaap-l06" :title "CRASH FIX: Replace background URLSession async/await with standard URLSession"}
            {:id "zaap-biq" :title "Pre-push git hook: 90% code coverage minimum"}
            {:id "zaap-jod" :title "Crash hardening — failure-path tests for all readers and services"}

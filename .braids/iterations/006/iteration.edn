@@ -1,5 +1,5 @@
 {:number "006"
- :status :active
+ :status :complete
  :stories [{:id "zaap-3sj" :title "Hook session routing — location data should persist to memory"}
            {:id "zaap-ho4" :title "Funnel persistence — gateway restart kills funnel"}
            {:id "zaap-h24" :title "Pre-push hook simulator auto-detection"}]
