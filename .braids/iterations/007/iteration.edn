@@ -7,7 +7,9 @@
            {:id "zaap-a0t" :title "ResponseSpeaker — AVSpeechSynthesizer with streaming token buffer"}
            {:id "zaap-l6q" :title "VoiceChatView — UI with idle/listening/processing/speaking states"}
            {:id "zaap-d0j" :title "Voice integration — wire full pipeline + pairing UI in Settings"}
-           {:id "zaap-st5" :title "Bonjour discovery — auto-find OpenClaw gateway on local network"}]
+           {:id "zaap-st5" :title "Bonjour discovery — auto-find OpenClaw gateway on local network"}
+           {:id "zaap-ncw" :title "Dashboard: add Y-axis scale to delivery chart"}
+           {:id "zaap-d1o" :title "WorkoutReader: clarify noData error to say 24 hours"}]
  :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
               "No force unwraps (!) anywhere in codebase"
               "All new Swift files must be added to project.pbxproj"
