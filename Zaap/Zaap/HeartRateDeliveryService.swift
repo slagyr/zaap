@@ -12,7 +12,7 @@ final class HeartRateDeliveryService {
     private let heartRateReader: any HeartRateReading
     private let webhookClient: any WebhookPosting
     private let settings: SettingsManager
-    private let deliveryLog: any DeliveryLogging
+    private var deliveryLog: any DeliveryLogging
 
     init(
         heartRateReader: any HeartRateReading = HeartRateReader.shared,
@@ -23,6 +23,10 @@ final class HeartRateDeliveryService {
         self.heartRateReader = heartRateReader
         self.webhookClient = webhookClient
         self.settings = settings
+        self.deliveryLog = deliveryLog
+    }
+
+    func configure(deliveryLog: any DeliveryLogging) {
         self.deliveryLog = deliveryLog
     }
 

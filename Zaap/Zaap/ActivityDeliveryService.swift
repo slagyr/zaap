@@ -12,7 +12,7 @@ final class ActivityDeliveryService {
     private let activityReader: any ActivityReading
     private let webhookClient: any WebhookPosting
     private let settings: SettingsManager
-    private let deliveryLog: any DeliveryLogging
+    private var deliveryLog: any DeliveryLogging
 
     init(
         activityReader: any ActivityReading = ActivityReader.shared,
@@ -23,6 +23,10 @@ final class ActivityDeliveryService {
         self.activityReader = activityReader
         self.webhookClient = webhookClient
         self.settings = settings
+        self.deliveryLog = deliveryLog
+    }
+
+    func configure(deliveryLog: any DeliveryLogging) {
         self.deliveryLog = deliveryLog
     }
 

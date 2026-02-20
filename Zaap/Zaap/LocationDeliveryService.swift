@@ -17,7 +17,7 @@ final class LocationDeliveryService {
     private let locationManager: any LocationPublishing
     private let webhookClient: any WebhookPosting
     private let settings: SettingsManager
-    private let deliveryLog: any DeliveryLogging
+    private var deliveryLog: any DeliveryLogging
 
     init(
         locationManager: (any LocationPublishing)? = nil,
@@ -28,6 +28,10 @@ final class LocationDeliveryService {
         self.locationManager = locationManager ?? LocationManager()
         self.webhookClient = webhookClient
         self.settings = settings
+        self.deliveryLog = deliveryLog
+    }
+
+    func configure(deliveryLog: any DeliveryLogging) {
         self.deliveryLog = deliveryLog
     }
 

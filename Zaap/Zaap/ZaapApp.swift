@@ -46,8 +46,20 @@ struct ZaapApp: App {
 
     private func startServices() {
         logger.info("Starting delivery services")
+        guard let context = modelContainer?.mainContext else {
+            logger.error("Cannot start services — no model context")
+            return
+        }
+        let deliveryLog = DeliveryLogService(context: context)
+        LocationDeliveryService.shared.configure(deliveryLog: deliveryLog)
+        SleepDeliveryService.shared.configure(deliveryLog: deliveryLog)
+        HeartRateDeliveryService.shared.configure(deliveryLog: deliveryLog)
+        ActivityDeliveryService.shared.configure(deliveryLog: deliveryLog)
+        WorkoutDeliveryService.shared.configure(deliveryLog: deliveryLog)
         LocationDeliveryService.shared.start()
         SleepDeliveryService.shared.start()
+        HeartRateDeliveryService.shared.start()
         ActivityDeliveryService.shared.start()
+        WorkoutDeliveryService.shared.start()
     }
 }

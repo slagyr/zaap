@@ -12,7 +12,7 @@ final class SleepDeliveryService {
     private let sleepReader: any SleepReading
     private let webhookClient: any WebhookPosting
     private let settings: SettingsManager
-    private let deliveryLog: any DeliveryLogging
+    private var deliveryLog: any DeliveryLogging
 
     init(
         sleepReader: any SleepReading = SleepDataReader.shared,
@@ -23,6 +23,10 @@ final class SleepDeliveryService {
         self.sleepReader = sleepReader
         self.webhookClient = webhookClient
         self.settings = settings
+        self.deliveryLog = deliveryLog
+    }
+
+    func configure(deliveryLog: any DeliveryLogging) {
         self.deliveryLog = deliveryLog
     }
 
