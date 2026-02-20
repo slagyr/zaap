@@ -33,6 +33,7 @@ struct RequestLogView: View {
 struct RequestLogEntryRow: View {
     let entry: RequestLogEntry
     @State private var isExpanded = false
+    @State private var showCopied = false
 
     private static let timeFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -84,6 +85,22 @@ struct RequestLogEntryRow: View {
                     .padding(6)
                     .background(Color(.systemGray6))
                     .cornerRadius(4)
+
+                Button {
+                    UIPasteboard.general.string = entry.copyableText
+                    showCopied = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        showCopied = false
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: showCopied ? "checkmark" : "doc.on.doc")
+                        Text(showCopied ? "Copied!" : "Copy")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(showCopied ? .green : .accentColor)
+                }
+                .buttonStyle(.borderless)
             }
         }
         .contentShape(Rectangle())

@@ -57,6 +57,47 @@ final class RequestLogTests: XCTestCase {
         XCTAssertTrue(log.entries.isEmpty)
     }
 
+    // MARK: - copyableText
+
+    func testCopyableTextIncludesAllFields() {
+        let date = Date(timeIntervalSince1970: 1700000000) // 2023-11-14 22:13:20 UTC
+        let entry = RequestLogEntry(
+            timestamp: date,
+            path: "/hooks/location",
+            statusCode: 200,
+            responseTimeMs: 42,
+            requestBody: "{\"lat\":33.4}"
+        )
+        let text = entry.copyableText
+        XCTAssertTrue(text.contains("/hooks/location"))
+        XCTAssertTrue(text.contains("200"))
+        XCTAssertTrue(text.contains("42ms"))
+        XCTAssertTrue(text.contains("{\"lat\":33.4}"))
+    }
+
+    func testCopyableTextIncludesErrorWhenPresent() {
+        let entry = RequestLogEntry(
+            path: "/hooks/fail",
+            statusCode: nil,
+            responseTimeMs: 100,
+            requestBody: "{}",
+            errorMessage: "Connection refused"
+        )
+        let text = entry.copyableText
+        XCTAssertTrue(text.contains("Connection refused"))
+    }
+
+    func testCopyableTextShowsNoResponseWhenStatusNil() {
+        let entry = RequestLogEntry(
+            path: "/hooks/fail",
+            statusCode: nil,
+            responseTimeMs: 100,
+            requestBody: "{}"
+        )
+        let text = entry.copyableText
+        XCTAssertTrue(text.contains("No response"))
+    }
+
     func testEntriesOrderIsChronological() {
         let log = RequestLog(capacity: 10)
         let early = Date(timeIntervalSince1970: 1000)

@@ -10,6 +10,25 @@ struct RequestLogEntry: Identifiable, Sendable {
     let requestBody: String
     let errorMessage: String?
 
+    private static let copyFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return f
+    }()
+
+    var copyableText: String {
+        var lines: [String] = []
+        lines.append("Timestamp: \(Self.copyFormatter.string(from: timestamp))")
+        lines.append("Path: \(path)")
+        lines.append("Status: \(statusCode.map { "\($0)" } ?? "No response")")
+        lines.append("Response Time: \(responseTimeMs)ms")
+        if let errorMessage {
+            lines.append("Error: \(errorMessage)")
+        }
+        lines.append("Body: \(requestBody)")
+        return lines.joined(separator: "\n")
+    }
+
     var isSuccess: Bool {
         guard let code = statusCode else { return false }
         return (200...299).contains(code)
