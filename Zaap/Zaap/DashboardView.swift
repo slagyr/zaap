@@ -45,6 +45,7 @@ struct DashboardView: View {
                     "Activity": Color.green,
                     "Workouts": Color.orange,
                 ])
+                .chartLegend(position: .bottom, alignment: .leading)
                 .chartXScale(domain: sevenDaysAgo...endOfToday)
                 .chartXAxis {
                     AxisMarks(values: .stride(by: .day, count: 1)) { value in

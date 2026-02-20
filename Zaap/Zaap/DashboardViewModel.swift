@@ -30,11 +30,19 @@ struct DashboardViewModel {
         }
     }
 
+    /// Canonical order for chart series — must match chartForegroundStyleScale key order.
+    static let seriesOrder: [DeliveryDataType] = [.location, .sleep, .heartRate, .activity, .workout]
+
     static func transformToChartData(_ grouped: [DeliveryGroupKey: [DeliveryRecord]]) -> [ChartDataPoint] {
         let calendar = Calendar.current
         return grouped.map { key, records in
             let date = calendar.date(from: key.day) ?? Date()
             return ChartDataPoint(date: date, dataType: key.dataType, count: records.count)
+        }
+        .sorted { a, b in
+            let ai = seriesOrder.firstIndex(of: a.dataType) ?? seriesOrder.count
+            let bi = seriesOrder.firstIndex(of: b.dataType) ?? seriesOrder.count
+            return ai != bi ? ai < bi : a.date < b.date
         }
     }
 }
