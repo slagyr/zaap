@@ -7,6 +7,18 @@ struct DashboardView: View {
     @State private var chartData: [DashboardViewModel.ChartDataPoint] = []
     @State private var errorMessage: String?
 
+    private var startOfToday: Date {
+        Calendar.current.startOfDay(for: Date())
+    }
+
+    private var sevenDaysAgo: Date {
+        Calendar.current.date(byAdding: .day, value: -6, to: startOfToday)!
+    }
+
+    private var endOfToday: Date {
+        Calendar.current.date(byAdding: .day, value: 1, to: startOfToday)!
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Deliveries (7 Days)")
@@ -33,6 +45,14 @@ struct DashboardView: View {
                     "Activity": Color.green,
                     "Workouts": Color.orange,
                 ])
+                .chartXScale(domain: sevenDaysAgo...endOfToday)
+                .chartXAxis {
+                    AxisMarks(values: .stride(by: .day, count: 1)) { value in
+                        AxisGridLine()
+                        AxisTick()
+                        AxisValueLabel(format: .dateTime.weekday(.abbreviated))
+                    }
+                }
                 .chartYAxis {
                     AxisMarks(position: .leading) { value in
                         AxisGridLine()
