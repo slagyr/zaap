@@ -3,9 +3,8 @@ import Charts
 import SwiftData
 
 struct DashboardView: View {
-    @Environment(\.modelContext) private var modelContext
-    @State private var chartData: [DashboardViewModel.ChartDataPoint] = []
-    @State private var errorMessage: String?
+    @Query(sort: [SortDescriptor(\DeliveryRecord.timestamp, order: .reverse)])
+    private var records: [DeliveryRecord]
 
     private var startOfToday: Date {
         Calendar.current.startOfDay(for: Date())
@@ -19,16 +18,25 @@ struct DashboardView: View {
         Calendar.current.date(byAdding: .day, value: 1, to: startOfToday)!
     }
 
+    private var chartData: [DashboardViewModel.ChartDataPoint] {
+        let calendar = Calendar.current
+        var grouped: [DeliveryGroupKey: [DeliveryRecord]] = [:]
+        for record in records where record.timestamp >= sevenDaysAgo {
+            let components = calendar.dateComponents([.year, .month, .day], from: record.timestamp)
+            let key = DeliveryGroupKey(dataType: record.dataType, day: components)
+            grouped[key, default: []].append(record)
+        }
+        return DashboardViewModel.transformToChartData(grouped)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Deliveries (7 Days)")
                 .font(.headline)
                 .padding(.horizontal)
 
-            if chartData.isEmpty && errorMessage == nil {
+            if chartData.isEmpty {
                 ContentUnavailableView("No Deliveries", systemImage: "chart.bar", description: Text("No delivery data for the past 7 days."))
-            } else if let error = errorMessage {
-                ContentUnavailableView("Error", systemImage: "exclamationmark.triangle", description: Text(error))
             } else {
                 Chart(chartData) { point in
                     BarMark(
@@ -66,17 +74,6 @@ struct DashboardView: View {
                 .frame(height: 250)
                 .padding(.horizontal)
             }
-        }
-        .onAppear { loadData() }
-    }
-
-    private func loadData() {
-        let service = DeliveryLogService(context: modelContext)
-        do {
-            let grouped = try service.recordsGroupedByTypeAndDay(lastDays: 7)
-            chartData = DashboardViewModel.transformToChartData(grouped)
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 }
