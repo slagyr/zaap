@@ -86,4 +86,61 @@ final class HeartRateReaderTests: XCTestCase {
         XCTAssertFalse(reader.isAuthorized)
         XCTAssertNil(reader.lastError)
     }
+
+    // MARK: - Mock reader failure paths
+
+    func testMockReaderThrowsNoDataWhenSummaryNotSet() async {
+        let reader = MockHeartRateReader()
+        // summaryToReturn is nil by default → fetchDailySummary should throw noData
+        do {
+            _ = try await reader.fetchDailySummary(for: Date())
+            XCTFail("Expected noData error")
+        } catch {
+            XCTAssertEqual(error as? HeartRateReader.HeartRateError, .noData)
+        }
+    }
+
+    func testMockReaderThrowsAuthorizationDeniedOnFetch() async {
+        let reader = MockHeartRateReader()
+        reader.shouldThrow = HeartRateReader.HeartRateError.authorizationDenied
+        do {
+            _ = try await reader.fetchDailySummary(for: Date())
+            XCTFail("Expected authorizationDenied error")
+        } catch {
+            XCTAssertEqual(error as? HeartRateReader.HeartRateError, .authorizationDenied)
+        }
+    }
+
+    func testMockReaderThrowsAuthorizationDeniedOnRequestAuthorization() async {
+        let reader = MockHeartRateReader()
+        reader.shouldThrow = HeartRateReader.HeartRateError.authorizationDenied
+        do {
+            try await reader.requestAuthorization()
+            XCTFail("Expected authorizationDenied error")
+        } catch {
+            XCTAssertEqual(error as? HeartRateReader.HeartRateError, .authorizationDenied)
+        }
+    }
+
+    func testMockReaderPropagatesNetworkStyleError() async {
+        let reader = MockHeartRateReader()
+        reader.shouldThrow = URLError(.notConnectedToInternet)
+        do {
+            _ = try await reader.fetchDailySummary(for: Date())
+            XCTFail("Expected URLError")
+        } catch {
+            XCTAssertTrue(error is URLError)
+        }
+    }
+
+    func testMockReaderReturnsSummaryWhenSet() async throws {
+        let reader = MockHeartRateReader()
+        reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
+            date: "2026-02-19", minBPM: 55, maxBPM: 150, avgBPM: 72,
+            restingBPM: 58, sampleCount: 10, samples: []
+        )
+        let summary = try await reader.fetchDailySummary(for: Date())
+        XCTAssertEqual(summary.date, "2026-02-19")
+        XCTAssertEqual(summary.avgBPM, 72)
+    }
 }

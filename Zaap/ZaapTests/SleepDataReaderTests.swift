@@ -92,4 +92,63 @@ final class SleepDataReaderTests: XCTestCase {
         XCTAssertFalse(reader.isAuthorized)
         XCTAssertNil(reader.lastError)
     }
+
+    // MARK: - Mock reader failure paths
+
+    func testMockReaderThrowsNoDataWhenSummaryNotSet() async {
+        let reader = MockSleepReader()
+        // summaryToReturn is nil by default → fetchLastNightSummary should throw noData
+        do {
+            _ = try await reader.fetchLastNightSummary()
+            XCTFail("Expected noData error")
+        } catch {
+            XCTAssertEqual(error as? SleepDataReader.SleepError, .noData)
+        }
+    }
+
+    func testMockReaderThrowsAuthorizationDeniedOnFetch() async {
+        let reader = MockSleepReader()
+        reader.shouldThrow = SleepDataReader.SleepError.authorizationDenied
+        do {
+            _ = try await reader.fetchLastNightSummary()
+            XCTFail("Expected authorizationDenied error")
+        } catch {
+            XCTAssertEqual(error as? SleepDataReader.SleepError, .authorizationDenied)
+        }
+    }
+
+    func testMockReaderThrowsAuthorizationDeniedOnRequestAuthorization() async {
+        let reader = MockSleepReader()
+        reader.shouldThrow = SleepDataReader.SleepError.authorizationDenied
+        do {
+            try await reader.requestAuthorization()
+            XCTFail("Expected authorizationDenied error")
+        } catch {
+            XCTAssertEqual(error as? SleepDataReader.SleepError, .authorizationDenied)
+        }
+    }
+
+    func testMockReaderPropagatesNetworkStyleError() async {
+        let reader = MockSleepReader()
+        reader.shouldThrow = URLError(.notConnectedToInternet)
+        do {
+            _ = try await reader.fetchLastNightSummary()
+            XCTFail("Expected URLError")
+        } catch {
+            XCTAssertTrue(error is URLError)
+        }
+    }
+
+    func testMockReaderReturnsSummaryWhenSet() async throws {
+        let reader = MockSleepReader()
+        reader.summaryToReturn = SleepDataReader.SleepSummary(
+            date: "2026-02-19", bedtime: nil, wakeTime: nil,
+            totalInBedMinutes: 480, totalAsleepMinutes: 420,
+            deepSleepMinutes: 90, remSleepMinutes: 120,
+            coreSleepMinutes: 210, awakeMinutes: 30, sessions: []
+        )
+        let summary = try await reader.fetchLastNightSummary()
+        XCTAssertEqual(summary.date, "2026-02-19")
+        XCTAssertEqual(summary.totalAsleepMinutes, 420)
+    }
 }

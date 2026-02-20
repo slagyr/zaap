@@ -149,4 +149,114 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
 
         XCTAssertEqual(webhook.postCallCount, 1)
     }
+
+    // MARK: - sendNow failure paths
+
+    func testSendNowThrowsWhenAuthorizationDenied() async {
+        let (service, reader, _, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.shouldThrow = WorkoutReader.WorkoutError.authorizationDenied
+
+        do {
+            try await service.sendNow()
+            XCTFail("Expected sendNow to throw when authorization is denied")
+        } catch {
+            XCTAssertEqual(error as? WorkoutReader.WorkoutError, .authorizationDenied)
+        }
+    }
+
+    func testSendNowThrowsWhenReaderFetchFails() async {
+        let (service, reader, _, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.shouldThrow = WorkoutReader.WorkoutError.noData
+
+        do {
+            try await service.sendNow()
+            XCTFail("Expected sendNow to throw when reader reports no workout data")
+        } catch {
+            XCTAssertEqual(error as? WorkoutReader.WorkoutError, .noData)
+        }
+    }
+
+    func testSendNowThrowsWhenNetworkRequestFails() async {
+        let webhook = MockWebhookClient()
+        webhook.shouldThrow = URLError(.notConnectedToInternet)
+        let (service, reader, _, settings, _) = makeService(webhook: webhook)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.sessionsToReturn = [
+            WorkoutReader.WorkoutSession(
+                workoutType: "running", startDate: Date(), endDate: Date(),
+                durationMinutes: 30, totalCalories: 300, distanceMeters: 5000
+            )
+        ]
+
+        do {
+            try await service.sendNow()
+            XCTFail("Expected sendNow to throw when network request fails")
+        } catch {
+            XCTAssertTrue(error is URLError)
+        }
+    }
+
+    func testSendNowLogsSuccessOnDelivery() async throws {
+        let (service, reader, _, settings, log) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.sessionsToReturn = [
+            WorkoutReader.WorkoutSession(
+                workoutType: "cycling", startDate: Date(), endDate: Date(),
+                durationMinutes: 45, totalCalories: 400, distanceMeters: 15000
+            )
+        ]
+
+        try await service.sendNow()
+
+        XCTAssertEqual(log.records.count, 1)
+        XCTAssertEqual(log.records[0].dataType, .workout)
+        XCTAssertTrue(log.records[0].success)
+        XCTAssertNil(log.records[0].errorMessage)
+    }
+
+    // MARK: - deliverLatest failure paths
+
+    func testDeliverLatestLogsFailureWhenAuthorizationDenied() {
+        let (service, reader, _, settings, log) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.workoutTrackingEnabled = true
+        reader.shouldThrow = WorkoutReader.WorkoutError.authorizationDenied
+
+        service.deliverLatest()
+
+        let exp = expectation(description: "failure logged")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { exp.fulfill() }
+        waitForExpectations(timeout: 2)
+
+        XCTAssertEqual(log.records.count, 1)
+        XCTAssertEqual(log.records[0].dataType, .workout)
+        XCTAssertFalse(log.records[0].success)
+        XCTAssertNotNil(log.records[0].errorMessage)
+    }
+
+    func testDeliverLatestLogsFailureWhenReaderReturnsNoWorkoutData() {
+        let (service, reader, _, settings, log) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.workoutTrackingEnabled = true
+        reader.shouldThrow = WorkoutReader.WorkoutError.noData
+
+        service.deliverLatest()
+
+        let exp = expectation(description: "failure logged")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { exp.fulfill() }
+        waitForExpectations(timeout: 2)
+
+        XCTAssertEqual(log.records.count, 1)
+        XCTAssertEqual(log.records[0].dataType, .workout)
+        XCTAssertFalse(log.records[0].success)
+        XCTAssertNotNil(log.records[0].errorMessage)
+    }
 }

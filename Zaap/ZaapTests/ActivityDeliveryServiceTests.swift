@@ -11,6 +11,17 @@ final class ActivityDeliveryServiceTests: XCTestCase {
         return (service, reader, webhook, settings, log)
     }
 
+    func testStartDoesNothingWhenDisabled() {
+        let (service, _, webhook, _, _) = makeService()
+        service.start()
+
+        let exp = expectation(description: "wait")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { exp.fulfill() }
+        waitForExpectations(timeout: 1)
+
+        XCTAssertEqual(webhook.postCallCount, 0)
+    }
+
     func testDeliverLatestPostsToActivityPath() {
         let (service, reader, webhook, settings, _) = makeService()
         settings.webhookURL = "https://example.com"
@@ -163,5 +174,111 @@ final class ActivityDeliveryServiceTests: XCTestCase {
         try await service.sendNow()
 
         XCTAssertEqual(webhook.postCallCount, 1)
+    }
+
+    // MARK: - sendNow failure paths
+
+    func testSendNowThrowsWhenAuthorizationDenied() async {
+        let (service, reader, _, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.shouldThrow = ActivityReader.ActivityError.authorizationDenied
+
+        do {
+            try await service.sendNow()
+            XCTFail("Expected sendNow to throw when authorization is denied")
+        } catch {
+            XCTAssertEqual(error as? ActivityReader.ActivityError, .authorizationDenied)
+        }
+    }
+
+    func testSendNowThrowsWhenNoActivityDataAvailable() async {
+        let (service, _, _, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        // summaryToReturn is nil by default → fetchTodaySummary throws noData after auth succeeds
+
+        do {
+            try await service.sendNow()
+            XCTFail("Expected sendNow to throw when no activity data is available")
+        } catch {
+            XCTAssertEqual(error as? ActivityReader.ActivityError, .noData)
+        }
+    }
+
+    func testSendNowThrowsWhenNetworkRequestFails() async {
+        let webhook = MockWebhookClient()
+        webhook.shouldThrow = URLError(.notConnectedToInternet)
+        let (service, reader, _, settings, _) = makeService(webhook: webhook)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.summaryToReturn = ActivityReader.ActivitySummary(
+            date: "2026-02-19", steps: 5000, distanceMeters: 4000,
+            activeEnergyKcal: 250, timestamp: Date()
+        )
+
+        do {
+            try await service.sendNow()
+            XCTFail("Expected sendNow to throw when network request fails")
+        } catch {
+            XCTAssertTrue(error is URLError)
+        }
+    }
+
+    func testSendNowLogsSuccessOnDelivery() async throws {
+        let (service, reader, _, settings, log) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.summaryToReturn = ActivityReader.ActivitySummary(
+            date: "2026-02-19", steps: 5000, distanceMeters: 4000,
+            activeEnergyKcal: 250, timestamp: Date()
+        )
+
+        try await service.sendNow()
+
+        XCTAssertEqual(log.records.count, 1)
+        XCTAssertEqual(log.records[0].dataType, .activity)
+        XCTAssertTrue(log.records[0].success)
+        XCTAssertNil(log.records[0].errorMessage)
+    }
+
+    // MARK: - deliverLatest failure paths
+
+    func testDeliverLatestLogsFailureWhenNoActivityDataAvailable() {
+        let (service, _, _, settings, log) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.activityTrackingEnabled = true
+        // summaryToReturn is nil → fetchTodaySummary throws noData
+
+        service.deliverLatest()
+
+        let exp = expectation(description: "failure logged")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { exp.fulfill() }
+        waitForExpectations(timeout: 2)
+
+        XCTAssertEqual(log.records.count, 1)
+        XCTAssertEqual(log.records[0].dataType, .activity)
+        XCTAssertFalse(log.records[0].success)
+        XCTAssertNotNil(log.records[0].errorMessage)
+    }
+
+    func testDeliverLatestLogsFailureWhenAuthorizationDenied() {
+        let (service, reader, _, settings, log) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.activityTrackingEnabled = true
+        reader.shouldThrow = ActivityReader.ActivityError.authorizationDenied
+
+        service.deliverLatest()
+
+        let exp = expectation(description: "failure logged")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { exp.fulfill() }
+        waitForExpectations(timeout: 2)
+
+        XCTAssertEqual(log.records.count, 1)
+        XCTAssertEqual(log.records[0].dataType, .activity)
+        XCTAssertFalse(log.records[0].success)
+        XCTAssertNotNil(log.records[0].errorMessage)
     }
 }

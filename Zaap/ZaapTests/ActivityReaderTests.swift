@@ -45,4 +45,26 @@ final class ActivityReaderTests: XCTestCase {
         XCTAssertEqual(summary.activeEnergyKcal, 0)
         XCTAssertEqual(summary.timestamp, ts)
     }
+
+    // MARK: - Failure paths (HealthKit unavailable in simulator)
+
+    func testRequestAuthorizationThrowsWhenHealthKitUnavailable() async {
+        let reader = ActivityReader()
+        do {
+            try await reader.requestAuthorization()
+            XCTFail("Expected healthKitNotAvailable error")
+        } catch {
+            XCTAssertEqual(error as? ActivityReader.ActivityError, .healthKitNotAvailable)
+        }
+    }
+
+    func testFetchTodaySummaryThrowsWhenHealthKitUnavailable() async {
+        let reader = ActivityReader()
+        do {
+            _ = try await reader.fetchTodaySummary()
+            XCTFail("Expected healthKitNotAvailable error")
+        } catch {
+            XCTAssertEqual(error as? ActivityReader.ActivityError, .healthKitNotAvailable)
+        }
+    }
 }

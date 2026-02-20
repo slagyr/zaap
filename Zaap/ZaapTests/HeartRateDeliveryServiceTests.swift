@@ -174,4 +174,102 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
 
         XCTAssertEqual(webhook.postCallCount, 1)
     }
+
+    // MARK: - sendNow failure paths
+
+    func testSendNowThrowsWhenAuthorizationDenied() async {
+        let (service, reader, _, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.shouldThrow = HeartRateReader.HeartRateError.authorizationDenied
+
+        do {
+            try await service.sendNow()
+            XCTFail("Expected sendNow to throw when authorization is denied")
+        } catch {
+            XCTAssertEqual(error as? HeartRateReader.HeartRateError, .authorizationDenied)
+        }
+    }
+
+    func testSendNowThrowsWhenNoHeartRateDataAvailable() async {
+        let (service, _, _, settings, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        // summaryToReturn is nil by default → fetchDailySummary throws noData after auth succeeds
+
+        do {
+            try await service.sendNow()
+            XCTFail("Expected sendNow to throw when no heart rate data is available")
+        } catch {
+            XCTAssertEqual(error as? HeartRateReader.HeartRateError, .noData)
+        }
+    }
+
+    func testSendNowThrowsWhenNetworkRequestFails() async {
+        let webhook = MockWebhookClient()
+        webhook.shouldThrow = URLError(.notConnectedToInternet)
+        let (service, reader, _, settings, _) = makeService(webhook: webhook)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
+            date: "2026-02-19", minBPM: 55, maxBPM: 120, avgBPM: 72,
+            restingBPM: nil, sampleCount: 5, samples: []
+        )
+
+        do {
+            try await service.sendNow()
+            XCTFail("Expected sendNow to throw when network request fails")
+        } catch {
+            XCTAssertTrue(error is URLError)
+        }
+    }
+
+    func testSendNowLogsSuccessOnDelivery() async throws {
+        let (service, reader, _, settings, log) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
+            date: "2026-02-19", minBPM: 55, maxBPM: 120, avgBPM: 72,
+            restingBPM: nil, sampleCount: 5, samples: []
+        )
+
+        try await service.sendNow()
+
+        XCTAssertEqual(log.records.count, 1)
+        XCTAssertEqual(log.records[0].dataType, .heartRate)
+        XCTAssertTrue(log.records[0].success)
+        XCTAssertNil(log.records[0].errorMessage)
+    }
+
+    // MARK: - deliverDailySummary failure paths
+
+    func testDeliverDailySummaryLogsFailureWhenNoHeartRateDataAvailable() async {
+        let (service, _, _, settings, log) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.heartRateTrackingEnabled = true
+        // reader.summaryToReturn is nil → fetchDailySummary throws noData
+
+        await service.deliverDailySummary()
+
+        XCTAssertEqual(log.records.count, 1)
+        XCTAssertEqual(log.records[0].dataType, .heartRate)
+        XCTAssertFalse(log.records[0].success)
+        XCTAssertNotNil(log.records[0].errorMessage)
+    }
+
+    func testDeliverDailySummaryLogsFailureWhenAuthorizationDenied() async {
+        let (service, reader, _, settings, log) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.heartRateTrackingEnabled = true
+        reader.shouldThrow = HeartRateReader.HeartRateError.authorizationDenied
+
+        await service.deliverDailySummary()
+
+        XCTAssertEqual(log.records.count, 1)
+        XCTAssertEqual(log.records[0].dataType, .heartRate)
+        XCTAssertFalse(log.records[0].success)
+        XCTAssertNotNil(log.records[0].errorMessage)
+    }
 }
