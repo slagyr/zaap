@@ -98,6 +98,51 @@ final class RequestLogTests: XCTestCase {
         XCTAssertTrue(text.contains("No response"))
     }
 
+    // MARK: - summaryLine
+
+    func testSummaryLineFormatSuccess() {
+        let date = Date(timeIntervalSince1970: 1700000000)
+        let entry = RequestLogEntry(
+            timestamp: date,
+            path: "/hooks/location",
+            statusCode: 200,
+            responseTimeMs: 42,
+            requestBody: "{}"
+        )
+        let line = entry.summaryLine
+        XCTAssertTrue(line.contains("/hooks/location"))
+        XCTAssertTrue(line.contains("42ms"))
+        XCTAssertTrue(line.contains("200"))
+        XCTAssertFalse(line.contains("Error"))
+    }
+
+    func testSummaryLineFormatError() {
+        let entry = RequestLogEntry(
+            path: "/hooks/sleep",
+            statusCode: nil,
+            responseTimeMs: 150,
+            requestBody: "{}",
+            errorMessage: "Connection refused"
+        )
+        let line = entry.summaryLine
+        XCTAssertTrue(line.contains("/hooks/sleep"))
+        XCTAssertTrue(line.contains("150ms"))
+        XCTAssertTrue(line.contains("Connection refused"))
+    }
+
+    func testSummaryLineFormatServerError() {
+        let entry = RequestLogEntry(
+            path: "/hooks/heartrate",
+            statusCode: 500,
+            responseTimeMs: 80,
+            requestBody: "{}",
+            errorMessage: "Server error"
+        )
+        let line = entry.summaryLine
+        XCTAssertTrue(line.contains("500"))
+        XCTAssertTrue(line.contains("Server error"))
+    }
+
     func testEntriesOrderIsChronological() {
         let log = RequestLog(capacity: 10)
         let early = Date(timeIntervalSince1970: 1000)
