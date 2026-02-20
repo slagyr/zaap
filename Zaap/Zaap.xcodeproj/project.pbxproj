@@ -49,6 +49,9 @@
 		J10002 /* MainTabViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = J20002 /* MainTabViewTests.swift */; };
 		K10001 /* WebhookTestService.swift in Sources */ = {isa = PBXBuildFile; fileRef = K20001 /* WebhookTestService.swift */; };
 		K10002 /* WebhookTestServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = K20002 /* WebhookTestServiceTests.swift */; };
+		L10001 /* RequestLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = L20001 /* RequestLog.swift */; };
+		L10002 /* RequestLogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = L20002 /* RequestLogTests.swift */; };
+		L10003 /* RequestLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = L20003 /* RequestLogView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -108,6 +111,9 @@
 		J20002 /* MainTabViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabViewTests.swift; sourceTree = "<group>"; };
 		K20001 /* WebhookTestService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebhookTestService.swift; sourceTree = "<group>"; };
 		K20002 /* WebhookTestServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebhookTestServiceTests.swift; sourceTree = "<group>"; };
+		L20001 /* RequestLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestLog.swift; sourceTree = "<group>"; };
+		L20002 /* RequestLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestLogTests.swift; sourceTree = "<group>"; };
+		L20003 /* RequestLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestLogView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -162,6 +168,8 @@
 				I20002 /* DashboardView.swift */,
 				J20001 /* MainTabView.swift */,
 				K20001 /* WebhookTestService.swift */,
+				L20001 /* RequestLog.swift */,
+				L20003 /* RequestLogView.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -208,6 +216,7 @@
 				I20003 /* DashboardViewModelTests.swift */,
 				J20002 /* MainTabViewTests.swift */,
 				K20002 /* WebhookTestServiceTests.swift */,
+				L20002 /* RequestLogTests.swift */,
 			);
 			path = ZaapTests;
 			sourceTree = "<group>";
@@ -326,6 +335,8 @@
 				I10002 /* DashboardView.swift in Sources */,
 				J10001 /* MainTabView.swift in Sources */,
 				K10001 /* WebhookTestService.swift in Sources */,
+				L10001 /* RequestLog.swift in Sources */,
+				L10003 /* RequestLogView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -351,6 +362,7 @@
 				I10003 /* DashboardViewModelTests.swift in Sources */,
 				J10002 /* MainTabViewTests.swift in Sources */,
 				K10002 /* WebhookTestServiceTests.swift in Sources */,
+				L10002 /* RequestLogTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

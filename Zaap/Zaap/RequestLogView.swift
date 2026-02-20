@@ -1,0 +1,96 @@
+import SwiftUI
+
+/// Displays the request log entries in a scrollable list, color-coded by success/failure.
+struct RequestLogView: View {
+    @ObservedObject var log: RequestLog
+
+    var body: some View {
+        Section {
+            if log.entries.isEmpty {
+                Text("No requests yet")
+                    .foregroundStyle(.secondary)
+                    .font(.subheadline)
+            } else {
+                ForEach(log.entries.reversed()) { entry in
+                    RequestLogEntryRow(entry: entry)
+                }
+            }
+        } header: {
+            HStack {
+                Text("Request Log")
+                Spacer()
+                if !log.entries.isEmpty {
+                    Button("Clear") {
+                        log.clear()
+                    }
+                    .font(.subheadline)
+                }
+            }
+        }
+    }
+}
+
+struct RequestLogEntryRow: View {
+    let entry: RequestLogEntry
+    @State private var isExpanded = false
+
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm:ss"
+        return f
+    }()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Circle()
+                    .fill(entry.isSuccess ? .green : .red)
+                    .frame(width: 8, height: 8)
+
+                Text(entry.path)
+                    .font(.subheadline.monospaced())
+                    .fontWeight(.medium)
+
+                Spacer()
+
+                if let code = entry.statusCode {
+                    Text("\(code)")
+                        .font(.caption.monospaced())
+                        .foregroundStyle(entry.isSuccess ? .green : .red)
+                }
+
+                Text("\(entry.responseTimeMs)ms")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack {
+                Text(Self.timeFormatter.string(from: entry.timestamp))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+
+                if let error = entry.errorMessage {
+                    Text(error)
+                        .font(.caption2)
+                        .foregroundStyle(.red)
+                        .lineLimit(1)
+                }
+            }
+
+            if isExpanded {
+                Text(entry.requestBody)
+                    .font(.caption2.monospaced())
+                    .foregroundStyle(.secondary)
+                    .padding(6)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(4)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isExpanded.toggle()
+            }
+        }
+    }
+}

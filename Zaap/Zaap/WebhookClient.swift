@@ -38,11 +38,13 @@ final class WebhookClient: Sendable {
 
     private let logger = Logger(subsystem: "com.zaap.app", category: "WebhookClient")
     private let session: URLSession
+    let requestLog: RequestLog
 
     // MARK: - Init
 
-    init() {
+    init(requestLog: RequestLog? = nil) {
         session = URLSession(configuration: .default)
+        self.requestLog = requestLog ?? RequestLog.shared
     }
 
     // MARK: - Public
@@ -85,6 +87,7 @@ final class WebhookClient: Sendable {
         do {
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .iso8601
+            encoder.outputFormatting = .prettyPrinted
             data = try encoder.encode(payload)
         } catch {
             throw WebhookError.encodingFailed(error)
@@ -97,12 +100,46 @@ final class WebhookClient: Sendable {
 
         logger.info("POST \(targetURL.absoluteString, privacy: .public)")
 
+        let requestBodyString = String(data: data, encoding: .utf8) ?? "{}"
+        let startTime = CFAbsoluteTimeGetCurrent()
+
         do {
             let (responseData, response) = try await session.upload(for: request, from: data)
+            let elapsedMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+
+            await requestLog.append(RequestLogEntry(
+                path: path ?? targetURL.path,
+                statusCode: statusCode,
+                responseTimeMs: elapsedMs,
+                requestBody: requestBodyString
+            ))
+
             try validateResponse(responseData, response)
         } catch let error as WebhookError {
+            let elapsedMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
+            let statusCode: Int? = if case .invalidResponse(let code) = error { code } else { nil }
+
+            await requestLog.append(RequestLogEntry(
+                path: path ?? targetURL.path,
+                statusCode: statusCode,
+                responseTimeMs: elapsedMs,
+                requestBody: requestBodyString,
+                errorMessage: error.localizedDescription
+            ))
+
             throw error
         } catch {
+            let elapsedMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
+
+            await requestLog.append(RequestLogEntry(
+                path: path ?? targetURL.path,
+                statusCode: nil,
+                responseTimeMs: elapsedMs,
+                requestBody: requestBodyString,
+                errorMessage: error.localizedDescription
+            ))
+
             throw WebhookError.networkError(error)
         }
     }

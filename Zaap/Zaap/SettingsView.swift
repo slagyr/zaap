@@ -11,6 +11,7 @@ struct SettingsView: View {
 
     @Bindable var settings: SettingsManager
     var testService: WebhookTestService?
+    @ObservedObject var requestLog: RequestLog = .shared
 
     @State private var isTokenVisible = false
     @State private var isTesting = false
@@ -150,6 +151,7 @@ struct SettingsView: View {
                     Text("Summary")
                 }
             }
+            RequestLogView(log: requestLog)
         }
         .navigationTitle("Settings")
     }
