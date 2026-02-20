@@ -35,17 +35,47 @@ struct RequestLogEntryRow: View {
     @State private var isExpanded = false
     @State private var showCopied = false
 
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm:ss"
+        return f
+    }()
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
+            HStack {
                 Circle()
                     .fill(entry.isSuccess ? .green : .red)
                     .frame(width: 8, height: 8)
 
-                Text(entry.summaryLine)
-                    .font(.caption.monospaced())
-                    .foregroundStyle(entry.isSuccess ? Color.primary : Color.red)
-                    .lineLimit(1)
+                Text(entry.path)
+                    .font(.subheadline.monospaced())
+                    .fontWeight(.medium)
+
+                Spacer()
+
+                if let code = entry.statusCode {
+                    Text("\(code)")
+                        .font(.caption.monospaced())
+                        .foregroundStyle(entry.isSuccess ? .green : .red)
+                }
+
+                Text("\(entry.responseTimeMs)ms")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack {
+                Text(Self.timeFormatter.string(from: entry.timestamp))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+
+                if let error = entry.errorMessage {
+                    Text(error)
+                        .font(.caption2)
+                        .foregroundStyle(.red)
+                        .lineLimit(1)
+                }
             }
 
             if isExpanded {

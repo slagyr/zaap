@@ -29,30 +29,6 @@ struct RequestLogEntry: Identifiable, Sendable {
         return lines.joined(separator: "\n")
     }
 
-    /// Single-line summary: `/path  NNNms | HH:mm:ss | status or error`
-    var summaryLine: String {
-        let time = Self.timeOnlyFormatter.string(from: timestamp)
-        let tail: String
-        if let error = errorMessage {
-            if let code = statusCode {
-                tail = "\(code) \(error)"
-            } else {
-                tail = error
-            }
-        } else if let code = statusCode {
-            tail = "\(code)"
-        } else {
-            tail = "No response"
-        }
-        return "\(path)  \(responseTimeMs)ms | \(time) | \(tail)"
-    }
-
-    private static let timeOnlyFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "HH:mm:ss"
-        return f
-    }()
-
     var isSuccess: Bool {
         guard let code = statusCode else { return false }
         return (200...299).contains(code)
