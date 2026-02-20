@@ -1,0 +1,20 @@
+{:number "007"
+ :status :active
+ :stories [{:id "zaap-v6u" :title "Wire DeliveryLogService into singletons — Dashboard shows No Deliveries (in progress)"}
+           {:id "zaap-aqb" :title "NodePairingManager — Ed25519 keypair, Keychain, pairing WS flow"}
+           {:id "zaap-89d" :title "GatewayConnection — WS client, handshake, message routing, reconnect"}
+           {:id "zaap-0s7" :title "VoiceEngine — SFSpeechRecognizer continuous mode + VAD"}
+           {:id "zaap-a0t" :title "ResponseSpeaker — AVSpeechSynthesizer with streaming token buffer"}
+           {:id "zaap-l6q" :title "VoiceChatView — UI with idle/listening/processing/speaking states"}
+           {:id "zaap-d0j" :title "Voice integration — wire full pipeline + pairing UI in Settings"}
+           {:id "zaap-st5" :title "Bonjour discovery — auto-find OpenClaw gateway on local network"}]
+ :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
+              "No force unwraps (!) anywhere in codebase"
+              "All new Swift files must be added to project.pbxproj"
+              "No third-party dependencies — Apple frameworks only (Speech, AVFoundation, Network, CryptoKit)"]
+ :notes ["Theme: Voice Chat — talk to Zane from your phone"
+         "Architecture doc: .braids/iterations/005/z75-voice-chat-architecture.md"
+         "aqb and 0s7/a0t can be worked in parallel (no mutual dependency)"
+         "89d depends on aqb; l6q depends on 89d+0s7+a0t; d0j depends on l6q"
+         "v6u is a P0 bug fix already in progress — should land first"
+         "st5 (Bonjour) is P2 — can be deferred if voice works with manual IP"]}
