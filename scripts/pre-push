@@ -55,7 +55,7 @@ echo "📊 Checking coverage…"
 FAILED=0
 
 # SwiftUI view files are excluded — they require snapshot/UI testing
-EXCLUDED_FILES="ContentView.swift|DashboardView.swift|SettingsView.swift|ZaapApp.swift"
+EXCLUDED_FILES="ContentView.swift|DashboardView.swift|SettingsView.swift|RequestLogView.swift|ZaapApp.swift"
 
 # Parse per-file coverage from xcrun xccov
 while IFS= read -r line; do
