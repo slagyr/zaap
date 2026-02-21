@@ -43,6 +43,23 @@ ln -sf ../../scripts/pre-push .git/hooks/pre-push
 
 This runs tests with coverage on every `git push` and blocks if any source file falls below 90% coverage.
 
+## Multi-Component Features — Mandatory Integration Bead
+
+When a feature spans multiple components (e.g. VoiceEngine + GatewayConnection + ResponseSpeaker + View), the final bead **must** be an explicit integration/wiring bead that:
+1. Instantiates all real production dependencies (not just test doubles)
+2. Injects them into the UI (View, not just a coordinator class)
+3. Wires all callbacks end-to-end (partial transcripts, errors, state changes)
+4. Verifies with `xcodebuild build` that the full app compiles and runs
+
+**Do not mark a feature complete if the components only exist in isolation.** The integration point (the View or App entry point) must explicitly reference all pieces.
+
+Checklist before closing a multi-component bead:
+- [ ] Real production implementations exist (not just protocols + test mocks)
+- [ ] All dependencies instantiated with concrete types (no missing inits)
+- [ ] View/App entry point wired to coordinator/service
+- [ ] Callbacks wired (partial results, errors, completion)
+- [ ] `xcodebuild build` passes
+
 ## Session Completion
 
 Work is NOT complete until `git push` succeeds.
