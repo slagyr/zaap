@@ -34,6 +34,21 @@ struct RequestLogEntry: Identifiable, Sendable, Codable {
         return (200...299).contains(code)
     }
 
+    /// A compact single-line summary suitable for list display.
+    var summaryLine: String {
+        var parts: [String] = [path]
+        if let code = statusCode {
+            parts.append("\(code)")
+        } else {
+            parts.append("No response")
+        }
+        if let err = errorMessage {
+            parts.append(err)
+        }
+        parts.append("\(responseTimeMs)ms")
+        return parts.joined(separator: "  ")
+    }
+
     init(
         id: UUID = UUID(),
         timestamp: Date = Date(),

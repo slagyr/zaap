@@ -148,7 +148,7 @@ final class GatewayConnection {
         }
 
         let message: [String: Any] = [
-            "type": "request",
+            "type": "req",
             "method": "node.event",
             "id": UUID().uuidString,
             "params": [
@@ -169,14 +169,26 @@ final class GatewayConnection {
         ])
     }
 
+    /// Send a node.pair.request directly as a gateway method call (not wrapped in node.event).
     func sendPairRequest() async throws {
+        guard let ws = webSocket else {
+            throw GatewayConnectionError.connectionFailed("Not connected")
+        }
         let identity = try pairingManager.generateIdentity()
-        try await sendEvent("node.pair.request", payload: [
-            "nodeId": identity.nodeId,
-            "publicKey": identity.publicKeyBase64,
-            "platform": "iOS",
-            "name": "Zaap"
-        ])
+        let message: [String: Any] = [
+            "type": "req",
+            "id": UUID().uuidString,
+            "method": "node.pair.request",
+            "params": [
+                "nodeId": identity.nodeId,
+                "displayName": "Zaap (iPhone)",
+                "platform": "iOS",
+                "publicKey": identity.publicKeyBase64,
+                "caps": ["voice"]
+            ] as [String: Any]
+        ]
+        let data = try JSONSerialization.data(withJSONObject: message)
+        try await ws.send(.data(data))
     }
 
     // MARK: - Backoff Calculation
@@ -233,64 +245,76 @@ final class GatewayConnection {
         }
 
         let type = json["type"] as? String ?? ""
-        let method = json["method"] as? String
+        let event = json["event"] as? String
+        let payload = json["payload"] as? [String: Any]
 
-        if type == "challenge" || method == "connect.challenge" {
+        if type == "event" && event == "connect.challenge" {
+            // Protocol: {type:"event", event:"connect.challenge", payload:{nonce, ts}}
             handleChallenge(json)
-        } else if type == "hello-ok" || method == "hello-ok" {
-            handleHelloOk()
-        } else if type == "event" || method?.hasPrefix("node.") == true || method?.hasPrefix("chat.") == true {
-            let event = method ?? (json["event"] as? String) ?? type
-            let params = json["params"] as? [String: Any] ?? json
-            delegate?.gatewayDidReceiveEvent(event, payload: params)
+        } else if type == "res" && (payload?["type"] as? String) == "hello-ok" {
+            // Protocol: {type:"res", id, ok:true, payload:{type:"hello-ok", ...}}
+            handleHelloOk(payload: payload)
+        } else if type == "event" {
+            // All other gateway events
+            let eventName = event ?? ""
+            let params = payload ?? json
+            delegate?.gatewayDidReceiveEvent(eventName, payload: params)
+        } else if type == "res" {
+            // Response to a req — route as event for callers to handle
+            let method = json["method"] as? String ?? "response"
+            delegate?.gatewayDidReceiveEvent(method, payload: json)
         } else {
-            // Route unknown messages as generic events
-            let event = method ?? type
-            delegate?.gatewayDidReceiveEvent(event, payload: json)
+            // Fallback: route unknown frames as generic events
+            delegate?.gatewayDidReceiveEvent(type, payload: json)
         }
     }
 
     private func handleChallenge(_ json: [String: Any]) {
         state = .challenged
 
-        let nonce: String
-        if let params = json["params"] as? [String: Any], let n = params["nonce"] as? String {
-            nonce = n
-        } else if let n = json["nonce"] as? String {
-            nonce = n
-        } else {
-            delegate?.gatewayDidFailWithError(.challengeFailed("No nonce in challenge"))
+        // Protocol: nonce lives in payload.nonce
+        guard let payloadDict = json["payload"] as? [String: Any],
+              let nonce = payloadDict["nonce"] as? String else {
+            delegate?.gatewayDidFailWithError(.challengeFailed("No nonce in challenge payload"))
             return
         }
 
         do {
             let identity = try pairingManager.generateIdentity()
             let sig = try pairingManager.signChallenge(nonce: nonce)
-            let token = pairingManager.loadToken() ?? ""
 
+            // Use stored node token if paired; otherwise fall back to gateway auth token.
+            let authToken = pairingManager.loadToken() ?? SettingsManager.shared.authToken
+
+            // Protocol: type must be "req" (not "request"), auth in "auth" sub-key.
             let connectMessage: [String: Any] = [
-                "type": "request",
+                "type": "req",
                 "method": "connect",
                 "id": UUID().uuidString,
                 "params": [
-                    "minProtocol": 1,
-                    "maxProtocol": 1,
+                    "minProtocol": 3,
+                    "maxProtocol": 3,
                     "client": [
                         "id": "zaap",
                         "mode": "node",
-                        "platform": "iOS",
+                        "platform": "ios",
                         "version": "1.0"
                     ] as [String: Any],
+                    "role": "node",
+                    "scopes": [],
                     "caps": ["voice"],
+                    "commands": [],
+                    "permissions": [:] as [String: Any],
+                    "auth": ["token": authToken] as [String: Any],
+                    "locale": "en-US",
+                    "userAgent": "zaap-ios/1.0",
                     "device": [
                         "id": identity.nodeId,
                         "publicKey": identity.publicKeyBase64,
                         "signature": sig.signature,
                         "signedAt": sig.signedAt,
                         "nonce": nonce
-                    ] as [String: Any],
-                    "token": token,
-                    "role": "node"
+                    ] as [String: Any]
                 ] as [String: Any]
             ]
 
@@ -307,9 +331,17 @@ final class GatewayConnection {
         }
     }
 
-    private func handleHelloOk() {
+    private func handleHelloOk(payload: [String: Any]?) {
         state = .connected
         reconnectAttempt = 0
+
+        // If the gateway issued a device token, store it for future connections.
+        if let auth = payload?["auth"] as? [String: Any],
+           let deviceToken = auth["deviceToken"] as? String,
+           !deviceToken.isEmpty {
+            try? pairingManager.storeToken(deviceToken)
+        }
+
         delegate?.gatewayDidConnect()
     }
 

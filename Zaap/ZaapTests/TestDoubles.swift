@@ -181,6 +181,7 @@ final class MockVoiceEngine: VoiceEngineProtocol {
     var isListening = false
     var currentTranscript = ""
     var onUtteranceComplete: ((String) -> Void)?
+    var onPartialTranscript: ((String) -> Void)?
     var onError: ((VoiceEngineError) -> Void)?
     var startListeningCalled = false
     var stopListeningCalled = false

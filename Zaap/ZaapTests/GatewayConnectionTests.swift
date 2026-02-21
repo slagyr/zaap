@@ -239,7 +239,7 @@ final class GatewayConnectionTests: XCTestCase {
         let url = URL(string: "wss://192.168.1.100:18789")!
         let mockTask = MockWebSocketTask()
         mockTask.receivedMessages = [
-            makeMessage(["type": "challenge", "params": ["nonce": "test-nonce"]])
+            makeMessage(["type": "event", "event": "connect.challenge", "payload": ["nonce": "test-nonce"]])
         ]
         // After challenge, block on receive
         mockWSFactory.taskToReturn = mockTask
@@ -259,7 +259,7 @@ final class GatewayConnectionTests: XCTestCase {
         let url = URL(string: "wss://192.168.1.100:18789")!
         let mockTask = MockWebSocketTask()
         mockTask.receivedMessages = [
-            makeMessage(["type": "challenge", "params": ["nonce": "test-nonce-123"]])
+            makeMessage(["type": "event", "event": "connect.challenge", "payload": ["nonce": "test-nonce-123"]])
         ]
         mockWSFactory.taskToReturn = mockTask
 
@@ -274,12 +274,16 @@ final class GatewayConnectionTests: XCTestCase {
 
         let json = mockTask.sentJSON(at: 0)
         XCTAssertNotNil(json)
+        XCTAssertEqual(json?["type"] as? String, "req")
         XCTAssertEqual(json?["method"] as? String, "connect")
 
         let params = json?["params"] as? [String: Any]
         XCTAssertNotNil(params)
         XCTAssertEqual(params?["role"] as? String, "node")
-        XCTAssertEqual(params?["token"] as? String, "my-token")
+
+        // Auth token is now nested under "auth"
+        let auth = params?["auth"] as? [String: Any]
+        XCTAssertEqual(auth?["token"] as? String, "my-token")
 
         let device = params?["device"] as? [String: Any]
         XCTAssertEqual(device?["id"] as? String, identity.nodeId)
@@ -291,7 +295,7 @@ final class GatewayConnectionTests: XCTestCase {
         let client = params?["client"] as? [String: Any]
         XCTAssertEqual(client?["id"] as? String, "zaap")
         XCTAssertEqual(client?["mode"] as? String, "node")
-        XCTAssertEqual(client?["platform"] as? String, "iOS")
+        XCTAssertEqual(client?["platform"] as? String, "ios")
 
         let caps = params?["caps"] as? [String]
         XCTAssertEqual(caps, ["voice"])
@@ -301,7 +305,7 @@ final class GatewayConnectionTests: XCTestCase {
         let url = URL(string: "wss://192.168.1.100:18789")!
         let mockTask = MockWebSocketTask()
         mockTask.receivedMessages = [
-            makeMessage(["type": "challenge", "params": ["nonce": "test"]])
+            makeMessage(["type": "event", "event": "connect.challenge", "payload": ["nonce": "test"]])
         ]
         mockWSFactory.taskToReturn = mockTask
 
@@ -317,7 +321,7 @@ final class GatewayConnectionTests: XCTestCase {
         let url = URL(string: "wss://192.168.1.100:18789")!
         let mockTask = MockWebSocketTask()
         mockTask.receivedMessages = [
-            makeMessage(["type": "challenge", "params": [:] as [String: Any]])
+            makeMessage(["type": "event", "event": "connect.challenge", "payload": [:] as [String: Any]])
         ]
         mockWSFactory.taskToReturn = mockTask
 
@@ -338,7 +342,7 @@ final class GatewayConnectionTests: XCTestCase {
         let url = URL(string: "wss://192.168.1.100:18789")!
         let mockTask = MockWebSocketTask()
         mockTask.receivedMessages = [
-            makeMessage(["type": "hello-ok"])
+            makeMessage(["type": "res", "id": "1", "ok": true, "payload": ["type": "hello-ok"]])
         ]
         mockWSFactory.taskToReturn = mockTask
 
@@ -352,7 +356,7 @@ final class GatewayConnectionTests: XCTestCase {
         let url = URL(string: "wss://192.168.1.100:18789")!
         let mockTask = MockWebSocketTask()
         mockTask.receivedMessages = [
-            makeMessage(["type": "hello-ok"])
+            makeMessage(["type": "res", "id": "1", "ok": true, "payload": ["type": "hello-ok"]])
         ]
         mockWSFactory.taskToReturn = mockTask
 
@@ -368,8 +372,8 @@ final class GatewayConnectionTests: XCTestCase {
         let url = URL(string: "wss://192.168.1.100:18789")!
         let mockTask = MockWebSocketTask()
         mockTask.receivedMessages = [
-            makeMessage(["type": "hello-ok"]),
-            makeMessage(["type": "request", "method": "node.invoke.request", "params": ["command": "camera_snap"]])
+            makeMessage(["type": "res", "id": "1", "ok": true, "payload": ["type": "hello-ok"]]),
+            makeMessage(["type": "event", "event": "node.invoke.request", "payload": ["command": "camera_snap"]])
         ]
         mockWSFactory.taskToReturn = mockTask
 
@@ -385,8 +389,8 @@ final class GatewayConnectionTests: XCTestCase {
         let url = URL(string: "wss://192.168.1.100:18789")!
         let mockTask = MockWebSocketTask()
         mockTask.receivedMessages = [
-            makeMessage(["type": "hello-ok"]),
-            makeMessage(["type": "event", "method": "chat.event", "params": ["text": "Hello world"]])
+            makeMessage(["type": "res", "id": "1", "ok": true, "payload": ["type": "hello-ok"]]),
+            makeMessage(["type": "event", "event": "chat.event", "payload": ["text": "Hello world"]])
         ]
         mockWSFactory.taskToReturn = mockTask
 
