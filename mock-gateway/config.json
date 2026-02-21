@@ -1,0 +1,10 @@
+{
+  "port": 8788,
+  "fail": {
+    "enabled": false,
+    "paths": [],
+    "statusCode": 500,
+    "body": "simulated failure"
+  },
+  "delay": 0
+}
