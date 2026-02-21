@@ -132,6 +132,26 @@ final class MockDeliveryLogService: DeliveryLogging {
     }
 }
 
+// MARK: - Mock Keychain Access
+
+final class MockKeychainAccess: KeychainAccessing {
+    var savedKeys: [String: Data] = [:]
+    var shouldThrow: Error?
+
+    func save(key: String, data: Data) throws {
+        if let error = shouldThrow { throw error }
+        savedKeys[key] = data
+    }
+
+    func load(key: String) -> Data? {
+        return savedKeys[key]
+    }
+
+    func delete(key: String) {
+        savedKeys.removeValue(forKey: key)
+    }
+}
+
 // MARK: - Mock Workout Reader
 
 final class MockWorkoutReader: WorkoutReading {

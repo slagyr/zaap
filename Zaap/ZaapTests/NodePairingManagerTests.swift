@@ -1,0 +1,212 @@
+import XCTest
+import CryptoKit
+@testable import Zaap
+
+final class NodePairingManagerTests: XCTestCase {
+
+    var mockKeychain: MockKeychainAccess!
+    var manager: NodePairingManager!
+
+    override func setUp() {
+        super.setUp()
+        mockKeychain = MockKeychainAccess()
+        manager = NodePairingManager(keychain: mockKeychain)
+    }
+
+    // MARK: - Identity Generation
+
+    func testGenerateIdentityCreatesEd25519Keypair() throws {
+        let identity = try manager.generateIdentity()
+
+        XCTAssertFalse(identity.nodeId.isEmpty)
+        XCTAssertFalse(identity.publicKeyBase64.isEmpty)
+    }
+
+    func testGenerateIdentityNodeIdIsSha256OfPublicKey() throws {
+        let identity = try manager.generateIdentity()
+
+        // Decode the public key, hash it, and verify nodeId matches
+        let publicKeyData = Data(base64Encoded: identity.publicKeyBase64)!
+        let hash = SHA256.hash(data: publicKeyData)
+        let expectedNodeId = hash.map { String(format: "%02x", $0) }.joined()
+
+        XCTAssertEqual(identity.nodeId, expectedNodeId)
+    }
+
+    func testGenerateIdentityStoresPrivateKeyInKeychain() throws {
+        _ = try manager.generateIdentity()
+
+        XCTAssertTrue(mockKeychain.savedKeys.keys.contains("co.airworthy.zaap.node.privateKey"))
+    }
+
+    func testGenerateIdentityStoresPublicKeyInKeychain() throws {
+        _ = try manager.generateIdentity()
+
+        XCTAssertTrue(mockKeychain.savedKeys.keys.contains("co.airworthy.zaap.node.publicKey"))
+    }
+
+    func testGenerateIdentityStoresBothKeysInKeychain() throws {
+        _ = try manager.generateIdentity()
+
+        XCTAssertEqual(mockKeychain.savedKeys.count, 2)
+    }
+
+    func testGenerateIdentityIsConsistentWhenCalledTwice() throws {
+        let identity1 = try manager.generateIdentity()
+        let identity2 = try manager.generateIdentity()
+
+        // Second call should generate new keys (not reuse)
+        // But if keys already exist in keychain, it should return them
+        XCTAssertEqual(identity1.nodeId, identity2.nodeId)
+        XCTAssertEqual(identity1.publicKeyBase64, identity2.publicKeyBase64)
+    }
+
+    func testGenerateIdentityReturnsExistingKeysFromKeychain() throws {
+        // Generate once
+        let identity1 = try manager.generateIdentity()
+
+        // Create a new manager with the same keychain (simulating app restart)
+        let manager2 = NodePairingManager(keychain: mockKeychain)
+        let identity2 = try manager2.generateIdentity()
+
+        XCTAssertEqual(identity1.nodeId, identity2.nodeId)
+    }
+
+    // MARK: - Challenge Signing
+
+    func testSignChallengeProducesValidSignature() throws {
+        _ = try manager.generateIdentity()
+        let nonce = "test-nonce-12345"
+
+        let result = try manager.signChallenge(nonce: nonce)
+
+        XCTAssertFalse(result.signature.isEmpty)
+        XCTAssertGreaterThan(result.signedAt, 0)
+    }
+
+    func testSignChallengeFailsWithoutIdentity() {
+        XCTAssertThrowsError(try manager.signChallenge(nonce: "test")) { error in
+            XCTAssertEqual(error as? NodePairingError, .noIdentity)
+        }
+    }
+
+    func testSignChallengeSignatureIsVerifiable() throws {
+        let identity = try manager.generateIdentity()
+        let nonce = "verify-me-nonce"
+
+        let result = try manager.signChallenge(nonce: nonce)
+
+        // Verify signature using the public key
+        let publicKeyData = Data(base64Encoded: identity.publicKeyBase64)!
+        let publicKey = try Curve25519.Signing.PublicKey(rawRepresentation: publicKeyData)
+        let signatureData = Data(base64Encoded: result.signature)!
+        let message = "\(nonce):\(result.signedAt)".data(using: .utf8)!
+
+        XCTAssertTrue(publicKey.isValidSignature(signatureData, for: message))
+    }
+
+    func testSignChallengeSignedAtIsCurrentTimestamp() throws {
+        _ = try manager.generateIdentity()
+        let before = Int(Date().timeIntervalSince1970)
+        let result = try manager.signChallenge(nonce: "time-test")
+        let after = Int(Date().timeIntervalSince1970)
+
+        XCTAssertGreaterThanOrEqual(result.signedAt, before)
+        XCTAssertLessThanOrEqual(result.signedAt, after)
+    }
+
+    // MARK: - Token Storage
+
+    func testStoreTokenSavesToKeychain() throws {
+        try manager.storeToken("my-secret-token")
+
+        XCTAssertEqual(mockKeychain.savedKeys["co.airworthy.zaap.node.token"], "my-secret-token".data(using: .utf8))
+    }
+
+    func testLoadTokenRetrievesFromKeychain() throws {
+        try manager.storeToken("my-secret-token")
+
+        let token = manager.loadToken()
+        XCTAssertEqual(token, "my-secret-token")
+    }
+
+    func testLoadTokenReturnsNilWhenNoToken() {
+        let token = manager.loadToken()
+        XCTAssertNil(token)
+    }
+
+    // MARK: - Gateway URL Storage
+
+    func testStoreGatewayURLSavesToKeychain() throws {
+        let url = URL(string: "ws://192.168.1.100:18789")!
+        try manager.storeGatewayURL(url)
+
+        let stored = mockKeychain.savedKeys["co.airworthy.zaap.node.gatewayURL"]
+        XCTAssertEqual(stored, url.absoluteString.data(using: .utf8))
+    }
+
+    func testLoadGatewayURLRetrievesFromKeychain() throws {
+        let url = URL(string: "ws://192.168.1.100:18789")!
+        try manager.storeGatewayURL(url)
+
+        let loaded = manager.loadGatewayURL()
+        XCTAssertEqual(loaded, url)
+    }
+
+    func testLoadGatewayURLReturnsNilWhenNotStored() {
+        XCTAssertNil(manager.loadGatewayURL())
+    }
+
+    // MARK: - Pairing State
+
+    func testIsPairedReturnsFalseInitially() {
+        XCTAssertFalse(manager.isPaired)
+    }
+
+    func testIsPairedReturnsTrueWhenTokenExists() throws {
+        try manager.storeToken("some-token")
+        XCTAssertTrue(manager.isPaired)
+    }
+
+    // MARK: - Clear Pairing
+
+    func testClearPairingRemovesAllKeys() throws {
+        _ = try manager.generateIdentity()
+        try manager.storeToken("token")
+        try manager.storeGatewayURL(URL(string: "ws://localhost:18789")!)
+
+        manager.clearPairing()
+
+        XCTAssertTrue(mockKeychain.savedKeys.isEmpty)
+        XCTAssertFalse(manager.isPaired)
+    }
+
+    // MARK: - Pairing Request Message
+
+    func testBuildPairRequestMessage() throws {
+        let identity = try manager.generateIdentity()
+
+        let message = manager.buildPairRequestMessage()
+
+        XCTAssertNotNil(message)
+        let msg = message!
+        XCTAssertEqual(msg["type"] as? String, "request")
+        XCTAssertEqual(msg["method"] as? String, "node.pair.request")
+        XCTAssertNotNil(msg["id"] as? String)
+
+        let params = msg["params"] as? [String: Any]
+        XCTAssertNotNil(params)
+        XCTAssertEqual(params?["nodeId"] as? String, identity.nodeId)
+        XCTAssertEqual(params?["displayName"] as? String, "Zaap (iPhone)")
+        XCTAssertEqual(params?["platform"] as? String, "iOS")
+        XCTAssertEqual(params?["publicKey"] as? String, identity.publicKeyBase64)
+
+        let caps = params?["caps"] as? [String]
+        XCTAssertEqual(caps, ["voice"])
+    }
+
+    func testBuildPairRequestMessageReturnsNilWithoutIdentity() {
+        let message = manager.buildPairRequestMessage()
+        XCTAssertNil(message)
+    }
+}

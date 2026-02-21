@@ -52,6 +52,8 @@
 		L10001 /* RequestLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = L20001 /* RequestLog.swift */; };
 		L10002 /* RequestLogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = L20002 /* RequestLogTests.swift */; };
 		L10003 /* RequestLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = L20003 /* RequestLogView.swift */; };
+		M10001 /* NodePairingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20001 /* NodePairingManager.swift */; };
+		M10002 /* NodePairingManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20002 /* NodePairingManagerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -114,6 +116,8 @@
 		L20001 /* RequestLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestLog.swift; sourceTree = "<group>"; };
 		L20002 /* RequestLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestLogTests.swift; sourceTree = "<group>"; };
 		L20003 /* RequestLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestLogView.swift; sourceTree = "<group>"; };
+		M20001 /* NodePairingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodePairingManager.swift; sourceTree = "<group>"; };
+		M20002 /* NodePairingManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodePairingManagerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -170,6 +174,7 @@
 				K20001 /* WebhookTestService.swift */,
 				L20001 /* RequestLog.swift */,
 				L20003 /* RequestLogView.swift */,
+				M20001 /* NodePairingManager.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -217,6 +222,7 @@
 				J20002 /* MainTabViewTests.swift */,
 				K20002 /* WebhookTestServiceTests.swift */,
 				L20002 /* RequestLogTests.swift */,
+				M20002 /* NodePairingManagerTests.swift */,
 			);
 			path = ZaapTests;
 			sourceTree = "<group>";
@@ -337,6 +343,7 @@
 				K10001 /* WebhookTestService.swift in Sources */,
 				L10001 /* RequestLog.swift in Sources */,
 				L10003 /* RequestLogView.swift in Sources */,
+				M10001 /* NodePairingManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -363,6 +370,7 @@
 				J10002 /* MainTabViewTests.swift in Sources */,
 				K10002 /* WebhookTestServiceTests.swift in Sources */,
 				L10002 /* RequestLogTests.swift in Sources */,
+				M10002 /* NodePairingManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
