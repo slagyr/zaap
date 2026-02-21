@@ -31,6 +31,50 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            #if targetEnvironment(simulator)
+            Section {
+                Toggle("Use development config?", isOn: $devMode)
+                    .onChange(of: devMode) { _, isDev in
+                        applyDevMode(isDev)
+                    }
+
+                Button {
+                    seeder.seedAll()
+                } label: {
+                    HStack {
+                        Image(systemName: "waveform.path.ecg")
+                        Text("Seed Health Data")
+                    }
+                }
+                .disabled(seeder.status == .seeding)
+
+                switch seeder.status {
+                case .seeding:
+                    HStack(spacing: 8) {
+                        ProgressView().controlSize(.small)
+                        Text("Seeding…").foregroundStyle(.secondary).font(.subheadline)
+                    }
+                case .done(let msg):
+                    Label(msg, systemImage: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                case .failed(let msg):
+                    Label(msg, systemImage: "xmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                case .idle:
+                    EmptyView()
+                }
+            } header: {
+                Text("Developer")
+            } footer: {
+                Text(devMode
+                     ? "Dev: localhost:8788"
+                     : "Prod: REDACTED_HOSTNAME")
+                    .font(.caption)
+            }
+            #endif
+
             if let pairingVM = pairingViewModel {
                 PairingSectionView(viewModel: pairingVM)
             }
@@ -184,49 +228,6 @@ struct SettingsView: View {
 
             RequestLogView(log: requestLog)
 
-            #if targetEnvironment(simulator)
-            Section {
-                Button {
-                    seeder.seedAll()
-                } label: {
-                    HStack {
-                        Image(systemName: "waveform.path.ecg")
-                        Text("Seed Health Data")
-                    }
-                }
-                .disabled(seeder.status == .seeding)
-
-                switch seeder.status {
-                case .seeding:
-                    HStack(spacing: 8) {
-                        ProgressView().controlSize(.small)
-                        Text("Seeding…").foregroundStyle(.secondary).font(.subheadline)
-                    }
-                case .done(let msg):
-                    Label(msg, systemImage: "checkmark.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.green)
-                case .failed(let msg):
-                    Label(msg, systemImage: "xmark.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                case .idle:
-                    EmptyView()
-                }
-
-                Toggle("Connection: Dev / Prod", isOn: $devMode)
-                    .onChange(of: devMode) { _, isDev in
-                        applyDevMode(isDev)
-                    }
-            } header: {
-                Text("Developer")
-            } footer: {
-                Text(devMode
-                     ? "Dev: localhost:8788"
-                     : "Prod: REDACTED_HOSTNAME")
-                    .font(.caption)
-            }
-            #endif
         }
         .navigationTitle("Settings")
         .onAppear {
