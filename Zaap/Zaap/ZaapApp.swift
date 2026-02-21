@@ -61,5 +61,10 @@ struct ZaapApp: App {
         HeartRateDeliveryService.shared.start()
         ActivityDeliveryService.shared.start()
         WorkoutDeliveryService.shared.start()
+
+        // Start HealthKit observer queries for background delivery
+        let deliveryAdapter = ObserverDeliveryAdapter()
+        HealthKitObserverService.shared.configure(deliveryDelegate: deliveryAdapter)
+        HealthKitObserverService.shared.start()
     }
 }

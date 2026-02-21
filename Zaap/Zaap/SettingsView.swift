@@ -12,6 +12,7 @@ struct SettingsView: View {
     @Bindable var settings: SettingsManager
     var testService: WebhookTestService?
     @ObservedObject var requestLog: RequestLog = .shared
+    var gatewayBrowser: GatewayBrowserViewModel?
 
     @State private var isTokenVisible = false
     @State private var isTesting = false
@@ -24,6 +25,40 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            if let browser = gatewayBrowser, browser.hasDiscoveredGateways {
+                Section {
+                    ForEach(browser.discoveredGateways) { gateway in
+                        Button {
+                            browser.selectGateway(gateway)
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(gateway.displayName)
+                                        .foregroundStyle(.primary)
+                                    Text(gateway.hostnameWithPort)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                if settings.webhookURL == gateway.hostnameWithPort {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.blue)
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    HStack {
+                        Text("Discovered Gateways")
+                        Spacer()
+                        if browser.isSearching {
+                            ProgressView()
+                                .controlSize(.small)
+                        }
+                    }
+                }
+            }
+
             Section {
                 TextField("Hostname", text: $settings.webhookURL)
                     .keyboardType(.URL)
@@ -154,6 +189,8 @@ struct SettingsView: View {
             RequestLogView(log: requestLog)
         }
         .navigationTitle("Settings")
+        .onAppear { gatewayBrowser?.startSearching() }
+        .onDisappear { gatewayBrowser?.stopSearching() }
     }
 
     // MARK: - Data Source Row

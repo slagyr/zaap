@@ -61,6 +61,14 @@
 		O10003 /* VoiceEngineAdapters.swift in Sources */ = {isa = PBXBuildFile; fileRef = O20003 /* VoiceEngineAdapters.swift */; };
 		P10001 /* GatewayConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20001 /* GatewayConnection.swift */; };
 		P10002 /* GatewayConnectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20002 /* GatewayConnectionTests.swift */; };
+		Q10001 /* GatewayBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = Q20001 /* GatewayBrowser.swift */; };
+		Q10002 /* GatewayBrowserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = Q20002 /* GatewayBrowserTests.swift */; };
+		R10001 /* VoiceChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20001 /* VoiceChatViewModel.swift */; };
+		R10002 /* VoiceChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20002 /* VoiceChatView.swift */; };
+		R10003 /* VoiceChatViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20003 /* VoiceChatViewModelTests.swift */; };
+		S10001 /* HealthKitObserverService.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20001 /* HealthKitObserverService.swift */; };
+		S10002 /* ObserverDeliveryAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20002 /* ObserverDeliveryAdapter.swift */; };
+		S10003 /* HealthKitObserverServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20003 /* HealthKitObserverServiceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -132,6 +140,14 @@
 		O20003 /* VoiceEngineAdapters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceEngineAdapters.swift; sourceTree = "<group>"; };
 		P20001 /* GatewayConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayConnection.swift; sourceTree = "<group>"; };
 		P20002 /* GatewayConnectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayConnectionTests.swift; sourceTree = "<group>"; };
+		Q20001 /* GatewayBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayBrowser.swift; sourceTree = "<group>"; };
+		Q20002 /* GatewayBrowserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayBrowserTests.swift; sourceTree = "<group>"; };
+		R20001 /* VoiceChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChatViewModel.swift; sourceTree = "<group>"; };
+		R20002 /* VoiceChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChatView.swift; sourceTree = "<group>"; };
+		R20003 /* VoiceChatViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChatViewModelTests.swift; sourceTree = "<group>"; };
+		S20001 /* HealthKitObserverService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitObserverService.swift; sourceTree = "<group>"; };
+		S20002 /* ObserverDeliveryAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObserverDeliveryAdapter.swift; sourceTree = "<group>"; };
+		S20003 /* HealthKitObserverServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitObserverServiceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -193,6 +209,11 @@
 				O20001 /* VoiceEngine.swift */,
 				O20003 /* VoiceEngineAdapters.swift */,
 				P20001 /* GatewayConnection.swift */,
+				Q20001 /* GatewayBrowser.swift */,
+				R20001 /* VoiceChatViewModel.swift */,
+				R20002 /* VoiceChatView.swift */,
+				S20001 /* HealthKitObserverService.swift */,
+				S20002 /* ObserverDeliveryAdapter.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -244,6 +265,9 @@
 				N20002 /* ResponseSpeakerTests.swift */,
 				O20002 /* VoiceEngineTests.swift */,
 				P20002 /* GatewayConnectionTests.swift */,
+				Q20002 /* GatewayBrowserTests.swift */,
+				R20003 /* VoiceChatViewModelTests.swift */,
+				S20003 /* HealthKitObserverServiceTests.swift */,
 			);
 			path = ZaapTests;
 			sourceTree = "<group>";
@@ -369,6 +393,11 @@
 				O10001 /* VoiceEngine.swift in Sources */,
 				O10003 /* VoiceEngineAdapters.swift in Sources */,
 				P10001 /* GatewayConnection.swift in Sources */,
+				Q10001 /* GatewayBrowser.swift in Sources */,
+				R10001 /* VoiceChatViewModel.swift in Sources */,
+				R10002 /* VoiceChatView.swift in Sources */,
+				S10001 /* HealthKitObserverService.swift in Sources */,
+				S10002 /* ObserverDeliveryAdapter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -399,6 +428,9 @@
 				N10002 /* ResponseSpeakerTests.swift in Sources */,
 				O10002 /* VoiceEngineTests.swift in Sources */,
 				P10002 /* GatewayConnectionTests.swift in Sources */,
+				Q10002 /* GatewayBrowserTests.swift in Sources */,
+				R10003 /* VoiceChatViewModelTests.swift in Sources */,
+				S10003 /* HealthKitObserverServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

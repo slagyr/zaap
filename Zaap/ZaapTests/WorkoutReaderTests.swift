@@ -27,7 +27,7 @@ final class WorkoutReaderTests: XCTestCase {
         XCTAssertEqual(WorkoutReader.WorkoutError.authorizationDenied.errorDescription,
                        "HealthKit workout data access denied")
         XCTAssertEqual(WorkoutReader.WorkoutError.noData.errorDescription,
-                       "No workout data found for the requested period")
+                       "No workouts found in the last 24 hours")
     }
 
     // MARK: - Failure paths (HealthKit unavailable in simulator)

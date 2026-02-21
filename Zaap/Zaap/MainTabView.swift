@@ -4,6 +4,10 @@ struct MainTabView: View {
 
     @State var selectedTab = 0
     @State private var settings = SettingsManager.shared
+    @State private var gatewayBrowser = GatewayBrowserViewModel(
+        browser: NWGatewayBrowser(),
+        settings: SettingsManager.shared
+    )
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -16,12 +20,20 @@ struct MainTabView: View {
             .tag(0)
 
             NavigationStack {
-                SettingsView(settings: settings)
+                VoiceChatView()
+            }
+            .tabItem {
+                Label("Voice", systemImage: "mic")
+            }
+            .tag(1)
+
+            NavigationStack {
+                SettingsView(settings: settings, gatewayBrowser: gatewayBrowser)
             }
             .tabItem {
                 Label("Settings", systemImage: "gear")
             }
-            .tag(1)
+            .tag(2)
         }
     }
 }

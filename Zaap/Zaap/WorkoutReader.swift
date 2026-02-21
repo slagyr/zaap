@@ -27,7 +27,7 @@ final class WorkoutReader {
             switch self {
             case .healthKitNotAvailable: "HealthKit is not available on this device"
             case .authorizationDenied: "HealthKit workout data access denied"
-            case .noData: "No workout data found for the requested period"
+            case .noData: "No workouts found in the last 24 hours"
             }
         }
     }

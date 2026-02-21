@@ -7,6 +7,7 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
+		<string>fetch</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Zaap uses your location to relay position updates to your configured webhook endpoint.</string>
