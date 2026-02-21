@@ -53,3 +53,25 @@ git pull --rebase
 bd sync
 git push
 ```
+
+## Iteration Completion → TestFlight
+
+When all beads in an iteration are closed and the iteration is marked complete, **build and push to TestFlight**. Do not wait to be asked.
+
+Steps:
+1. Bump the build number in `Zaap/Zaap/Info.plist` (`CFBundleVersion`)
+2. Archive and export the IPA (use `destination=export` in ExportOptions.plist, **not** `destination=upload`):
+   ```bash
+   xcodebuild archive -project Zaap/Zaap.xcodeproj -scheme Zaap \
+     -archivePath /tmp/Zaap.xcarchive -allowProvisioningUpdates
+   xcodebuild -exportArchive -archivePath /tmp/Zaap.xcarchive \
+     -exportOptionsPlist /tmp/ExportOptions.plist \
+     -exportPath /tmp/ZaapExport -allowProvisioningUpdates
+   ```
+3. Upload to TestFlight via `altool`:
+   ```bash
+   xcrun altool --upload-app -f /tmp/ZaapExport/Zaap.ipa \
+     --type ios --apiKey 68P29K4Z2B \
+     --apiIssuer 69a6de84-bbb3-47e3-e053-5b8c7c11a4d1
+   ```
+4. Notify Micah in #zaap once the build is processing on TestFlight.
