@@ -11,6 +11,7 @@ final class SettingsManager {
     private enum Key: String {
         case webhookURL = "settings.webhookURL"  // legacy key, now stores hostname
         case authToken = "settings.authToken"
+        case voiceGatewayHostname = "settings.voiceGatewayHostname"
         case locationTrackingEnabled = "settings.locationTrackingEnabled"
         case sleepTrackingEnabled = "settings.sleepTrackingEnabled"
         case workoutTrackingEnabled = "settings.workoutTrackingEnabled"
@@ -96,11 +97,22 @@ final class SettingsManager {
         webhookURLValue?.appending(path: path)
     }
 
+    /// Hostname used exclusively for voice/WebSocket gateway connections.
+    /// Stored separately so it is never overwritten by the dev/prod webhook toggle.
+    /// Defaults to the webhook hostname when first set.
+    var voiceGatewayHostname: String {
+        get { defaults.string(forKey: Key.voiceGatewayHostname.rawValue) ?? hostname }
+        set { defaults.set(newValue, forKey: Key.voiceGatewayHostname.rawValue) }
+    }
+
     /// WebSocket URL for the voice gateway connection (ws:// for local, wss:// for remote).
+    /// Always derived from voiceGatewayHostname, not the webhook URL.
     var voiceWebSocketURL: URL? {
-        let h = hostname
+        let h = voiceGatewayHostname
         guard !h.isEmpty else { return nil }
-        let scheme = isLocalHostname ? "ws" : "wss"
+        let bare = h.components(separatedBy: ":").first ?? h
+        let isLocal = bare == "localhost" || bare == "127.0.0.1" || bare.hasSuffix(".local")
+        let scheme = isLocal ? "ws" : "wss"
         return URL(string: "\(scheme)://\(h)")
     }
 

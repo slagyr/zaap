@@ -315,6 +315,8 @@ struct SettingsView: View {
             settings.webhookURL = "REDACTED_HOSTNAME"
             settings.authToken = "REDACTED_HOOKS_TOKEN"
         }
+        // Voice WebSocket always uses the real gateway regardless of dev/prod toggle.
+        settings.voiceGatewayHostname = "REDACTED_HOSTNAME"
     }
     #endif
 

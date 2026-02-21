@@ -42,7 +42,14 @@ struct VoiceChatView: View {
         }
         .navigationTitle("Voice")
         .onAppear {
+            #if targetEnvironment(simulator)
+            // In simulator dev mode, skip pairing — mock gateway has no WebSocket.
+            // Pairing is only required when connecting to the real gateway.
+            let devMode = UserDefaults.standard.bool(forKey: "settings.devMode")
+            isPaired = devMode ? true : NodePairingManager(keychain: RealKeychain()).isPaired
+            #else
             isPaired = NodePairingManager(keychain: RealKeychain()).isPaired
+            #endif
             // Request microphone + speech recognition authorization
             AVAudioSession.sharedInstance().requestRecordPermission { _ in }
             SFSpeechRecognizer.requestAuthorization { _ in }
