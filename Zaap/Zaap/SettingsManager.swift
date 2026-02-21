@@ -76,11 +76,19 @@ final class SettingsManager {
         return h
     }
 
+    /// True when the hostname refers to a local/dev server (uses http instead of https).
+    var isLocalHostname: Bool {
+        let h = hostname.lowercased()
+        let bare = h.components(separatedBy: ":").first ?? h
+        return bare == "localhost" || bare == "127.0.0.1" || bare.hasSuffix(".local")
+    }
+
     /// Returns the base webhook URL built from the hostname, or nil if empty.
     var webhookURLValue: URL? {
         let h = hostname
         guard !h.isEmpty else { return nil }
-        return URL(string: "https://\(h)/hooks")
+        let scheme = isLocalHostname ? "http" : "https"
+        return URL(string: "\(scheme)://\(h)/hooks")
     }
 
     /// Build a full URL for a specific service path (e.g. "/location").
