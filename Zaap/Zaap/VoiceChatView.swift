@@ -4,6 +4,7 @@ import Speech
 struct VoiceChatView: View {
     @StateObject private var viewModel: VoiceChatViewModel
     @StateObject private var coordinator: VoiceChatCoordinator
+    @State private var isPaired = false
 
     init() {
         let vm = VoiceChatViewModel()
@@ -30,6 +31,25 @@ struct VoiceChatView: View {
     }
 
     var body: some View {
+        Group {
+            if isPaired {
+                micUI
+            } else {
+                VoicePairingView(onPaired: {
+                    isPaired = true
+                })
+            }
+        }
+        .navigationTitle("Voice")
+        .onAppear {
+            isPaired = NodePairingManager(keychain: RealKeychain()).isPaired
+            // Request microphone + speech recognition authorization
+            AVAudioSession.sharedInstance().requestRecordPermission { _ in }
+            SFSpeechRecognizer.requestAuthorization { _ in }
+        }
+    }
+
+    private var micUI: some View {
         VStack(spacing: 0) {
             // Conversation log
             ScrollViewReader { proxy in
@@ -55,7 +75,7 @@ struct VoiceChatView: View {
                     }
                     .padding()
                 }
-                .onChange(of: viewModel.conversationLog.count) { _ in
+                .onChange(of: viewModel.conversationLog.count) { _, _ in
                     if let last = viewModel.conversationLog.last {
                         withAnimation {
                             proxy.scrollTo(last.id, anchor: .bottom)
@@ -72,12 +92,6 @@ struct VoiceChatView: View {
                 micButton
             }
             .padding()
-        }
-        .navigationTitle("Voice")
-        .onAppear {
-            // Request microphone + speech recognition authorization
-            AVAudioSession.sharedInstance().requestRecordPermission { _ in }
-            SFSpeechRecognizer.requestAuthorization { _ in }
         }
     }
 

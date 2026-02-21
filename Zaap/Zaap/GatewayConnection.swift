@@ -169,6 +169,16 @@ final class GatewayConnection {
         ])
     }
 
+    func sendPairRequest() async throws {
+        let identity = try pairingManager.generateIdentity()
+        try await sendEvent("node.pair.request", payload: [
+            "nodeId": identity.nodeId,
+            "publicKey": identity.publicKeyBase64,
+            "platform": "iOS",
+            "name": "Zaap"
+        ])
+    }
+
     // MARK: - Backoff Calculation
 
     /// Calculate backoff delay for a given attempt number.

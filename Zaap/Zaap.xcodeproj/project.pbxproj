@@ -75,6 +75,7 @@
 		U10001 /* PairingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = U20001 /* PairingViewModel.swift */; };
 		U10002 /* PairingViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = U20002 /* PairingViewModelTests.swift */; };
 		U10003 /* PairingSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = U20003 /* PairingSectionView.swift */; };
+		U10004 /* PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = U20004 /* PairingView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -160,6 +161,7 @@
 		U20001 /* PairingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingViewModel.swift; sourceTree = "<group>"; };
 		U20002 /* PairingViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingViewModelTests.swift; sourceTree = "<group>"; };
 		U20003 /* PairingSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingSectionView.swift; sourceTree = "<group>"; };
+		U20004 /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -230,6 +232,7 @@
 				T20001 /* VoiceChatCoordinator.swift */,
 				U20001 /* PairingViewModel.swift */,
 				U20003 /* PairingSectionView.swift */,
+				U20004 /* PairingView.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -420,6 +423,7 @@
 				T10001 /* VoiceChatCoordinator.swift in Sources */,
 				U10001 /* PairingViewModel.swift in Sources */,
 				U10003 /* PairingSectionView.swift in Sources */,
+				U10004 /* PairingView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
