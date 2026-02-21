@@ -12,8 +12,7 @@ All new features must have tests written first. Red → Green → Refactor.
 ## How to Work on This Project
 
 **If you were spawned by the orchestrator** (your task message includes `Project:` and `Bead:` fields):
-→ Follow `~/.openclaw/skills/projects/references/worker.md`
-  (or online: https://raw.githubusercontent.com/slagyr/project-skill/refs/heads/main/projects/references/worker.md)
+→ Follow `~/.openclaw/skills/braids/references/worker.md`
 
 **If you're here on your own** (manual session, human asked you to help, etc.):
 1. Read `.project/PROJECT.md` — understand the goal and guardrails
@@ -25,12 +24,13 @@ All new features must have tests written first. Red → Green → Refactor.
 ## Quick Reference
 
 ```bash
-bd ready              # List unblocked tasks
-bd show <id>          # View task details
-bd update <id> --claim  # Claim a task
-bd update <id> -s closed  # Close completed task
-bd list               # List all tasks
-bd dep list <id>      # List dependencies
+# All bd commands require BEADS_IGNORE_REPO_MISMATCH=1 in this project
+BEADS_IGNORE_REPO_MISMATCH=1 bd ready              # List unblocked tasks
+BEADS_IGNORE_REPO_MISMATCH=1 bd show <id>          # View task details
+BEADS_IGNORE_REPO_MISMATCH=1 bd update <id> --claim  # Claim a task
+BEADS_IGNORE_REPO_MISMATCH=1 bd update <id> -s closed  # Close completed task
+BEADS_IGNORE_REPO_MISMATCH=1 bd list               # List all tasks
+BEADS_IGNORE_REPO_MISMATCH=1 bd dep list <id>      # List dependencies
 ```
 
 ## Git Hooks Setup
