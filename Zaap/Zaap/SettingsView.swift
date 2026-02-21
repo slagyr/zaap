@@ -181,20 +181,6 @@ struct SettingsView: View {
                 }
             }
 
-            if settings.isConfigured {
-                Section {
-                    LabeledContent("Endpoint", value: "https://\(settings.hostname)/hooks")
-                    LabeledContent("Status") {
-                        Label(
-                            settings.locationTrackingEnabled ? "Active" : "Inactive",
-                            systemImage: settings.locationTrackingEnabled ? "location.fill" : "location.slash"
-                        )
-                        .foregroundStyle(settings.locationTrackingEnabled ? .green : .secondary)
-                    }
-                } header: {
-                    Text("Summary")
-                }
-            }
             RequestLogView(log: requestLog)
 
             #if targetEnvironment(simulator)
