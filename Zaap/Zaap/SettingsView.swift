@@ -24,6 +24,10 @@ struct SettingsView: View {
     @State private var heartRateSendStatus: SendNowStatus = .idle
     @State private var activitySendStatus: SendNowStatus = .idle
 
+    #if targetEnvironment(simulator)
+    @StateObject private var seeder = HealthDataSeeder()
+    #endif
+
     var body: some View {
         Form {
             if let pairingVM = pairingViewModel {
@@ -192,6 +196,42 @@ struct SettingsView: View {
                 }
             }
             RequestLogView(log: requestLog)
+
+            #if targetEnvironment(simulator)
+            Section {
+                Button {
+                    seeder.seedAll()
+                } label: {
+                    HStack {
+                        Image(systemName: "waveform.path.ecg")
+                        Text("Seed Health Data")
+                    }
+                }
+                .disabled(seeder.status == .seeding)
+
+                switch seeder.status {
+                case .seeding:
+                    HStack(spacing: 8) {
+                        ProgressView().controlSize(.small)
+                        Text("Seeding…").foregroundStyle(.secondary).font(.subheadline)
+                    }
+                case .done(let msg):
+                    Label(msg, systemImage: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                case .failed(let msg):
+                    Label(msg, systemImage: "xmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                case .idle:
+                    EmptyView()
+                }
+            } header: {
+                Text("Developer")
+            } footer: {
+                Text("Inserts synthetic sleep, heart rate, activity, and workout data into the simulator's HealthKit store.")
+            }
+            #endif
         }
         .navigationTitle("Settings")
         .onAppear { gatewayBrowser?.startSearching() }

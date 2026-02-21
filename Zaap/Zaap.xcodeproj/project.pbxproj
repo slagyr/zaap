@@ -68,6 +68,7 @@
 		R10003 /* VoiceChatViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20003 /* VoiceChatViewModelTests.swift */; };
 		S10001 /* HealthKitObserverService.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20001 /* HealthKitObserverService.swift */; };
 		S10002 /* ObserverDeliveryAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20002 /* ObserverDeliveryAdapter.swift */; };
+		S10004 /* HealthDataSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20004 /* HealthDataSeeder.swift */; };
 		S10003 /* HealthKitObserverServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20003 /* HealthKitObserverServiceTests.swift */; };
 		T10001 /* VoiceChatCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20001 /* VoiceChatCoordinator.swift */; };
 		T10002 /* VoiceChatCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20002 /* VoiceChatCoordinatorTests.swift */; };
@@ -152,6 +153,7 @@
 		R20003 /* VoiceChatViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChatViewModelTests.swift; sourceTree = "<group>"; };
 		S20001 /* HealthKitObserverService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitObserverService.swift; sourceTree = "<group>"; };
 		S20002 /* ObserverDeliveryAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObserverDeliveryAdapter.swift; sourceTree = "<group>"; };
+		S20004 /* HealthDataSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthDataSeeder.swift; sourceTree = "<group>"; };
 		S20003 /* HealthKitObserverServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitObserverServiceTests.swift; sourceTree = "<group>"; };
 		T20001 /* VoiceChatCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChatCoordinator.swift; sourceTree = "<group>"; };
 		T20002 /* VoiceChatCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChatCoordinatorTests.swift; sourceTree = "<group>"; };
@@ -224,6 +226,7 @@
 				R20002 /* VoiceChatView.swift */,
 				S20001 /* HealthKitObserverService.swift */,
 				S20002 /* ObserverDeliveryAdapter.swift */,
+				S20004 /* HealthDataSeeder.swift */,
 				T20001 /* VoiceChatCoordinator.swift */,
 				U20001 /* PairingViewModel.swift */,
 				U20003 /* PairingSectionView.swift */,
@@ -413,6 +416,7 @@
 				R10002 /* VoiceChatView.swift in Sources */,
 				S10001 /* HealthKitObserverService.swift in Sources */,
 				S10002 /* ObserverDeliveryAdapter.swift in Sources */,
+				S10004 /* HealthDataSeeder.swift in Sources */,
 				T10001 /* VoiceChatCoordinator.swift in Sources */,
 				U10001 /* PairingViewModel.swift in Sources */,
 				U10003 /* PairingSectionView.swift in Sources */,
