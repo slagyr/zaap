@@ -59,6 +59,8 @@
 		O10001 /* VoiceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = O20001 /* VoiceEngine.swift */; };
 		O10002 /* VoiceEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = O20002 /* VoiceEngineTests.swift */; };
 		O10003 /* VoiceEngineAdapters.swift in Sources */ = {isa = PBXBuildFile; fileRef = O20003 /* VoiceEngineAdapters.swift */; };
+		P10001 /* GatewayConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20001 /* GatewayConnection.swift */; };
+		P10002 /* GatewayConnectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = P20002 /* GatewayConnectionTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -128,6 +130,8 @@
 		O20001 /* VoiceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceEngine.swift; sourceTree = "<group>"; };
 		O20002 /* VoiceEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceEngineTests.swift; sourceTree = "<group>"; };
 		O20003 /* VoiceEngineAdapters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceEngineAdapters.swift; sourceTree = "<group>"; };
+		P20001 /* GatewayConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayConnection.swift; sourceTree = "<group>"; };
+		P20002 /* GatewayConnectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayConnectionTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -188,6 +192,7 @@
 				N20001 /* ResponseSpeaker.swift */,
 				O20001 /* VoiceEngine.swift */,
 				O20003 /* VoiceEngineAdapters.swift */,
+				P20001 /* GatewayConnection.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -238,6 +243,7 @@
 				M20002 /* NodePairingManagerTests.swift */,
 				N20002 /* ResponseSpeakerTests.swift */,
 				O20002 /* VoiceEngineTests.swift */,
+				P20002 /* GatewayConnectionTests.swift */,
 			);
 			path = ZaapTests;
 			sourceTree = "<group>";
@@ -362,6 +368,7 @@
 				N10001 /* ResponseSpeaker.swift in Sources */,
 				O10001 /* VoiceEngine.swift in Sources */,
 				O10003 /* VoiceEngineAdapters.swift in Sources */,
+				P10001 /* GatewayConnection.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -391,6 +398,7 @@
 				M10002 /* NodePairingManagerTests.swift in Sources */,
 				N10002 /* ResponseSpeakerTests.swift in Sources */,
 				O10002 /* VoiceEngineTests.swift in Sources */,
+				P10002 /* GatewayConnectionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
