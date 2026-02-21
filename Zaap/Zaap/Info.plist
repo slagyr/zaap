@@ -17,5 +17,9 @@
 	<string>Zaap reads your health data (sleep, heart rate, steps, workouts) to relay summaries to your configured webhook endpoint.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Zaap requests write access to HealthKit as required by the framework. No health data is written by this app.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Zaap uses speech recognition to transcribe your voice so you can talk to your AI assistant.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Zaap uses the microphone to capture your voice for the voice chat feature.</string>
 </dict>
 </plist>
