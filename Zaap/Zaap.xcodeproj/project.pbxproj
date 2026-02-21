@@ -69,6 +69,11 @@
 		S10001 /* HealthKitObserverService.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20001 /* HealthKitObserverService.swift */; };
 		S10002 /* ObserverDeliveryAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20002 /* ObserverDeliveryAdapter.swift */; };
 		S10003 /* HealthKitObserverServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20003 /* HealthKitObserverServiceTests.swift */; };
+		T10001 /* VoiceChatCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20001 /* VoiceChatCoordinator.swift */; };
+		T10002 /* VoiceChatCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20002 /* VoiceChatCoordinatorTests.swift */; };
+		U10001 /* PairingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = U20001 /* PairingViewModel.swift */; };
+		U10002 /* PairingViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = U20002 /* PairingViewModelTests.swift */; };
+		U10003 /* PairingSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = U20003 /* PairingSectionView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -148,6 +153,11 @@
 		S20001 /* HealthKitObserverService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitObserverService.swift; sourceTree = "<group>"; };
 		S20002 /* ObserverDeliveryAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObserverDeliveryAdapter.swift; sourceTree = "<group>"; };
 		S20003 /* HealthKitObserverServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitObserverServiceTests.swift; sourceTree = "<group>"; };
+		T20001 /* VoiceChatCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChatCoordinator.swift; sourceTree = "<group>"; };
+		T20002 /* VoiceChatCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChatCoordinatorTests.swift; sourceTree = "<group>"; };
+		U20001 /* PairingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingViewModel.swift; sourceTree = "<group>"; };
+		U20002 /* PairingViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingViewModelTests.swift; sourceTree = "<group>"; };
+		U20003 /* PairingSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingSectionView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -214,6 +224,9 @@
 				R20002 /* VoiceChatView.swift */,
 				S20001 /* HealthKitObserverService.swift */,
 				S20002 /* ObserverDeliveryAdapter.swift */,
+				T20001 /* VoiceChatCoordinator.swift */,
+				U20001 /* PairingViewModel.swift */,
+				U20003 /* PairingSectionView.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -268,6 +281,8 @@
 				Q20002 /* GatewayBrowserTests.swift */,
 				R20003 /* VoiceChatViewModelTests.swift */,
 				S20003 /* HealthKitObserverServiceTests.swift */,
+				T20002 /* VoiceChatCoordinatorTests.swift */,
+				U20002 /* PairingViewModelTests.swift */,
 			);
 			path = ZaapTests;
 			sourceTree = "<group>";
@@ -398,6 +413,9 @@
 				R10002 /* VoiceChatView.swift in Sources */,
 				S10001 /* HealthKitObserverService.swift in Sources */,
 				S10002 /* ObserverDeliveryAdapter.swift in Sources */,
+				T10001 /* VoiceChatCoordinator.swift in Sources */,
+				U10001 /* PairingViewModel.swift in Sources */,
+				U10003 /* PairingSectionView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -431,6 +449,8 @@
 				Q10002 /* GatewayBrowserTests.swift in Sources */,
 				R10003 /* VoiceChatViewModelTests.swift in Sources */,
 				S10003 /* HealthKitObserverServiceTests.swift in Sources */,
+				T10002 /* VoiceChatCoordinatorTests.swift in Sources */,
+				U10002 /* PairingViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -13,6 +13,7 @@ struct SettingsView: View {
     var testService: WebhookTestService?
     @ObservedObject var requestLog: RequestLog = .shared
     var gatewayBrowser: GatewayBrowserViewModel?
+    var pairingViewModel: PairingViewModel?
 
     @State private var isTokenVisible = false
     @State private var isTesting = false
@@ -25,6 +26,10 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            if let pairingVM = pairingViewModel {
+                PairingSectionView(viewModel: pairingVM)
+            }
+
             if let browser = gatewayBrowser, browser.hasDiscoveredGateways {
                 Section {
                     ForEach(browser.discoveredGateways) { gateway in

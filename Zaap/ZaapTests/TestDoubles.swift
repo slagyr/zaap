@@ -175,6 +175,95 @@ final class MockWorkoutReader: WorkoutReading {
     }
 }
 
+// MARK: - Mock Voice Engine
+
+final class MockVoiceEngine: VoiceEngineProtocol {
+    var isListening = false
+    var currentTranscript = ""
+    var onUtteranceComplete: ((String) -> Void)?
+    var onError: ((VoiceEngineError) -> Void)?
+    var startListeningCalled = false
+    var stopListeningCalled = false
+
+    func startListening() {
+        startListeningCalled = true
+        isListening = true
+    }
+
+    func stopListening() {
+        stopListeningCalled = true
+        isListening = false
+    }
+}
+
+// MARK: - Mock Gateway Connecting
+
+final class MockGatewayConnecting: GatewayConnecting {
+    var state: ConnectionState = .disconnected
+    weak var delegate: GatewayConnectionDelegate?
+    var connectURL: URL?
+    var disconnectCalled = false
+    var sentTranscripts: [(text: String, sessionKey: String)] = []
+    var shouldThrowOnSend: Error?
+
+    func connect(to url: URL) {
+        connectURL = url
+        state = .connecting
+    }
+
+    func disconnect() {
+        disconnectCalled = true
+        state = .disconnected
+    }
+
+    func sendVoiceTranscript(_ text: String, sessionKey: String) async throws {
+        if let error = shouldThrowOnSend { throw error }
+        sentTranscripts.append((text: text, sessionKey: sessionKey))
+    }
+
+    func simulateConnect() {
+        state = .connected
+        delegate?.gatewayDidConnect()
+    }
+
+    func simulateDisconnect() {
+        state = .disconnected
+        delegate?.gatewayDidDisconnect()
+    }
+
+    func simulateEvent(_ event: String, payload: [String: Any]) {
+        delegate?.gatewayDidReceiveEvent(event, payload: payload)
+    }
+}
+
+// MARK: - Mock Response Speaking
+
+final class MockResponseSpeaking: ResponseSpeaking {
+    var state: SpeakerState = .idle
+    var spokenTexts: [String] = []
+    var bufferedTokens: [String] = []
+    var flushCalled = false
+    var interruptCalled = false
+
+    func speakImmediate(_ text: String) {
+        spokenTexts.append(text)
+        state = .speaking
+    }
+
+    func bufferToken(_ token: String) {
+        bufferedTokens.append(token)
+    }
+
+    func flush() {
+        flushCalled = true
+    }
+
+    func interrupt() {
+        interruptCalled = true
+        state = .idle
+    }
+}
+
 // MARK: - Mock Speech Synthesizer
 
 final class MockSpeechSynthesizer: SpeechSynthesizing {
