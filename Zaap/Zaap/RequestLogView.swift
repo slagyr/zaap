@@ -5,11 +5,15 @@ struct RequestLogView: View {
     @ObservedObject var log: RequestLog
     @State private var showAll = false
 
-    private static let defaultVisible = 10
+    private static let defaultVisible = 5
 
     private var visibleEntries: [RequestLogEntry] {
-        let all = log.entries.reversed() as [RequestLogEntry]
+        let all = Array(log.entries.reversed())
         return showAll ? all : Array(all.prefix(Self.defaultVisible))
+    }
+
+    private var hiddenCount: Int {
+        max(0, log.entries.count - Self.defaultVisible)
     }
 
     var body: some View {
@@ -23,7 +27,7 @@ struct RequestLogView: View {
                     RequestLogEntryRow(entry: entry)
                 }
 
-                if log.entries.count > Self.defaultVisible {
+                if hiddenCount > 0 || showAll {
                     Button {
                         withAnimation {
                             showAll.toggle()
@@ -31,9 +35,7 @@ struct RequestLogView: View {
                     } label: {
                         HStack {
                             Spacer()
-                            Text(showAll
-                                ? "Show Less"
-                                : "Show More (\(log.entries.count - Self.defaultVisible) more)")
+                            Text(showAll ? "Show Less" : "Show More (\(hiddenCount) more)")
                                 .font(.subheadline)
                                 .foregroundStyle(Color.accentColor)
                             Spacer()
@@ -71,42 +73,47 @@ struct RequestLogEntryRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack {
+            // Single line: ● 09:13:26  /hooks/location        200  145ms
+            HStack(spacing: 6) {
                 Circle()
-                    .fill(entry.isSuccess ? .green : .red)
+                    .fill(entry.isSuccess ? Color.green : Color.red)
                     .frame(width: 8, height: 8)
 
+                Text(Self.timeFormatter.string(from: entry.timestamp))
+                    .font(.caption2.monospaced())
+                    .foregroundStyle(.secondary)
+
                 Text(entry.path)
-                    .font(.subheadline.monospaced())
+                    .font(.caption.monospaced())
                     .fontWeight(.medium)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
 
                 Spacer()
 
                 if let code = entry.statusCode {
                     Text("\(code)")
                         .font(.caption.monospaced())
-                        .foregroundStyle(entry.isSuccess ? .green : .red)
+                        .foregroundStyle(entry.isSuccess ? Color.green : Color.red)
+                } else if entry.errorMessage != nil {
+                    Text("ERR")
+                        .font(.caption.monospaced())
+                        .foregroundStyle(Color.red)
                 }
 
                 Text("\(entry.responseTimeMs)ms")
-                    .font(.caption)
+                    .font(.caption2.monospaced())
                     .foregroundStyle(.secondary)
             }
 
-            HStack {
-                Text(Self.timeFormatter.string(from: entry.timestamp))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-
+            if isExpanded {
                 if let error = entry.errorMessage {
                     Text(error)
                         .font(.caption2)
                         .foregroundStyle(.red)
-                        .lineLimit(1)
+                        .lineLimit(2)
                 }
-            }
 
-            if isExpanded {
                 Text(entry.requestBody)
                     .font(.caption2.monospaced())
                     .foregroundStyle(.secondary)
