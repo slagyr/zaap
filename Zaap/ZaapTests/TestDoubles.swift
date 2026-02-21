@@ -1,6 +1,7 @@
 import Foundation
 import CoreLocation
 import Combine
+import AVFoundation
 @testable import Zaap
 
 // MARK: - Mock Webhook Client
@@ -171,5 +172,32 @@ final class MockWorkoutReader: WorkoutReading {
             throw error
         }
         return sessionsToReturn
+    }
+}
+
+// MARK: - Mock Speech Synthesizer
+
+final class MockSpeechSynthesizer: SpeechSynthesizing {
+    weak var delegate: (any AVSpeechSynthesizerDelegate)?
+    var isSpeakingValue = false
+    var isSpeaking: Bool { isSpeakingValue }
+    var spokenTexts: [String] = []
+    var stopCalled = false
+
+    func speak(_ utterance: AVSpeechUtterance) {
+        spokenTexts.append(utterance.speechString)
+    }
+
+    @discardableResult
+    func stopSpeaking(at boundary: AVSpeechBoundary) -> Bool {
+        stopCalled = true
+        return true
+    }
+
+    /// Simulate the delegate callback when an utterance finishes.
+    func simulateDidFinish() {
+        if let speaker = delegate as? ResponseSpeaker {
+            speaker.handleDidFinish()
+        }
     }
 }
