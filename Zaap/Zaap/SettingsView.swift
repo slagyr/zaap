@@ -26,6 +26,7 @@ struct SettingsView: View {
 
     #if targetEnvironment(simulator)
     @StateObject private var seeder = HealthDataSeeder()
+    @AppStorage("settings.devMode") private var devMode: Bool = true
     #endif
 
     var body: some View {
@@ -212,15 +213,28 @@ struct SettingsView: View {
                 case .idle:
                     EmptyView()
                 }
+
+                Toggle("Connection: Dev / Prod", isOn: $devMode)
+                    .onChange(of: devMode) { _, isDev in
+                        applyDevMode(isDev)
+                    }
             } header: {
                 Text("Developer")
             } footer: {
-                Text("Inserts synthetic sleep, heart rate, activity, and workout data into the simulator's HealthKit store.")
+                Text(devMode
+                     ? "Dev: localhost:8788"
+                     : "Prod: REDACTED_HOSTNAME")
+                    .font(.caption)
             }
             #endif
         }
         .navigationTitle("Settings")
-        .onAppear { gatewayBrowser?.startSearching() }
+        .onAppear {
+            gatewayBrowser?.startSearching()
+            #if targetEnvironment(simulator)
+            applyDevMode(devMode)
+            #endif
+        }
         .onDisappear { gatewayBrowser?.stopSearching() }
     }
 
@@ -288,6 +302,20 @@ struct SettingsView: View {
         }
         .padding(.vertical, 2)
     }
+
+    // MARK: - Developer (Simulator)
+
+    #if targetEnvironment(simulator)
+    private func applyDevMode(_ isDev: Bool) {
+        if isDev {
+            settings.webhookURL = "localhost:8788"
+            settings.authToken = "mock"
+        } else {
+            settings.webhookURL = "REDACTED_HOSTNAME"
+            settings.authToken = "REDACTED_HOOKS_TOKEN"
+        }
+    }
+    #endif
 
     // MARK: - Test Connection
 
