@@ -85,7 +85,7 @@ final class RequestLog: ObservableObject {
     @Published private(set) var entries: [RequestLogEntry] = []
     let capacity: Int
 
-    init(capacity: Int = 10) {
+    init(capacity: Int = 100) {
         self.capacity = capacity
     }
 
