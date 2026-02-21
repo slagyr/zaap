@@ -23,9 +23,17 @@ class DeliveryLogService: DeliveryLogging {
     }
 
     func record(dataType: DeliveryDataType, timestamp: Date, success: Bool, errorMessage: String? = nil) {
-        let record = DeliveryRecord(dataType: dataType, timestamp: timestamp, success: success, errorMessage: errorMessage)
-        context.insert(record)
-        try? context.save()
+        // ModelContext requires main queue access — dispatch if called from background thread.
+        DispatchQueue.main.async { [self] in
+            let entry = DeliveryRecord(
+                dataType: dataType,
+                timestamp: timestamp,
+                success: success,
+                errorMessage: errorMessage
+            )
+            context.insert(entry)
+            try? context.save()
+        }
     }
 
     func recordsGroupedByTypeAndDay(lastDays: Int) throws -> [DeliveryGroupKey: [DeliveryRecord]] {
