@@ -7,6 +7,7 @@ protocol VoiceEngineProtocol: AnyObject {
     var isListening: Bool { get }
     var currentTranscript: String { get }
     var onUtteranceComplete: ((String) -> Void)? { get set }
+    var onPartialTranscript: ((String) -> Void)? { get set }
     var onError: ((VoiceEngineError) -> Void)? { get set }
     func startListening()
     func stopListening()
@@ -41,7 +42,7 @@ extension ResponseSpeaker: ResponseSpeaking {}
 /// → receive chat.event stream → ResponseSpeaker speaks response.
 /// Handles interrupts when user speaks while TTS is playing.
 @MainActor
-final class VoiceChatCoordinator: GatewayConnectionDelegate {
+final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
     private let viewModel: VoiceChatViewModel
     private let voiceEngine: VoiceEngineProtocol
@@ -61,8 +62,25 @@ final class VoiceChatCoordinator: GatewayConnectionDelegate {
 
         gateway.delegate = self
 
+        voiceEngine.onPartialTranscript = { [weak self] text in
+            self?.viewModel.updatePartialTranscript(text)
+        }
+
         voiceEngine.onUtteranceComplete = { [weak self] text in
             self?.handleUtteranceComplete(text)
+        }
+
+        voiceEngine.onError = { [weak self] error in
+            switch error {
+            case .notAuthorized:
+                self?.viewModel.updatePartialTranscript("⚠️ Microphone not authorized")
+            case .recognizerUnavailable:
+                self?.viewModel.updatePartialTranscript("⚠️ Speech recognizer unavailable")
+            case .recognitionFailed(let msg):
+                self?.viewModel.updatePartialTranscript("⚠️ \(msg)")
+            case .audioSessionFailed(let msg):
+                self?.viewModel.updatePartialTranscript("⚠️ Audio error: \(msg)")
+            }
         }
     }
 

@@ -80,6 +80,7 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
 
     // Callbacks
     var onUtteranceComplete: ((String) -> Void)?
+    var onPartialTranscript: ((String) -> Void)?
     var onError: ((VoiceEngineError) -> Void)?
 
     // Dependencies
@@ -133,12 +134,15 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
             return
         }
 
-        let request = MockSpeechRecognitionRequest()
+        let request = RealSpeechRecognitionRequest()
         recognitionRequest = request
 
         let format = audioEngine.inputFormat(forBus: 0)
-        audioEngine.installTap(onBus: 0, bufferSize: 1024, format: format) { _ in
-            // Audio buffer appended to recognition request in real implementation
+        audioEngine.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak request] buffer in
+            // Feed audio to the real speech recognition request
+            if let pcmBuffer = buffer as Any as? AVAudioPCMBuffer {
+                request?.append(pcmBuffer)
+            }
         }
 
         recognitionTask = speechRecognizer.recognitionTask(with: request) { [weak self] result, error in
@@ -151,6 +155,7 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
                 guard let result = result else { return }
 
                 self.currentTranscript = result.bestTranscriptionString
+                self.onPartialTranscript?(self.currentTranscript)
                 self.resetSilenceTimer()
 
                 if result.isFinal {
@@ -201,6 +206,10 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         silenceTimer = nil
     }
 }
+
+// MARK: - VoiceEngineProtocol conformance
+
+extension VoiceEngine: VoiceEngineProtocol {}
 
 // MARK: - Concrete Request (used internally, mockable via protocol)
 

@@ -1,7 +1,33 @@
 import SwiftUI
+import Speech
 
 struct VoiceChatView: View {
-    @StateObject private var viewModel = VoiceChatViewModel()
+    @StateObject private var viewModel: VoiceChatViewModel
+    @StateObject private var coordinator: VoiceChatCoordinator
+
+    init() {
+        let vm = VoiceChatViewModel()
+        let engine = VoiceEngine(
+            speechRecognizer: RealSpeechRecognizer(),
+            audioEngine: RealAudioEngineProvider(),
+            audioSession: RealAudioSessionConfigurator(),
+            timerFactory: RealTimerFactory()
+        )
+        let gateway = GatewayConnection(
+            pairingManager: NodePairingManager(keychain: RealKeychain()),
+            webSocketFactory: URLSessionWebSocketFactory(),
+            networkMonitor: NWNetworkMonitor()
+        )
+        let speaker = ResponseSpeaker(synthesizer: AVSpeechSynthesizer())
+        let coord = VoiceChatCoordinator(
+            viewModel: vm,
+            voiceEngine: engine,
+            gateway: gateway,
+            speaker: speaker
+        )
+        _viewModel = StateObject(wrappedValue: vm)
+        _coordinator = StateObject(wrappedValue: coord)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -48,6 +74,11 @@ struct VoiceChatView: View {
             .padding()
         }
         .navigationTitle("Voice")
+        .onAppear {
+            // Request microphone + speech recognition authorization
+            AVAudioSession.sharedInstance().requestRecordPermission { _ in }
+            SFSpeechRecognizer.requestAuthorization { _ in }
+        }
     }
 
     @ViewBuilder
@@ -78,7 +109,18 @@ struct VoiceChatView: View {
     }
 
     private var micButton: some View {
-        Button(action: { viewModel.tapMic() }) {
+        Button(action: {
+            switch viewModel.state {
+            case .idle:
+                if let url = SettingsManager.shared.voiceWebSocketURL {
+                    coordinator.startSession(gatewayURL: url)
+                } else {
+                    viewModel.updatePartialTranscript("⚠️ Configure gateway URL in Settings first")
+                }
+            default:
+                coordinator.stopSession()
+            }
+        }) {
             Image(systemName: micIconName)
                 .font(.system(size: 32))
                 .frame(width: 72, height: 72)

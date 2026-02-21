@@ -1,4 +1,6 @@
 import AVFoundation
+import Network
+import Security
 import Speech
 
 // MARK: - Real SFSpeechRecognizer Adapter
@@ -156,5 +158,82 @@ final class RealAudioSessionConfigurator: AudioSessionConfiguring {
         if let observer = interruptionObserver {
             NotificationCenter.default.removeObserver(observer)
         }
+    }
+}
+
+// MARK: - Production WebSocket Factory
+
+final class URLSessionWebSocketFactory: WebSocketFactory {
+    func createWebSocketTask(with url: URL) -> WebSocketTaskProtocol {
+        URLSession.shared.webSocketTask(with: url)
+    }
+}
+
+// MARK: - Production Keychain
+
+final class RealKeychain: KeychainAccessing {
+    private let service = "co.airworthy.zaap"
+
+    func save(key: String, data: Data) throws {
+        let query: [String: Any] = [
+            kSecClass as String:            kSecClassGenericPassword,
+            kSecAttrService as String:      service,
+            kSecAttrAccount as String:      key,
+        ]
+        SecItemDelete(query as CFDictionary)
+        var addQuery = query
+        addQuery[kSecValueData as String] = data
+        let status = SecItemAdd(addQuery as CFDictionary, nil)
+        guard status == errSecSuccess else {
+            throw KeychainError.saveFailed(status)
+        }
+    }
+
+    func load(key: String) -> Data? {
+        let query: [String: Any] = [
+            kSecClass as String:            kSecClassGenericPassword,
+            kSecAttrService as String:      service,
+            kSecAttrAccount as String:      key,
+            kSecReturnData as String:       true,
+            kSecMatchLimit as String:       kSecMatchLimitOne,
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess else { return nil }
+        return result as? Data
+    }
+
+    func delete(key: String) {
+        let query: [String: Any] = [
+            kSecClass as String:        kSecClassGenericPassword,
+            kSecAttrService as String:  service,
+            kSecAttrAccount as String:  key,
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
+}
+
+enum KeychainError: Error {
+    case saveFailed(OSStatus)
+}
+
+// MARK: - Production Network Monitor
+
+final class NWNetworkMonitor: NetworkPathMonitoring {
+    private let monitor = NWPathMonitor()
+    private let queue = DispatchQueue(label: "co.airworthy.zaap.nwmonitor")
+    private(set) var isConnected: Bool = true
+
+    func start(onPathUpdate: @escaping (Bool) -> Void) {
+        monitor.pathUpdateHandler = { [weak self] path in
+            let connected = path.status == .satisfied
+            self?.isConnected = connected
+            onPathUpdate(connected)
+        }
+        monitor.start(queue: queue)
+    }
+
+    func stop() {
+        monitor.cancel()
     }
 }

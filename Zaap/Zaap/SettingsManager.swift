@@ -96,6 +96,14 @@ final class SettingsManager {
         webhookURLValue?.appending(path: path)
     }
 
+    /// WebSocket URL for the voice gateway connection (ws:// for local, wss:// for remote).
+    var voiceWebSocketURL: URL? {
+        let h = hostname
+        guard !h.isEmpty else { return nil }
+        let scheme = isLocalHostname ? "ws" : "wss"
+        return URL(string: "\(scheme)://\(h)")
+    }
+
     /// True when minimum configuration is present (valid hostname + non-empty token).
     var isConfigured: Bool {
         webhookURLValue != nil && !authToken.isEmpty
