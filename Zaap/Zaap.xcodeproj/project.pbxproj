@@ -58,6 +58,7 @@
 		N10002 /* ResponseSpeakerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = N20002 /* ResponseSpeakerTests.swift */; };
 		O10001 /* VoiceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = O20001 /* VoiceEngine.swift */; };
 		O10002 /* VoiceEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = O20002 /* VoiceEngineTests.swift */; };
+		O10003 /* VoiceEngineAdapters.swift in Sources */ = {isa = PBXBuildFile; fileRef = O20003 /* VoiceEngineAdapters.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -126,6 +127,7 @@
 		N20002 /* ResponseSpeakerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseSpeakerTests.swift; sourceTree = "<group>"; };
 		O20001 /* VoiceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceEngine.swift; sourceTree = "<group>"; };
 		O20002 /* VoiceEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceEngineTests.swift; sourceTree = "<group>"; };
+		O20003 /* VoiceEngineAdapters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceEngineAdapters.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -185,6 +187,7 @@
 				M20001 /* NodePairingManager.swift */,
 				N20001 /* ResponseSpeaker.swift */,
 				O20001 /* VoiceEngine.swift */,
+				O20003 /* VoiceEngineAdapters.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -358,6 +361,7 @@
 				M10001 /* NodePairingManager.swift in Sources */,
 				N10001 /* ResponseSpeaker.swift in Sources */,
 				O10001 /* VoiceEngine.swift in Sources */,
+				O10003 /* VoiceEngineAdapters.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
