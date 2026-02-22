@@ -295,7 +295,7 @@ final class GatewayConnection {
                     "minProtocol": 3,
                     "maxProtocol": 3,
                     "client": [
-                        "id": "zaap",
+                        "id": "ios-node",
                         "mode": "node",
                         "platform": "ios",
                         "version": "1.0"
