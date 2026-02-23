@@ -56,15 +56,19 @@ struct ZaapApp: App {
         HeartRateDeliveryService.shared.configure(deliveryLog: deliveryLog)
         ActivityDeliveryService.shared.configure(deliveryLog: deliveryLog)
         WorkoutDeliveryService.shared.configure(deliveryLog: deliveryLog)
+        #if !targetEnvironment(simulator)
+        // On real devices, auto-deliver on launch and start background observers.
+        // In the simulator, all delivery is manual-only (Developer section) to avoid
+        // sending seeded mock data to the real gateway.
         LocationDeliveryService.shared.start()
         SleepDeliveryService.shared.start()
         HeartRateDeliveryService.shared.start()
         ActivityDeliveryService.shared.start()
         WorkoutDeliveryService.shared.start()
 
-        // Start HealthKit observer queries for background delivery
         let deliveryAdapter = ObserverDeliveryAdapter()
         HealthKitObserverService.shared.configure(deliveryDelegate: deliveryAdapter)
         HealthKitObserverService.shared.start()
+        #endif
     }
 }
