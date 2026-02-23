@@ -76,7 +76,10 @@ final class ResponseSpeaker: NSObject, AVSpeechSynthesizerDelegate {
         guard !trimmed.isEmpty else { return }
 
         let utterance = AVSpeechUtterance(string: trimmed)
-        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+        let voiceId = SettingsManager.shared.ttsVoiceIdentifier
+        utterance.voice = voiceId.isEmpty
+            ? AVSpeechSynthesisVoice(language: "en-US")
+            : AVSpeechSynthesisVoice(identifier: voiceId) ?? AVSpeechSynthesisVoice(language: "en-US")
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate
         utterance.prefersAssistiveTechnologySettings = false
         synthesizer.speak(utterance)

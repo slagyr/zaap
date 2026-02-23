@@ -63,6 +63,14 @@ final class VoiceChatViewModel: ObservableObject {
         }
     }
 
+    /// Set the full response text (for streaming sources that send cumulative text, not incremental tokens)
+    func setResponseText(_ text: String) {
+        responseText = text
+        if state == .processing {
+            state = .speaking
+        }
+    }
+
     func handleResponseComplete() {
         if !responseText.isEmpty {
             conversationLog.append(ConversationEntry(role: .agent, text: responseText))

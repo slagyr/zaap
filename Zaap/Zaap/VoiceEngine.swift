@@ -149,6 +149,9 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
             Task { @MainActor in
                 guard let self = self else { return }
                 if let error = error {
+                    // Ignore errors that fire after we intentionally stopped listening
+                    // (e.g. kAFAssistantErrorDomain 216 from cancelling the recognition task)
+                    guard self.isListening else { return }
                     self.onError?(.recognitionFailed(error.localizedDescription))
                     return
                 }

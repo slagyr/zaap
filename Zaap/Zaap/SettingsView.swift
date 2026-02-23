@@ -1,4 +1,5 @@
 import SwiftUI
+import AVFoundation
 
 enum SendNowStatus: Equatable {
     case idle
@@ -23,6 +24,9 @@ struct SettingsView: View {
     @State private var workoutSendStatus: SendNowStatus = .idle
     @State private var heartRateSendStatus: SendNowStatus = .idle
     @State private var activitySendStatus: SendNowStatus = .idle
+
+    // TTS voice picker
+    @State private var availableVoices: [(id: String, name: String)] = []
 
     #if targetEnvironment(simulator)
     @StateObject private var seeder = HealthDataSeeder()
@@ -178,6 +182,25 @@ struct SettingsView: View {
             }
 
             Section {
+                if availableVoices.isEmpty {
+                    Text("No voices available")
+                        .foregroundStyle(.secondary)
+                } else {
+                    Picker("Response Voice", selection: $settings.ttsVoiceIdentifier) {
+                        Text("System Default").tag("")
+                        ForEach(availableVoices, id: \.id) { voice in
+                            Text(voice.name).tag(voice.id)
+                        }
+                    }
+                    .pickerStyle(.navigationLink)
+                }
+            } header: {
+                Text("Voice")
+            } footer: {
+                Text("Choose the voice used when the assistant speaks responses. Enhanced and Premium voices sound more natural.")
+            }
+
+            Section {
                 dataSourceRow(
                     label: "Location Tracking",
                     isOn: $settings.locationTrackingEnabled,
@@ -232,6 +255,7 @@ struct SettingsView: View {
         .navigationTitle("Settings")
         .onAppear {
             gatewayBrowser?.startSearching()
+            loadAvailableVoices()
             #if targetEnvironment(simulator)
             applyDevMode(devMode)
             #endif
@@ -302,6 +326,41 @@ struct SettingsView: View {
             }
         }
         .padding(.vertical, 2)
+    }
+
+    // MARK: - Voice Loading
+
+    private func loadAvailableVoices() {
+        let all = AVSpeechSynthesisVoice.speechVoices()
+        let english = all.filter { $0.language.hasPrefix("en") }
+
+        // Sort: Premium first, then Enhanced, then everything else; alphabetical within tier
+        let sorted = english.sorted { a, b in
+            let tierA = voiceTier(a)
+            let tierB = voiceTier(b)
+            if tierA != tierB { return tierA < tierB }
+            return a.name < b.name
+        }
+
+        availableVoices = sorted.map { voice in
+            let tier = voiceTierLabel(voice)
+            let lang = voice.language == "en-US" ? "" : " (\(voice.language))"
+            return (id: voice.identifier, name: "\(voice.name)\(lang)\(tier)")
+        }
+    }
+
+    private func voiceTier(_ voice: AVSpeechSynthesisVoice) -> Int {
+        let id = voice.identifier.lowercased()
+        if id.contains("premium") { return 0 }
+        if id.contains("enhanced") { return 1 }
+        return 2
+    }
+
+    private func voiceTierLabel(_ voice: AVSpeechSynthesisVoice) -> String {
+        let id = voice.identifier.lowercased()
+        if id.contains("premium") { return " ⭐️ Premium" }
+        if id.contains("enhanced") { return " ✦ Enhanced" }
+        return ""
     }
 
     // MARK: - Developer (Simulator)

@@ -74,18 +74,30 @@ class NodePairingManager {
     }
 
     /// Sign a nonce for the connect handshake.
-    func signChallenge(nonce: String) throws -> ChallengeSignature {
+    /// Builds a v2 payload matching the gateway's buildDeviceAuthPayload format:
+    /// "v2|deviceId|clientId|clientMode|role|scopes|signedAtMs|token|nonce"
+    func signChallenge(
+        nonce: String,
+        deviceId: String,
+        clientId: String,
+        clientMode: String,
+        role: String,
+        scopes: [String],
+        token: String
+    ) throws -> ChallengeSignature {
         guard let privateKey = cachedPrivateKey else {
             throw NodePairingError.noIdentity
         }
 
-        let signedAt = Int(Date().timeIntervalSince1970)
-        let message = "\(nonce):\(signedAt)".data(using: .utf8)!
+        let signedAtMs = Int(Date().timeIntervalSince1970 * 1000)
+        let scopesStr = scopes.joined(separator: ",")
+        let payload = ["v2", deviceId, clientId, clientMode, role, scopesStr, String(signedAtMs), token, nonce].joined(separator: "|")
+        let message = payload.data(using: .utf8)!
         let signature = try privateKey.signature(for: message)
 
         return ChallengeSignature(
             signature: signature.base64EncodedString(),
-            signedAt: signedAt
+            signedAt: signedAtMs
         )
     }
 

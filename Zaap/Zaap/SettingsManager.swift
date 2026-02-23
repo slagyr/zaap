@@ -16,6 +16,7 @@ final class SettingsManager {
         case workoutTrackingEnabled = "settings.workoutTrackingEnabled"
         case activityTrackingEnabled = "settings.activityTrackingEnabled"
         case heartRateTrackingEnabled = "settings.heartRateTrackingEnabled"
+        case ttsVoiceIdentifier = "settings.ttsVoiceIdentifier"
     }
 
     private let defaults: UserDefaults
@@ -50,6 +51,11 @@ final class SettingsManager {
         didSet { defaults.set(heartRateTrackingEnabled, forKey: Key.heartRateTrackingEnabled.rawValue) }
     }
 
+    /// AVSpeechSynthesisVoice identifier for TTS responses. Empty string = system default.
+    var ttsVoiceIdentifier: String {
+        didSet { defaults.set(ttsVoiceIdentifier, forKey: Key.ttsVoiceIdentifier.rawValue) }
+    }
+
     // MARK: - Init
 
     init(defaults: UserDefaults = .standard) {
@@ -61,6 +67,7 @@ final class SettingsManager {
         self.workoutTrackingEnabled = defaults.bool(forKey: Key.workoutTrackingEnabled.rawValue)
         self.activityTrackingEnabled = defaults.bool(forKey: Key.activityTrackingEnabled.rawValue)
         self.heartRateTrackingEnabled = defaults.bool(forKey: Key.heartRateTrackingEnabled.rawValue)
+        self.ttsVoiceIdentifier = defaults.string(forKey: Key.ttsVoiceIdentifier.rawValue) ?? ""
     }
 
     // MARK: - Convenience

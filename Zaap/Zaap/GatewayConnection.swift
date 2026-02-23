@@ -281,10 +281,19 @@ final class GatewayConnection {
 
         do {
             let identity = try pairingManager.generateIdentity()
-            let sig = try pairingManager.signChallenge(nonce: nonce)
 
             // Use stored node token if paired; otherwise fall back to gateway auth token.
             let authToken = pairingManager.loadToken() ?? SettingsManager.shared.authToken
+
+            let sig = try pairingManager.signChallenge(
+                nonce: nonce,
+                deviceId: identity.nodeId,
+                clientId: "openclaw-ios",
+                clientMode: "node",
+                role: "node",
+                scopes: [],
+                token: authToken ?? ""
+            )
 
             // Protocol: type must be "req" (not "request"), auth in "auth" sub-key.
             let connectMessage: [String: Any] = [
@@ -295,7 +304,7 @@ final class GatewayConnection {
                     "minProtocol": 3,
                     "maxProtocol": 3,
                     "client": [
-                        "id": "ios-node",
+                        "id": "openclaw-ios",
                         "mode": "node",
                         "platform": "ios",
                         "version": "1.0"

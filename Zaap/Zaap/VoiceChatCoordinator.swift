@@ -89,18 +89,35 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     func startSession(gatewayURL: URL) {
         sessionKey = UUID().uuidString
         isActive = true
-        viewModel.tapMic() // idle → listening
-        voiceEngine.startListening()
-        gateway.connect(to: gatewayURL)
+        if gateway.state == .connected {
+            // Already connected — go straight to listening
+            viewModel.tapMic() // idle → listening
+            voiceEngine.startListening()
+        } else {
+            // Connect first; gatewayDidConnect will start listening when ready
+            gateway.connect(to: gatewayURL)
+        }
     }
 
     func stopSession() {
-        isActive = false
+        // Flush any partial transcript before stopping, so in-flight speech isn't lost
+        let pending = voiceEngine.currentTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+        let hasPending = pending.count >= 3
+        if hasPending {
+            handleUtteranceComplete(pending) // sends transcript; sets state → .processing
+        }
+
         voiceEngine.stopListening()
         speaker.interrupt()
-        gateway.disconnect()
-        // Reset VM to idle
-        if viewModel.state != .idle {
+        isActive = false
+
+        // Don't disconnect — keep gateway connected so the response can still arrive
+        // and next tap reuses the connection without handshake delay.
+
+        // If we sent a transcript, leave the VM in .processing so the response bubble can appear.
+        // handleChatEvent(final) will reset to idle when the response arrives.
+        // If nothing was sent, reset to idle immediately.
+        if !hasPending, viewModel.state != .idle {
             viewModel.tapMic()
         }
     }
@@ -127,7 +144,10 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
     nonisolated func gatewayDidConnect() {
         Task { @MainActor in
-            // Connection established, ready for voice
+            guard isActive else { return }
+            // Gateway is ready — transition UI to listening and start capturing voice
+            viewModel.tapMic() // idle → listening
+            voiceEngine.startListening()
         }
     }
 
@@ -152,10 +172,16 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     // MARK: - Gateway → ResponseSpeaker
 
     private func handleGatewayEvent(_ event: String, payload: [String: Any]) {
-        guard isActive else { return }
+        // Always process incoming responses (agent may reply after user taps stop)
 
+        // Handle gateway chat streaming events (delta/final from agent run)
+        if event == "chat" {
+            handleChatEvent(payload)
+            return
+        }
+
+        // Legacy token/done events (kept for backward compat)
         let type = payload["type"] as? String ?? event
-
         switch type {
         case "token":
             if let text = payload["text"] as? String {
@@ -165,8 +191,49 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         case "done":
             speaker.flush()
             viewModel.handleResponseComplete()
-            // Resume listening
             voiceEngine.startListening()
+        default:
+            break
+        }
+    }
+
+    private func handleChatEvent(_ payload: [String: Any]) {
+        guard let state = payload["state"] as? String else { return }
+
+        // Extract text from message.content[0].text
+        let text: String? = {
+            guard let message = payload["message"] as? [String: Any],
+                  let content = message["content"] as? [[String: Any]],
+                  let first = content.first,
+                  let t = first["text"] as? String else { return nil }
+            return t
+        }()
+
+        switch state {
+        case "delta":
+            // Delta carries the full accumulated text so far — SET (don't append)
+            if let t = text, !t.isEmpty {
+                viewModel.setResponseText(t)
+            }
+        case "final":
+            // Final carries the complete response — speak it, then resume or idle
+            if let t = text, !t.isEmpty {
+                speaker.bufferToken(t)
+            }
+            speaker.flush()
+            viewModel.handleResponseComplete() // → .listening state
+            if isActive {
+                voiceEngine.startListening()
+            } else {
+                viewModel.tapMic() // listening → idle (session was stopped by user)
+            }
+        case "error":
+            viewModel.handleResponseComplete()
+            if isActive {
+                voiceEngine.startListening()
+            } else {
+                viewModel.tapMic()
+            }
         default:
             break
         }
