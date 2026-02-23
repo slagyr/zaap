@@ -27,6 +27,8 @@ struct SettingsView: View {
 
     // TTS voice picker
     @State private var availableVoices: [(id: String, name: String)] = []
+    @State private var previewSynthesizer = AVSpeechSynthesizer()
+    @State private var isPreviewPlaying = false
 
     #if targetEnvironment(simulator)
     @StateObject private var seeder = HealthDataSeeder()
@@ -193,11 +195,32 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.navigationLink)
+                    .onChange(of: settings.ttsVoiceIdentifier) { _, _ in
+                        // Auto-preview when a new voice is selected
+                        playVoicePreview()
+                    }
+
+                    Button {
+                        if isPreviewPlaying {
+                            previewSynthesizer.stopSpeaking(at: .immediate)
+                            isPreviewPlaying = false
+                        } else {
+                            playVoicePreview()
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: isPreviewPlaying ? "stop.circle.fill" : "play.circle.fill")
+                                .foregroundStyle(isPreviewPlaying ? .red : .blue)
+                                .font(.title3)
+                            Text(isPreviewPlaying ? "Stop Preview" : "Preview Voice")
+                                .foregroundStyle(isPreviewPlaying ? .red : .blue)
+                        }
+                    }
                 }
             } header: {
                 Text("Voice")
             } footer: {
-                Text("Choose the voice used when the assistant speaks responses. Enhanced and Premium voices sound more natural.")
+                Text("Tap Preview to hear the selected voice. Enhanced ✦ and Premium ⭐️ voices sound more natural and must be downloaded in iOS Settings → Accessibility → Spoken Content → Voices.")
             }
 
             Section {
@@ -328,6 +351,35 @@ struct SettingsView: View {
         .padding(.vertical, 2)
     }
 
+    // MARK: - Voice Preview
+
+    private func playVoicePreview() {
+        previewSynthesizer.stopSpeaking(at: .immediate)
+
+        let sampleText = "Hi, I'm your voice assistant. Just ask me anything."
+        let utterance = AVSpeechUtterance(string: sampleText)
+
+        let voiceId = settings.ttsVoiceIdentifier
+        utterance.voice = voiceId.isEmpty
+            ? AVSpeechSynthesisVoice(language: "en-US")
+            : AVSpeechSynthesisVoice(identifier: voiceId) ?? AVSpeechSynthesisVoice(language: "en-US")
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+
+        isPreviewPlaying = true
+        // Use a delegate-free approach: monitor via notification or just reset after a delay.
+        // AVSpeechSynthesizer needs a delegate object — use a simple one-shot wrapper.
+        let monitor = SpeechFinishMonitor { [self] in
+            isPreviewPlaying = false
+        }
+        previewSynthesizer.delegate = monitor
+        // Keep monitor alive for the duration of the utterance
+        objc_setAssociatedObject(previewSynthesizer, &Self.monitorKey, monitor, .OBJC_ASSOCIATION_RETAIN)
+
+        previewSynthesizer.speak(utterance)
+    }
+
+    private static var monitorKey: UInt8 = 0
+
     // MARK: - Voice Loading
 
     private func loadAvailableVoices() {
@@ -385,6 +437,22 @@ struct SettingsView: View {
         let service = testService ?? WebhookTestService(settings: settings)
         testResult = await service.testConnection()
         isTesting = false
+    }
+}
+
+// MARK: - Speech Finish Monitor
+
+/// Lightweight AVSpeechSynthesizerDelegate that fires a callback when speech finishes.
+private final class SpeechFinishMonitor: NSObject, AVSpeechSynthesizerDelegate {
+    private let onFinish: () -> Void
+    init(onFinish: @escaping () -> Void) { self.onFinish = onFinish }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        DispatchQueue.main.async { self.onFinish() }
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        DispatchQueue.main.async { self.onFinish() }
     }
 }
 
