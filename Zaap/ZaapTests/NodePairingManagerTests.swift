@@ -74,18 +74,37 @@ final class NodePairingManagerTests: XCTestCase {
 
     // MARK: - Challenge Signing
 
+    private let testDeviceId = "device-1"
+    private let testClientId = "client-1"
+    private let testClientMode = "node"
+    private let testRole = "peer"
+    private let testScopes = ["voice", "hooks"]
+    private let testToken = "tok-123"
+
+    private func signChallenge(nonce: String) throws -> ChallengeSignature {
+        try manager.signChallenge(
+            nonce: nonce,
+            deviceId: testDeviceId,
+            clientId: testClientId,
+            clientMode: testClientMode,
+            role: testRole,
+            scopes: testScopes,
+            token: testToken
+        )
+    }
+
     func testSignChallengeProducesValidSignature() throws {
         _ = try manager.generateIdentity()
         let nonce = "test-nonce-12345"
 
-        let result = try manager.signChallenge(nonce: nonce)
+        let result = try signChallenge(nonce: nonce)
 
         XCTAssertFalse(result.signature.isEmpty)
         XCTAssertGreaterThan(result.signedAt, 0)
     }
 
     func testSignChallengeFailsWithoutIdentity() {
-        XCTAssertThrowsError(try manager.signChallenge(nonce: "test")) { error in
+        XCTAssertThrowsError(try signChallenge(nonce: "test")) { error in
             XCTAssertEqual(error as? NodePairingError, .noIdentity)
         }
     }
@@ -94,25 +113,27 @@ final class NodePairingManagerTests: XCTestCase {
         let identity = try manager.generateIdentity()
         let nonce = "verify-me-nonce"
 
-        let result = try manager.signChallenge(nonce: nonce)
+        let result = try signChallenge(nonce: nonce)
 
         // Verify signature using the public key
         let publicKeyData = Data(base64Encoded: identity.publicKeyBase64)!
         let publicKey = try Curve25519.Signing.PublicKey(rawRepresentation: publicKeyData)
         let signatureData = Data(base64Encoded: result.signature)!
-        let message = "\(nonce):\(result.signedAt)".data(using: .utf8)!
+        let scopesStr = testScopes.joined(separator: ",")
+        let payload = ["v2", testDeviceId, testClientId, testClientMode, testRole, scopesStr, String(result.signedAt), testToken, nonce].joined(separator: "|")
+        let message = payload.data(using: .utf8)!
 
         XCTAssertTrue(publicKey.isValidSignature(signatureData, for: message))
     }
 
     func testSignChallengeSignedAtIsCurrentTimestamp() throws {
         _ = try manager.generateIdentity()
-        let before = Int(Date().timeIntervalSince1970)
-        let result = try manager.signChallenge(nonce: "time-test")
-        let after = Int(Date().timeIntervalSince1970)
+        let beforeMs = Int(Date().timeIntervalSince1970 * 1000)
+        let result = try signChallenge(nonce: "time-test")
+        let afterMs = Int(Date().timeIntervalSince1970 * 1000)
 
-        XCTAssertGreaterThanOrEqual(result.signedAt, before)
-        XCTAssertLessThanOrEqual(result.signedAt, after)
+        XCTAssertGreaterThanOrEqual(result.signedAt, beforeMs)
+        XCTAssertLessThanOrEqual(result.signedAt, afterMs)
     }
 
     // MARK: - Token Storage

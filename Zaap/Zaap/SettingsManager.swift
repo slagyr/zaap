@@ -17,6 +17,7 @@ final class SettingsManager {
         case activityTrackingEnabled = "settings.activityTrackingEnabled"
         case heartRateTrackingEnabled = "settings.heartRateTrackingEnabled"
         case ttsVoiceIdentifier = "settings.ttsVoiceIdentifier"
+        case gatewayToken = "settings.gatewayToken"
     }
 
     private let defaults: UserDefaults
@@ -56,6 +57,11 @@ final class SettingsManager {
         didSet { defaults.set(ttsVoiceIdentifier, forKey: Key.ttsVoiceIdentifier.rawValue) }
     }
 
+    /// Gateway WebSocket auth token (used for pairing/voice — separate from the hooks Bearer Token).
+    var gatewayToken: String {
+        didSet { defaults.set(gatewayToken, forKey: Key.gatewayToken.rawValue) }
+    }
+
     // MARK: - Init
 
     init(defaults: UserDefaults = .standard) {
@@ -68,6 +74,7 @@ final class SettingsManager {
         self.activityTrackingEnabled = defaults.bool(forKey: Key.activityTrackingEnabled.rawValue)
         self.heartRateTrackingEnabled = defaults.bool(forKey: Key.heartRateTrackingEnabled.rawValue)
         self.ttsVoiceIdentifier = defaults.string(forKey: Key.ttsVoiceIdentifier.rawValue) ?? ""
+        self.gatewayToken = defaults.string(forKey: Key.gatewayToken.rawValue) ?? ""
     }
 
     // MARK: - Convenience

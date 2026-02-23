@@ -17,6 +17,7 @@ struct SettingsView: View {
     var pairingViewModel: PairingViewModel?
 
     @State private var isTokenVisible = false
+    @State private var isGatewayTokenVisible = false
     @State private var isTesting = false
     @State private var testResult: WebhookTestService.TestResult?
     @State private var locationSendStatus: SendNowStatus = .idle
@@ -129,9 +130,9 @@ struct SettingsView: View {
                 HStack {
                     Group {
                         if isTokenVisible {
-                            TextField("Bearer Token", text: $settings.authToken)
+                            TextField("Hooks Bearer Token", text: $settings.authToken)
                         } else {
-                            SecureField("Bearer Token", text: $settings.authToken)
+                            SecureField("Hooks Bearer Token", text: $settings.authToken)
                         }
                     }
                     .textInputAutocapitalization(.never)
@@ -145,6 +146,7 @@ struct SettingsView: View {
                     }
                     .buttonStyle(.plain)
                 }
+
             } header: {
                 Text("Server")
             } footer: {
@@ -184,6 +186,26 @@ struct SettingsView: View {
             }
 
             Section {
+                HStack {
+                    Group {
+                        if isGatewayTokenVisible {
+                            TextField("Gateway Bearer Token", text: $settings.gatewayToken)
+                        } else {
+                            SecureField("Gateway Bearer Token", text: $settings.gatewayToken)
+                        }
+                    }
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+
+                    Button {
+                        isGatewayTokenVisible.toggle()
+                    } label: {
+                        Image(systemName: isGatewayTokenVisible ? "eye.slash" : "eye")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+
                 if availableVoices.isEmpty {
                     Text("No voices available")
                         .foregroundStyle(.secondary)

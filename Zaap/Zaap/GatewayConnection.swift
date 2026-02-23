@@ -282,8 +282,8 @@ final class GatewayConnection {
         do {
             let identity = try pairingManager.generateIdentity()
 
-            // Use stored node token if paired; otherwise fall back to gateway auth token.
-            let authToken = pairingManager.loadToken() ?? SettingsManager.shared.authToken
+            // Use stored node token if paired; otherwise fall back to the gateway WebSocket token.
+            let authToken = pairingManager.loadToken() ?? SettingsManager.shared.gatewayToken
 
             let sig = try pairingManager.signChallenge(
                 nonce: nonce,
