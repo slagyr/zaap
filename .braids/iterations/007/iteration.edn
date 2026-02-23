@@ -10,7 +10,8 @@
            {:id "zaap-st5" :title "Bonjour discovery — auto-find OpenClaw gateway on local network"}
            {:id "zaap-ncw" :title "Dashboard: add Y-axis scale to delivery chart"}
            {:id "zaap-d1o" :title "WorkoutReader: clarify noData error to say 24 hours"}
-           {:id "zaap-o8k" :title "True background HealthKit delivery — send data as it's collected, without app open"}]
+           {:id "zaap-o8k" :title "True background HealthKit delivery — send data as it's collected, without app open"}
+           {:id "zaap-q7r" :title "Webhook retry queue — persist failed POSTs, retry on connectivity restore, preserve original timestamps"}]
  :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
               "No force unwraps (!) anywhere in codebase"
               "All new Swift files must be added to project.pbxproj"
