@@ -175,14 +175,23 @@ final class RealKeychain: KeychainAccessing {
     private let service = "co.airworthy.zaap"
 
     func save(key: String, data: Data) throws {
-        let query: [String: Any] = [
-            kSecClass as String:            kSecClassGenericPassword,
-            kSecAttrService as String:      service,
-            kSecAttrAccount as String:      key,
+        // Delete any pre-existing item (including old iCloud-synced ones) before saving
+        let deleteQuery: [String: Any] = [
+            kSecClass as String:        kSecClassGenericPassword,
+            kSecAttrService as String:  service,
+            kSecAttrAccount as String:  key,
         ]
-        SecItemDelete(query as CFDictionary)
-        var addQuery = query
-        addQuery[kSecValueData as String] = data
+        SecItemDelete(deleteQuery as CFDictionary)
+
+        // Save as device-local only — never sync to iCloud Keychain.
+        // This ensures each physical device gets its own independent node identity.
+        let addQuery: [String: Any] = [
+            kSecClass as String:                kSecClassGenericPassword,
+            kSecAttrService as String:          service,
+            kSecAttrAccount as String:          key,
+            kSecAttrSynchronizable as String:   kCFBooleanFalse!,
+            kSecValueData as String:            data,
+        ]
         let status = SecItemAdd(addQuery as CFDictionary, nil)
         guard status == errSecSuccess else {
             throw KeychainError.saveFailed(status)
@@ -190,12 +199,14 @@ final class RealKeychain: KeychainAccessing {
     }
 
     func load(key: String) -> Data? {
+        // Only load device-local items — ignore any iCloud-synced ones from other devices
         let query: [String: Any] = [
-            kSecClass as String:            kSecClassGenericPassword,
-            kSecAttrService as String:      service,
-            kSecAttrAccount as String:      key,
-            kSecReturnData as String:       true,
-            kSecMatchLimit as String:       kSecMatchLimitOne,
+            kSecClass as String:                kSecClassGenericPassword,
+            kSecAttrService as String:          service,
+            kSecAttrAccount as String:          key,
+            kSecAttrSynchronizable as String:   kCFBooleanFalse!,
+            kSecReturnData as String:           true,
+            kSecMatchLimit as String:           kSecMatchLimitOne,
         ]
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
@@ -204,6 +215,7 @@ final class RealKeychain: KeychainAccessing {
     }
 
     func delete(key: String) {
+        // Delete all matching items regardless of synchronizability
         let query: [String: Any] = [
             kSecClass as String:        kSecClassGenericPassword,
             kSecAttrService as String:  service,
