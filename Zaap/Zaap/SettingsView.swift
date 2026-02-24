@@ -31,7 +31,9 @@ struct SettingsView: View {
     @State private var previewSynthesizer = AVSpeechSynthesizer()
     @State private var isPreviewPlaying = false
 
+    #if targetEnvironment(simulator)
     @StateObject private var seeder = HealthDataSeeder()
+    #endif
 
     var body: some View {
         Form {
