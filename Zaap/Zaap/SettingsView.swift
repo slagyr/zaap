@@ -31,20 +31,14 @@ struct SettingsView: View {
     @State private var previewSynthesizer = AVSpeechSynthesizer()
     @State private var isPreviewPlaying = false
 
-    #if targetEnvironment(simulator)
     @StateObject private var seeder = HealthDataSeeder()
-    @AppStorage("settings.devMode") private var devMode: Bool = true
-    #endif
 
     var body: some View {
         Form {
-            #if targetEnvironment(simulator)
             Section {
-                Toggle("Use development config?", isOn: $devMode)
-                    .onChange(of: devMode) { _, isDev in
-                        applyDevMode(isDev)
-                    }
+                Toggle("Use development config?", isOn: $settings.useDevConfig)
 
+                #if targetEnvironment(simulator)
                 Button {
                     seeder.seedAll()
                 } label: {
@@ -72,15 +66,15 @@ struct SettingsView: View {
                 case .idle:
                     EmptyView()
                 }
+                #endif
             } header: {
-                Text("Developer")
+                Text("Configuration")
             } footer: {
-                Text(devMode
-                     ? "Dev: localhost:8788"
-                     : "Prod: REDACTED_HOSTNAME")
+                Text(settings.useDevConfig
+                     ? "Development: localhost:8788 (for testing)"
+                     : "Production: REDACTED_HOSTNAME")
                     .font(.caption)
             }
-            #endif
 
             if let pairingVM = pairingViewModel {
                 PairingSectionView(viewModel: pairingVM)
@@ -126,6 +120,7 @@ struct SettingsView: View {
                     .textContentType(.URL)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .disabled(settings.useDevConfig)
 
                 HStack {
                     Group {
@@ -137,6 +132,7 @@ struct SettingsView: View {
                     }
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .disabled(settings.useDevConfig)
 
                     Button {
                         isTokenVisible.toggle()
@@ -147,13 +143,36 @@ struct SettingsView: View {
                     .buttonStyle(.plain)
                 }
 
+                HStack {
+                    Group {
+                        if isGatewayTokenVisible {
+                            TextField("Gateway Bearer Token", text: $settings.gatewayToken)
+                        } else {
+                            SecureField("Gateway Bearer Token", text: $settings.gatewayToken)
+                        }
+                    }
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .disabled(settings.useDevConfig)
+
+                    Button {
+                        isGatewayTokenVisible.toggle()
+                    } label: {
+                        Image(systemName: isGatewayTokenVisible ? "eye.slash" : "eye")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+
             } header: {
                 Text("Server")
             } footer: {
-                if settings.hostname.isEmpty {
+                if settings.useDevConfig {
+                    Text("Development mode: Configuration is set automatically")
+                } else if settings.hostname.isEmpty {
                     Text("Enter your OpenClaw gateway hostname (e.g. myhost.ts.net)")
                 } else {
-                    Text("Sends to: https://\(settings.hostname)/hooks/…")
+                    Text("Webhooks: https://\(settings.hostname)/hooks/…\nVoice: \(settings.isLocalHostname ? "ws" : "wss")://\(settings.hostname)")
                 }
             }
 
@@ -186,26 +205,6 @@ struct SettingsView: View {
             }
 
             Section {
-                HStack {
-                    Group {
-                        if isGatewayTokenVisible {
-                            TextField("Gateway Bearer Token", text: $settings.gatewayToken)
-                        } else {
-                            SecureField("Gateway Bearer Token", text: $settings.gatewayToken)
-                        }
-                    }
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-
-                    Button {
-                        isGatewayTokenVisible.toggle()
-                    } label: {
-                        Image(systemName: isGatewayTokenVisible ? "eye.slash" : "eye")
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                }
-
                 if availableVoices.isEmpty {
                     Text("No voices available")
                         .foregroundStyle(.secondary)
@@ -301,9 +300,7 @@ struct SettingsView: View {
         .onAppear {
             gatewayBrowser?.startSearching()
             loadAvailableVoices()
-            #if targetEnvironment(simulator)
-            applyDevMode(devMode)
-            #endif
+            settings.refreshConfigMode()
         }
         .onDisappear { gatewayBrowser?.stopSearching() }
     }
@@ -437,19 +434,7 @@ struct SettingsView: View {
         return ""
     }
 
-    // MARK: - Developer (Simulator)
-
-    #if targetEnvironment(simulator)
-    private func applyDevMode(_ isDev: Bool) {
-        if isDev {
-            settings.webhookURL = "localhost:8788"
-            settings.authToken = "mock"
-        } else {
-            settings.webhookURL = "REDACTED_HOSTNAME"
-            settings.authToken = "REDACTED_HOOKS_TOKEN"
-        }
-    }
-    #endif
+    // MARK: - Test Connection
 
     // MARK: - Test Connection
 

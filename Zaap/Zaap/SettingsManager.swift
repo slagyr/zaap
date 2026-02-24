@@ -18,6 +18,7 @@ final class SettingsManager {
         case heartRateTrackingEnabled = "settings.heartRateTrackingEnabled"
         case ttsVoiceIdentifier = "settings.ttsVoiceIdentifier"
         case gatewayToken = "settings.gatewayToken"
+        case useDevConfig = "settings.useDevConfig"
     }
 
     private let defaults: UserDefaults
@@ -62,6 +63,14 @@ final class SettingsManager {
         didSet { defaults.set(gatewayToken, forKey: Key.gatewayToken.rawValue) }
     }
 
+    /// Use development configuration (localhost) vs production (REDACTED_HOSTNAME).
+    var useDevConfig: Bool {
+        didSet { 
+            defaults.set(useDevConfig, forKey: Key.useDevConfig.rawValue)
+            applyConfigMode(useDevConfig)
+        }
+    }
+
     // MARK: - Init
 
     init(defaults: UserDefaults = .standard) {
@@ -75,6 +84,14 @@ final class SettingsManager {
         self.heartRateTrackingEnabled = defaults.bool(forKey: Key.heartRateTrackingEnabled.rawValue)
         self.ttsVoiceIdentifier = defaults.string(forKey: Key.ttsVoiceIdentifier.rawValue) ?? ""
         self.gatewayToken = defaults.string(forKey: Key.gatewayToken.rawValue) ?? ""
+        
+        #if targetEnvironment(simulator)
+        // Default to dev config in simulator
+        self.useDevConfig = defaults.object(forKey: Key.useDevConfig.rawValue) as? Bool ?? true
+        #else
+        // Default to production config on real devices
+        self.useDevConfig = defaults.bool(forKey: Key.useDevConfig.rawValue)
+        #endif
     }
 
     // MARK: - Convenience
@@ -122,5 +139,27 @@ final class SettingsManager {
     /// True when minimum configuration is present (valid hostname + non-empty token).
     var isConfigured: Bool {
         webhookURLValue != nil && !authToken.isEmpty
+    }
+
+    // MARK: - Configuration Modes
+
+    /// Apply development or production configuration values.
+    private func applyConfigMode(_ isDev: Bool) {
+        if isDev {
+            // Development configuration
+            webhookURL = "localhost:8788"
+            authToken = "mock"
+            gatewayToken = "mock-gateway-token"
+        } else {
+            // Production configuration
+            webhookURL = "REDACTED_HOSTNAME"
+            authToken = "REDACTED_HOOKS_TOKEN"
+            gatewayToken = "REDACTED_GATEWAY_TOKEN"
+        }
+    }
+
+    /// Manually apply the current configuration mode (for UI sync).
+    func refreshConfigMode() {
+        applyConfigMode(useDevConfig)
     }
 }

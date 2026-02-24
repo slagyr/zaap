@@ -304,7 +304,7 @@ final class GatewayConnection {
                     "minProtocol": 3,
                     "maxProtocol": 3,
                     "client": [
-                        "id": "openclaw-ios",
+                        "id": "ios-node",
                         "mode": "node",
                         "platform": "ios",
                         "version": "1.0"
