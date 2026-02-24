@@ -282,8 +282,14 @@ final class GatewayConnection {
         do {
             let identity = try pairingManager.generateIdentity()
 
-            // Use stored node token if paired; otherwise fall back to the gateway WebSocket token.
+            // Use stored device token if already paired; otherwise use gateway bearer token from settings.
             let authToken = pairingManager.loadToken() ?? SettingsManager.shared.gatewayToken
+            
+            // Ensure we have a valid token before proceeding
+            guard !authToken.isEmpty else {
+                delegate?.gatewayDidFailWithError(.challengeFailed("No authentication token available. Configure Gateway Bearer Token in Settings."))
+                return
+            }
 
             let sig = try pairingManager.signChallenge(
                 nonce: nonce,
@@ -292,7 +298,7 @@ final class GatewayConnection {
                 clientMode: "node",
                 role: "node",
                 scopes: [],
-                token: authToken ?? ""
+                token: authToken
             )
 
             // Protocol: type must be "req" (not "request"), auth in "auth" sub-key.
