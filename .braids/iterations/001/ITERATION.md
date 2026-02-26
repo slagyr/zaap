@@ -14,6 +14,6 @@
 - No UI polish until core functionality is proven
 
 ## Notes
-- Webhook endpoint already configured: `https://zanebot.tail66e5f8.ts.net/hooks/location`
+- Webhook endpoint already configured: `https://REDACTED_HOSTNAME/hooks/location`
 - Gateway hooks mapping in place and tested
 - iOS Shortcut proof-of-concept confirmed the webhook flow works
