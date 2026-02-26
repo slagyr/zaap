@@ -122,7 +122,6 @@ struct SettingsView: View {
                     .textContentType(.URL)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                    .disabled(settings.useDevConfig)
 
                 HStack {
                     Group {
@@ -134,7 +133,6 @@ struct SettingsView: View {
                     }
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                    .disabled(settings.useDevConfig)
 
                     Button {
                         isTokenVisible.toggle()
@@ -155,7 +153,6 @@ struct SettingsView: View {
                     }
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                    .disabled(settings.useDevConfig)
 
                     Button {
                         isGatewayTokenVisible.toggle()
@@ -169,9 +166,7 @@ struct SettingsView: View {
             } header: {
                 Text("Server")
             } footer: {
-                if settings.useDevConfig {
-                    Text("Development mode: Configuration is set automatically")
-                } else if settings.hostname.isEmpty {
+                if settings.hostname.isEmpty {
                     Text("Enter your OpenClaw gateway hostname (e.g. myhost.ts.net)")
                 } else {
                     Text("Webhooks: https://\(settings.hostname)/hooks/…\nVoice: \(settings.isLocalHostname ? "ws" : "wss")://\(settings.hostname)")
@@ -302,7 +297,6 @@ struct SettingsView: View {
         .onAppear {
             gatewayBrowser?.startSearching()
             loadAvailableVoices()
-            settings.refreshConfigMode()
         }
         .onDisappear { gatewayBrowser?.stopSearching() }
     }

@@ -67,7 +67,7 @@ final class SettingsManager {
     var useDevConfig: Bool {
         didSet { 
             defaults.set(useDevConfig, forKey: Key.useDevConfig.rawValue)
-            applyConfigMode(useDevConfig)
+            // Note: No longer auto-applies config - user sets hostname manually in Settings
         }
     }
 
@@ -142,24 +142,5 @@ final class SettingsManager {
     }
 
     // MARK: - Configuration Modes
-
-    /// Apply development or production configuration values.
-    private func applyConfigMode(_ isDev: Bool) {
-        if isDev {
-            // Development configuration - Use actual local gateway settings
-            webhookURL = "localhost:18789"
-            authToken = "REDACTED_HOOKS_TOKEN"
-            gatewayToken = "REDACTED_GATEWAY_TOKEN"
-        } else {
-            // Production configuration
-            webhookURL = "REDACTED_HOSTNAME"
-            authToken = "REDACTED_HOOKS_TOKEN"
-            gatewayToken = "REDACTED_GATEWAY_TOKEN"
-        }
-    }
-
-    /// Manually apply the current configuration mode (for UI sync).
-    func refreshConfigMode() {
-        applyConfigMode(useDevConfig)
-    }
+    // Note: Removed auto-apply functionality - user manually configures hostname in Settings UI
 }
