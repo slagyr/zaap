@@ -131,6 +131,7 @@ struct VoicePairingView: View {
                     Spacer()
                     
                     Button("Copy") {
+                        print("🚨 [CRITICAL] COPY BUTTON TAPPED!")
                         let debugInfo = generateDebugInfo()
                         print("📋 [DEBUG] Copying to clipboard: \(debugInfo)")
                         UIPasteboard.general.string = debugInfo
@@ -215,7 +216,10 @@ struct VoicePairingView: View {
 
             statusView
 
-            Button(action: { viewModel.requestPairing() }) {
+            Button(action: { 
+                print("🚨 [CRITICAL] BUTTON TAPPED!")
+                viewModel.requestPairing() 
+            }) {
                 HStack {
                     if viewModel.status == .connecting || viewModel.status == .awaitingApproval {
                         ProgressView()
