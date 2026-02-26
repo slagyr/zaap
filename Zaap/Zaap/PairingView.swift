@@ -119,61 +119,10 @@ struct VoicePairingView: View {
         """
     }
 
+    @State private var copiedDeviceId = false
+
     var body: some View {
         VStack(spacing: 24) {
-            // DEBUG: Show connection details
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("🔍 DEBUG CONNECTION INFO")
-                        .font(.caption.bold())
-                        .foregroundColor(.orange)
-                    
-                    Spacer()
-                    
-                    Button("Copy") {
-                        print("🚨 [CRITICAL] COPY BUTTON TAPPED!")
-                        let debugInfo = generateDebugInfo()
-                        print("📋 [DEBUG] Copying to clipboard: \(debugInfo)")
-                        UIPasteboard.general.string = debugInfo
-                        print("📋 [DEBUG] Clipboard set successfully")
-                    }
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.blue.opacity(0.2))
-                    .cornerRadius(4)
-                }
-                
-                if let url = SettingsManager.shared.voiceWebSocketURL {
-                    Text("URL: \(url.absoluteString)")
-                        .font(.caption.monospaced())
-                        .foregroundColor(.blue)
-                } else {
-                    Text("URL: ❌ NULL - voiceWebSocketURL is nil")
-                        .font(.caption.monospaced())
-                        .foregroundColor(.red)
-                }
-                
-                Text("Hostname: \(SettingsManager.shared.hostname)")
-                    .font(.caption.monospaced())
-                    .foregroundColor(.blue)
-                
-                Text("Gateway Token: \(SettingsManager.shared.gatewayToken.isEmpty ? "❌ EMPTY" : "✅ Set (\(SettingsManager.shared.gatewayToken.count) chars)")")
-                    .font(.caption.monospaced())
-                    .foregroundColor(SettingsManager.shared.gatewayToken.isEmpty ? .red : .green)
-                
-                Text("Status: \(String(describing: viewModel.status))")
-                    .font(.caption.monospaced())
-                    .foregroundColor(.purple)
-                
-                Text("⚠️ NO iOS CONNECTION ATTEMPTS in gateway logs!")
-                    .font(.caption.bold())
-                    .foregroundColor(.red)
-            }
-            .padding(12)
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(8)
-            
             Spacer()
 
             Image(systemName: "link.circle.fill")
@@ -185,25 +134,66 @@ struct VoicePairingView: View {
                 .fontWeight(.bold)
 
             if !viewModel.nodeId.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Label("Node ID", systemImage: "person.badge.key")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Text(viewModel.nodeId)
-                        .font(.system(.caption, design: .monospaced))
-                        .textSelection(.enabled)
+                VStack(spacing: 12) {
+                    // Device ID with copy button
+                    VStack(spacing: 6) {
+                        Label("Device ID", systemImage: "cpu")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundColor(.primary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
 
-                    Label("Key fingerprint", systemImage: "key")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 4)
-                    Text(viewModel.publicKeyFingerprint)
-                        .font(.system(.caption, design: .monospaced))
-                        .textSelection(.enabled)
+                        HStack(spacing: 10) {
+                            Text(viewModel.nodeId)
+                                .font(.system(.callout, design: .monospaced))
+                                .textSelection(.enabled)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+
+                            Spacer()
+
+                            Button {
+                                UIPasteboard.general.string = viewModel.nodeId
+                                copiedDeviceId = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    copiedDeviceId = false
+                                }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: copiedDeviceId ? "checkmark" : "doc.on.doc")
+                                    Text(copiedDeviceId ? "Copied" : "Copy")
+                                }
+                                .font(.caption.weight(.medium))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(copiedDeviceId ? Color.green.opacity(0.2) : Color.blue.opacity(0.15))
+                                .foregroundColor(copiedDeviceId ? .green : .blue)
+                                .cornerRadius(6)
+                            }
+                        }
+                    }
+
+                    Divider()
+
+                    // Key fingerprint
+                    VStack(spacing: 4) {
+                        Label("Key Fingerprint", systemImage: "key")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text(viewModel.publicKeyFingerprint)
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundColor(.secondary)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.secondary.opacity(0.1))
+                .background(Color(.systemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                )
                 .cornerRadius(12)
                 .padding(.horizontal)
             }
