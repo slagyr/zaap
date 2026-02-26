@@ -121,10 +121,19 @@ final class GatewayConnection {
     // MARK: - Connect / Disconnect
 
     func connect(to url: URL) {
-        guard state == .disconnected else { return }
+        print("🔧 [GATEWAY] connect(to: \(url.absoluteString)) called")
+        print("🔧 [GATEWAY] Current state: \(state)")
+        
+        guard state == .disconnected else { 
+            print("❌ [GATEWAY] Cannot connect - state is not disconnected, current state: \(state)")
+            return 
+        }
+        
         intentionalDisconnect = false
         gatewayURL = url
         reconnectAttempt = 0
+        
+        print("🔧 [GATEWAY] Calling performConnect(to: \(url.absoluteString))")
         performConnect(to: url)
     }
 
@@ -203,11 +212,20 @@ final class GatewayConnection {
     // MARK: - Private: Connection Flow
 
     private func performConnect(to url: URL) {
+        print("🔧 [GATEWAY] performConnect(to: \(url.absoluteString)) called")
         state = .connecting
+        
+        print("🔧 [GATEWAY] Creating WebSocket task with factory")
         let ws = webSocketFactory.createWebSocketTask(with: url)
         self.webSocket = ws
+        
+        print("🔧 [GATEWAY] Calling ws.resume() to start WebSocket connection")
         ws.resume()
+        
+        print("🔧 [GATEWAY] Starting receive loop")
         startReceiveLoop()
+        
+        print("✅ [GATEWAY] performConnect completed, WebSocket should be connecting...")
     }
 
     private func startReceiveLoop() {

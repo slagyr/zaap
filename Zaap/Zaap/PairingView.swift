@@ -44,12 +44,21 @@ final class VoicePairingViewModel: ObservableObject, GatewayConnectionDelegate {
     // MARK: - Actions
 
     func requestPairing() {
+        print("🔧 [DEBUG] requestPairing() called")
+        
         guard let url = SettingsManager.shared.voiceWebSocketURL else {
+            print("❌ [DEBUG] Gateway URL is nil!")
             status = .failed("Gateway URL not configured. Add it in Settings.")
             return
         }
+        
+        print("✅ [DEBUG] Gateway URL: \(url.absoluteString)")
+        print("🔧 [DEBUG] Setting status to .connecting")
         status = .connecting
+        
+        print("🔧 [DEBUG] Calling gateway.connect(to: \(url.absoluteString))")
         gateway.connect(to: url)
+        print("🔧 [DEBUG] gateway.connect() call completed")
     }
 
     // MARK: - GatewayConnectionDelegate
@@ -123,7 +132,9 @@ struct VoicePairingView: View {
                     
                     Button("Copy") {
                         let debugInfo = generateDebugInfo()
+                        print("📋 [DEBUG] Copying to clipboard: \(debugInfo)")
                         UIPasteboard.general.string = debugInfo
+                        print("📋 [DEBUG] Clipboard set successfully")
                     }
                     .font(.caption)
                     .padding(.horizontal, 8)
