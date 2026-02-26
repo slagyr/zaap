@@ -294,7 +294,7 @@ final class GatewayConnection {
             let sig = try pairingManager.signChallenge(
                 nonce: nonce,
                 deviceId: identity.nodeId,
-                clientId: "openclaw-ios",
+                clientId: "ios-node",
                 clientMode: "node",
                 role: "node",
                 scopes: [],
