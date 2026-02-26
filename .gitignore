@@ -1,2 +1,4 @@
-Zaap/build/
+.idea
 .zaap-simulator
+Zaap/build/
+Zaap/Zaap.xcodeproj/project.xcworkspace/xcuserdata
