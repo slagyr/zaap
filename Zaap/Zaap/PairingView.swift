@@ -93,8 +93,75 @@ struct VoicePairingView: View {
     @StateObject private var viewModel = VoicePairingViewModel()
     var onPaired: (() -> Void)?
 
+    private func generateDebugInfo() -> String {
+        let url = SettingsManager.shared.voiceWebSocketURL?.absoluteString ?? "NULL"
+        let hostname = SettingsManager.shared.hostname
+        let tokenStatus = SettingsManager.shared.gatewayToken.isEmpty ? "EMPTY" : "Set (\(SettingsManager.shared.gatewayToken.count) chars)"
+        let status = String(describing: viewModel.status)
+        
+        return """
+        🔍 ZAAP VOICE DEBUG INFO
+        URL: \(url)
+        Hostname: \(hostname)
+        Gateway Token: \(tokenStatus)
+        Status: \(status)
+        Node ID: \(viewModel.nodeId)
+        Key Fingerprint: \(viewModel.publicKeyFingerprint)
+        """
+    }
+
     var body: some View {
         VStack(spacing: 24) {
+            // DEBUG: Show connection details
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("🔍 DEBUG CONNECTION INFO")
+                        .font(.caption.bold())
+                        .foregroundColor(.orange)
+                    
+                    Spacer()
+                    
+                    Button("Copy") {
+                        let debugInfo = generateDebugInfo()
+                        UIPasteboard.general.string = debugInfo
+                    }
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.blue.opacity(0.2))
+                    .cornerRadius(4)
+                }
+                
+                if let url = SettingsManager.shared.voiceWebSocketURL {
+                    Text("URL: \(url.absoluteString)")
+                        .font(.caption.monospaced())
+                        .foregroundColor(.blue)
+                } else {
+                    Text("URL: ❌ NULL - voiceWebSocketURL is nil")
+                        .font(.caption.monospaced())
+                        .foregroundColor(.red)
+                }
+                
+                Text("Hostname: \(SettingsManager.shared.hostname)")
+                    .font(.caption.monospaced())
+                    .foregroundColor(.blue)
+                
+                Text("Gateway Token: \(SettingsManager.shared.gatewayToken.isEmpty ? "❌ EMPTY" : "✅ Set (\(SettingsManager.shared.gatewayToken.count) chars)")")
+                    .font(.caption.monospaced())
+                    .foregroundColor(SettingsManager.shared.gatewayToken.isEmpty ? .red : .green)
+                
+                Text("Status: \(String(describing: viewModel.status))")
+                    .font(.caption.monospaced())
+                    .foregroundColor(.purple)
+                
+                Text("⚠️ NO iOS CONNECTION ATTEMPTS in gateway logs!")
+                    .font(.caption.bold())
+                    .foregroundColor(.red)
+            }
+            .padding(12)
+            .background(Color.gray.opacity(0.1))
+            .cornerRadius(8)
+            
             Spacer()
 
             Image(systemName: "link.circle.fill")
