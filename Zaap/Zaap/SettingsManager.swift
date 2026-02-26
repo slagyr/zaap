@@ -146,10 +146,10 @@ final class SettingsManager {
     /// Apply development or production configuration values.
     private func applyConfigMode(_ isDev: Bool) {
         if isDev {
-            // Development configuration
-            webhookURL = "localhost:8788"
-            authToken = "mock"
-            gatewayToken = "mock-gateway-token"
+            // Development configuration - Use actual local gateway settings
+            webhookURL = "localhost:18789"
+            authToken = "REDACTED_HOOKS_TOKEN"
+            gatewayToken = "REDACTED_GATEWAY_TOKEN"
         } else {
             // Production configuration
             webhookURL = "REDACTED_HOSTNAME"
