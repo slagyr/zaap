@@ -24,7 +24,7 @@ class DeliveryLogService: DeliveryLogging {
 
     func record(dataType: DeliveryDataType, timestamp: Date, success: Bool, errorMessage: String? = nil) {
         // ModelContext requires main queue access — dispatch if called from background thread.
-        let recordEntry = { [self] in
+        DispatchQueue.main.async { [self] in
             let entry = DeliveryRecord(
                 dataType: dataType,
                 timestamp: timestamp,
@@ -33,16 +33,6 @@ class DeliveryLogService: DeliveryLogging {
             )
             context.insert(entry)
             try? context.save()
-        }
-        
-        // If already on main queue (like in tests), execute synchronously
-        if Thread.isMainThread {
-            recordEntry()
-        } else {
-            // ModelContext requires main queue access — dispatch if called from background thread
-            DispatchQueue.main.async {
-                recordEntry()
-            }
         }
     }
 
