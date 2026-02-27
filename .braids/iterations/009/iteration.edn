@@ -2,7 +2,7 @@
  :status :active
  :stories [{:id "zaap-eky" :title "Fix mic button: derive channelType from session key, auto-select agent:main:main, remove Discord-only filter"}
            {:id "zaap-09m" :title "Voice tab UI: compact single-row toolbar at bottom (ACTUALLY change the layout)"}
-           {:id "zaap-qrc" :title "Remove Voice navigation title from voice tab"}]
+           {:id "zaap-k20" :title "Remove navigation titles from all tabs (Voice, Settings, Dashboard)"}]
  :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
               "No force unwraps (!) anywhere in codebase"
               "All new Swift files must be added to project.pbxproj"
