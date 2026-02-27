@@ -79,8 +79,10 @@ final class MockWebSocketTask: WebSocketTaskProtocol {
 final class MockWebSocketFactory: WebSocketFactory {
     var lastCreatedTask: MockWebSocketTask?
     var taskToReturn: MockWebSocketTask?
+    var lastBearerToken: String?
 
-    func createWebSocketTask(with url: URL) -> WebSocketTaskProtocol {
+    func createWebSocketTask(with url: URL, bearerToken: String?) -> WebSocketTaskProtocol {
+        lastBearerToken = bearerToken
         let task = taskToReturn ?? MockWebSocketTask()
         lastCreatedTask = task
         return task
@@ -200,6 +202,28 @@ final class GatewayConnectionTests: XCTestCase {
         connection.connect(to: url)
 
         XCTAssertTrue(mockWSFactory.lastCreatedTask === firstTask)
+    }
+
+    // MARK: - Bearer Token
+
+    func testConnectPassesBearerTokenToFactory() {
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let settings = SettingsManager(defaults: UserDefaults(suiteName: "test-bearer-\(UUID().uuidString)")!)
+        settings.gatewayToken = "my-gateway-token"
+        connection.settingsProvider = settings
+        connection.connect(to: url)
+
+        XCTAssertEqual(mockWSFactory.lastBearerToken, "my-gateway-token")
+    }
+
+    func testConnectPassesNilBearerTokenWhenEmpty() {
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let settings = SettingsManager(defaults: UserDefaults(suiteName: "test-bearer-empty-\(UUID().uuidString)")!)
+        settings.gatewayToken = ""
+        connection.settingsProvider = settings
+        connection.connect(to: url)
+
+        XCTAssertNil(mockWSFactory.lastBearerToken)
     }
 
     // MARK: - Disconnect

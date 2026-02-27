@@ -14,7 +14,7 @@ extension URLSessionWebSocketTask: WebSocketTaskProtocol {}
 
 /// Factory for creating WebSocket tasks.
 protocol WebSocketFactory {
-    func createWebSocketTask(with url: URL) -> WebSocketTaskProtocol
+    func createWebSocketTask(with url: URL, bearerToken: String?) -> WebSocketTaskProtocol
 }
 
 /// Monitors network path status.
@@ -102,6 +102,7 @@ final class GatewayConnection {
     private var reconnectAttempt: Int = 0
     private var gatewayURL: URL?
     private var intentionalDisconnect = false
+    var settingsProvider: SettingsManager = .shared
 
     init(pairingManager: NodePairingManager,
          webSocketFactory: WebSocketFactory,
@@ -216,7 +217,9 @@ final class GatewayConnection {
         state = .connecting
         
         print("🔧 [GATEWAY] Creating WebSocket task with factory")
-        let ws = webSocketFactory.createWebSocketTask(with: url)
+        let token = settingsProvider.gatewayToken
+        let bearerToken = token.isEmpty ? nil : token
+        let ws = webSocketFactory.createWebSocketTask(with: url, bearerToken: bearerToken)
         self.webSocket = ws
         
         print("🔧 [GATEWAY] Calling ws.resume() to start WebSocket connection")

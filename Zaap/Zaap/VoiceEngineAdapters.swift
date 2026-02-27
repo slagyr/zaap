@@ -164,8 +164,12 @@ final class RealAudioSessionConfigurator: AudioSessionConfiguring {
 // MARK: - Production WebSocket Factory
 
 final class URLSessionWebSocketFactory: WebSocketFactory {
-    func createWebSocketTask(with url: URL) -> WebSocketTaskProtocol {
-        URLSession.shared.webSocketTask(with: url)
+    func createWebSocketTask(with url: URL, bearerToken: String?) -> WebSocketTaskProtocol {
+        var request = URLRequest(url: url)
+        if let token = bearerToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        return URLSession.shared.webSocketTask(with: request)
     }
 }
 
