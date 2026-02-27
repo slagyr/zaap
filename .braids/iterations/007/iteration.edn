@@ -1,5 +1,5 @@
 {:number "007"
- :status :active
+ :status :complete
  :stories [{:id "zaap-v6u" :title "Wire DeliveryLogService into singletons — Dashboard shows No Deliveries (in progress)"}
            {:id "zaap-aqb" :title "NodePairingManager — Ed25519 keypair, Keychain, pairing WS flow"}
            {:id "zaap-89d" :title "GatewayConnection — WS client, handshake, message routing, reconnect"}
