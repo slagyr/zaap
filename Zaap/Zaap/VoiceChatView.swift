@@ -43,10 +43,16 @@ struct VoiceChatView: View {
         .navigationTitle("Voice")
         .onAppear {
             // Check if device is already paired with gateway
-            isPaired = NodePairingManager(keychain: RealKeychain()).isPaired
+            let mgr = NodePairingManager(keychain: RealKeychain())
+            isPaired = mgr.isPaired
             // Request microphone + speech recognition authorization
             AVAudioSession.sharedInstance().requestRecordPermission { _ in }
             SFSpeechRecognizer.requestAuthorization { _ in }
+        }
+        .onReceive(coordinator.needsRepairingPublisher) {
+            // Auth failed — token is stale or invalid, force re-pairing
+            NodePairingManager(keychain: RealKeychain()).clearPairing()
+            isPaired = false
         }
     }
 

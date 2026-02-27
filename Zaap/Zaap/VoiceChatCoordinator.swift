@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 // MARK: - Protocols for Dependency Injection
 
@@ -50,6 +51,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     private let speaker: ResponseSpeaking
     private var sessionKey: String = ""
     private var isActive = false
+    let needsRepairingPublisher = PassthroughSubject<Void, Never>()
 
     init(viewModel: VoiceChatViewModel,
          voiceEngine: VoiceEngineProtocol,
@@ -165,7 +167,10 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
     nonisolated func gatewayDidFailWithError(_ error: GatewayConnectionError) {
         Task { @MainActor in
-            // Could surface error to UI
+            // Auth failure means stale/invalid token — signal the view to re-pair
+            if case .challengeFailed(_) = error {
+                needsRepairingPublisher.send()
+            }
         }
     }
 
