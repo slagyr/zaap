@@ -4,6 +4,7 @@ import Speech
 struct VoiceChatView: View {
     @StateObject private var viewModel: VoiceChatViewModel
     @StateObject private var coordinator: VoiceChatCoordinator
+    @StateObject private var sessionPicker: SessionPickerViewModel
     @State private var isPaired = NodePairingManager(keychain: RealKeychain()).isPaired
 
     init() {
@@ -28,6 +29,7 @@ struct VoiceChatView: View {
         )
         _viewModel = StateObject(wrappedValue: vm)
         _coordinator = StateObject(wrappedValue: coord)
+        _sessionPicker = StateObject(wrappedValue: SessionPickerViewModel(sessionLister: gateway))
     }
 
     var body: some View {
@@ -45,6 +47,9 @@ struct VoiceChatView: View {
             // Check if device is already paired with gateway
             let mgr = NodePairingManager(keychain: RealKeychain())
             isPaired = mgr.isPaired
+            if isPaired {
+                Task { await sessionPicker.loadSessions() }
+            }
             // Request microphone + speech recognition authorization
             AVAudioSession.sharedInstance().requestRecordPermission { _ in }
             SFSpeechRecognizer.requestAuthorization { _ in }
@@ -91,6 +96,9 @@ struct VoiceChatView: View {
                 }
             }
 
+            SessionPickerView(viewModel: sessionPicker)
+                .padding(.horizontal)
+
             Divider()
 
             // Status & mic button
@@ -134,7 +142,7 @@ struct VoiceChatView: View {
             switch viewModel.state {
             case .idle:
                 if let url = SettingsManager.shared.voiceWebSocketURL {
-                    coordinator.startSession(gatewayURL: url)
+                    coordinator.startSession(gatewayURL: url, sessionKey: sessionPicker.activeSessionKey)
                 } else {
                     viewModel.updatePartialTranscript("⚠️ Configure gateway URL in Settings first")
                 }

@@ -79,6 +79,10 @@
 		U10002 /* PairingViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = U20002 /* PairingViewModelTests.swift */; };
 		U10003 /* PairingSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = U20003 /* PairingSectionView.swift */; };
 		U10004 /* PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = U20004 /* PairingView.swift */; };
+		V10001 /* SessionPickerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = V20001 /* SessionPickerViewModel.swift */; };
+		V10002 /* SessionPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = V20002 /* SessionPickerView.swift */; };
+		V10003 /* SessionPickerViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = V20003 /* SessionPickerViewModelTests.swift */; };
+		V10001 /* SessionPickerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = V20001 /* SessionPickerViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -168,6 +172,10 @@
 		U20002 /* PairingViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingViewModelTests.swift; sourceTree = "<group>"; };
 		U20003 /* PairingSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingSectionView.swift; sourceTree = "<group>"; };
 		U20004 /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingView.swift; sourceTree = "<group>"; };
+		V20001 /* SessionPickerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerViewModel.swift; sourceTree = "<group>"; };
+		V20002 /* SessionPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerView.swift; sourceTree = "<group>"; };
+		V20003 /* SessionPickerViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerViewModelTests.swift; sourceTree = "<group>"; };
+		V20001 /* SessionPickerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -240,6 +248,9 @@
 				U20001 /* PairingViewModel.swift */,
 				U20003 /* PairingSectionView.swift */,
 				U20004 /* PairingView.swift */,
+				V20001 /* SessionPickerViewModel.swift */,
+				V20002 /* SessionPickerView.swift */,
+				V20001 /* SessionPickerViewModel.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -299,6 +310,7 @@
 				S20003 /* HealthKitObserverServiceTests.swift */,
 				T20002 /* VoiceChatCoordinatorTests.swift */,
 				U20002 /* PairingViewModelTests.swift */,
+				V20003 /* SessionPickerViewModelTests.swift */,
 			);
 			path = ZaapTests;
 			sourceTree = "<group>";
@@ -435,6 +447,9 @@
 				U10001 /* PairingViewModel.swift in Sources */,
 				U10003 /* PairingSectionView.swift in Sources */,
 				U10004 /* PairingView.swift in Sources */,
+				V10001 /* SessionPickerViewModel.swift in Sources */,
+				V10002 /* SessionPickerView.swift in Sources */,
+				V10001 /* SessionPickerViewModel.swift in Sources */,
 				E6606BBF48384523A4EAF3E7 /* SessionPickerViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -473,6 +488,7 @@
 				S10003 /* HealthKitObserverServiceTests.swift in Sources */,
 				T10002 /* VoiceChatCoordinatorTests.swift in Sources */,
 				U10002 /* PairingViewModelTests.swift in Sources */,
+				V10003 /* SessionPickerViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

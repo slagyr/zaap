@@ -222,6 +222,12 @@ final class MockGatewayConnecting: GatewayConnecting {
         sentTranscripts.append((text: text, sessionKey: sessionKey))
     }
 
+    var sessionsToReturn: [GatewaySession] = []
+
+    func listSessions(limit: Int, activeMinutes: Int?, includeDerivedTitles: Bool, includeLastMessage: Bool) async throws -> [GatewaySession] {
+        return sessionsToReturn
+    }
+
     func simulateConnect() {
         state = .connected
         delegate?.gatewayDidConnect()

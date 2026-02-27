@@ -102,6 +102,7 @@ final class GatewayConnection {
     private var reconnectAttempt: Int = 0
     private var gatewayURL: URL?
     private var intentionalDisconnect = false
+    var pendingSessionListContinuation: (String, CheckedContinuation<[GatewaySession], Error>)?
 
     init(pairingManager: NodePairingManager,
          webSocketFactory: WebSocketFactory,
@@ -298,6 +299,8 @@ final class GatewayConnection {
             let eventName = event ?? ""
             let params = payload ?? json
             delegate?.gatewayDidReceiveEvent(eventName, payload: params)
+        } else if type == "res", let id = json["id"] as? String, pendingSessionListContinuation?.0 == id {
+            handleSessionListResponse(json, requestId: id)
         } else if type == "res" {
             // Response to a req — route as event for callers to handle
             let method = json["method"] as? String ?? "response"
@@ -431,5 +434,61 @@ final class GatewayConnection {
     private func jsonString(_ dict: [String: Any]) -> String? {
         guard let data = try? JSONSerialization.data(withJSONObject: dict) else { return nil }
         return String(data: data, encoding: .utf8)
+    }
+}
+
+
+// MARK: - Session Listing
+
+extension GatewayConnection: SessionListing {
+    func listSessions(limit: Int, activeMinutes: Int?, includeDerivedTitles: Bool, includeLastMessage: Bool) async throws -> [GatewaySession] {
+        guard state == .connected, let ws = webSocket else {
+            throw GatewayConnectionError.connectionFailed("Not connected")
+        }
+
+        let requestId = UUID().uuidString
+        var params: [String: Any] = [
+            "limit": limit,
+            "includeDerivedTitles": includeDerivedTitles,
+            "includeLastMessage": includeLastMessage
+        ]
+        if let mins = activeMinutes {
+            params["activeMinutes"] = mins
+        }
+
+        let message: [String: Any] = [
+            "type": "req",
+            "method": "sessions.list",
+            "id": requestId,
+            "params": params
+        ]
+
+        let data = try JSONSerialization.data(withJSONObject: message)
+        try await ws.send(.data(data))
+
+        return try await withCheckedThrowingContinuation { continuation in
+            self.pendingSessionListContinuation = (requestId, continuation)
+        }
+    }
+
+    internal func handleSessionListResponse(_ json: [String: Any], requestId: String) {
+        guard let (pendingId, continuation) = pendingSessionListContinuation,
+              pendingId == requestId else { return }
+        pendingSessionListContinuation = nil
+
+        guard let ok = json["ok"] as? Bool, ok,
+              let payload = json["payload"] as? [String: Any],
+              let sessionsArray = payload["sessions"] as? [[String: Any]] else {
+            continuation.resume(throwing: GatewayConnectionError.connectionFailed("Invalid sessions response"))
+            return
+        }
+
+        let sessions = sessionsArray.compactMap { dict -> GatewaySession? in
+            guard let key = dict["key"] as? String else { return nil }
+            let title = dict["title"] as? String ?? dict["derivedTitle"] as? String ?? "Untitled"
+            let lastMessage = dict["lastMessage"] as? String
+            return GatewaySession(key: key, title: title, lastMessage: lastMessage)
+        }
+        continuation.resume(returning: sessions)
     }
 }

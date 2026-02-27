@@ -270,7 +270,7 @@ struct VoicePairingView: View {
                 Label("Awaiting approval on gateway...", systemImage: "clock")
                     .foregroundColor(.orange)
                 if !viewModel.approvalRequestId.isEmpty {
-                    Text("openclaw nodes approve \(viewModel.approvalRequestId)")
+                    Text("openclaw devices approve \(viewModel.approvalRequestId)")
                         .font(.system(.caption, design: .monospaced))
                         .foregroundColor(.secondary)
                         .textSelection(.enabled)

@@ -21,6 +21,7 @@ protocol GatewayConnecting: AnyObject {
     func connect(to url: URL)
     func disconnect()
     func sendVoiceTranscript(_ text: String, sessionKey: String) async throws
+    func listSessions(limit: Int, activeMinutes: Int?, includeDerivedTitles: Bool, includeLastMessage: Bool) async throws -> [GatewaySession]
 }
 
 extension GatewayConnection: GatewayConnecting {}
@@ -88,8 +89,8 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
     // MARK: - Session Management
 
-    func startSession(gatewayURL: URL) {
-        sessionKey = UUID().uuidString
+    func startSession(gatewayURL: URL, sessionKey: String? = nil) {
+        self.sessionKey = sessionKey ?? UUID().uuidString
         isActive = true
         if gateway.state == .connected {
             // Already connected — go straight to listening
