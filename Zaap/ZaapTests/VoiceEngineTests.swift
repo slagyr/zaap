@@ -8,12 +8,16 @@ final class MockSpeechRecognizer: SpeechRecognizing {
     var authorizationStatus: SpeechAuthorizationStatus = .authorized
     var recognitionTaskToReturn: MockRecognitionTask?
     var lastRequest: (any SpeechRecognitionRequesting)?
+    var taskCreationCount = 0
+    var allCreatedTasks: [MockRecognitionTask] = []
 
     func recognitionTask(with request: any SpeechRecognitionRequesting,
                          resultHandler: @escaping (SpeechRecognitionResultProtocol?, Error?) -> Void) -> SpeechRecognitionTaskProtocol {
         lastRequest = request
+        taskCreationCount += 1
         let task = recognitionTaskToReturn ?? MockRecognitionTask()
         task.resultHandler = resultHandler
+        allCreatedTasks.append(task)
         return task
     }
 }
@@ -427,5 +431,82 @@ final class VoiceEngineTests: XCTestCase {
     @MainActor
     func testMinimumTranscriptLengthDefaultsTo3() {
         XCTAssertEqual(engine.minimumTranscriptLength, 3)
+    }
+
+    // MARK: - Recognition Restart After Utterance
+
+    @MainActor
+    func testEmittingUtteranceCancelsCurrentRecognitionTask() async {
+        engine.onUtteranceComplete = { _ in }
+
+        engine.startListening()
+        await simulateResultAndWait("What is the weather?", isFinal: false)
+
+        XCTAssertFalse(mockTask.cancelCalled, "Task should not be cancelled before emission")
+
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertTrue(mockTask.cancelCalled, "Old recognition task should be cancelled after emitting utterance")
+    }
+
+    @MainActor
+    func testEmittingUtteranceStartsNewRecognitionTask() async {
+        engine.onUtteranceComplete = { _ in }
+
+        engine.startListening()
+        XCTAssertEqual(speechRecognizer.taskCreationCount, 1)
+
+        await simulateResultAndWait("What is the weather?", isFinal: false)
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(speechRecognizer.taskCreationCount, 2, "A new recognition task should be created after emitting utterance")
+    }
+
+    @MainActor
+    func testNewRecognitionTaskReceivesFreshTranscript() async {
+        var emittedTranscripts: [String] = []
+        engine.onUtteranceComplete = { text in emittedTranscripts.append(text) }
+
+        engine.startListening()
+        await simulateResultAndWait("First utterance test", isFinal: false)
+
+        // Emit first utterance via silence timer
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(emittedTranscripts, ["First utterance test"])
+
+        // The new task should have its own resultHandler via allCreatedTasks
+        guard speechRecognizer.allCreatedTasks.count >= 2 else {
+            XCTFail("Expected a second recognition task to be created")
+            return
+        }
+        let newTask = speechRecognizer.allCreatedTasks[1]
+
+        // Simulate result on the NEW task — should only contain new text
+        newTask.simulateResult("Second thing", isFinal: false)
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(engine.currentTranscript, "Second thing", "New task should start with fresh transcript")
+    }
+
+    @MainActor
+    func testEngineRemainsListeningAfterUtteranceEmission() async {
+        engine.onUtteranceComplete = { _ in }
+
+        engine.startListening()
+        await simulateResultAndWait("Hello world test", isFinal: false)
+
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertTrue(engine.isListening, "Engine should remain listening after emitting utterance")
     }
 }

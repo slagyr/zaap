@@ -5,31 +5,27 @@ struct SessionPickerView: View {
 
     var body: some View {
         VStack(spacing: 8) {
+            Picker("Session", selection: $viewModel.selectedSessionKey) {
+                Text("New conversation")
+                    .tag(nil as String?)
+
+                ForEach(viewModel.sessions) { session in
+                    VStack(alignment: .leading) {
+                        Text(session.title)
+                        if let msg = session.lastMessage {
+                            Text(msg)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .tag(session.key as String?)
+                }
+            }
+            .pickerStyle(.menu)
+
             if viewModel.isLoading {
                 ProgressView()
-                    .frame(height: 44)
-            } else if viewModel.sessions.isEmpty {
-                Text("New conversation")
-                    .foregroundColor(.secondary)
-                    .frame(height: 44)
-            } else {
-                Picker("Session", selection: $viewModel.selectedSessionKey) {
-                    Text("New conversation")
-                        .tag(nil as String?)
-
-                    ForEach(viewModel.sessions) { session in
-                        VStack(alignment: .leading) {
-                            Text(session.title)
-                            if let msg = session.lastMessage {
-                                Text(msg)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                        .tag(session.key as String?)
-                    }
-                }
-                .pickerStyle(.menu)
+                    .controlSize(.small)
             }
         }
     }
