@@ -1,4 +1,5 @@
-{:name "Zaap"
+{:worker-agent "scrapper"
+ :name "Zaap"
  :status :active
  :priority :normal
  :autonomy :full

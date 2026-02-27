@@ -120,7 +120,7 @@ final class GatewayConnection {
 
     // MARK: - Connect / Disconnect
 
-    func connect(to url: URL) {
+    func connect() {
         print("🔧 [GATEWAY] connect(to: \(url.absoluteString)) called")
         print("🔧 [GATEWAY] Current state: \(state)")
         
