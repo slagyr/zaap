@@ -212,7 +212,7 @@ final class GatewayConnection {
     // MARK: - Private: Connection Flow
 
     private func performConnect(to url: URL) {
-        print("🔧 [GATEWAY] performConnect(to: \(url.absoluteString)) called")
+        print("🔧 [GATEWAY] performConnect(to: \(url.absoluteString)) called — scheme: \(url.scheme ?? "nil")")
         state = .connecting
         
         print("🔧 [GATEWAY] Creating WebSocket task with factory")
@@ -257,7 +257,12 @@ final class GatewayConnection {
             return
         }
 
+        // Log raw incoming data for debugging
+        let rawString = String(data: data, encoding: .utf8) ?? "<binary: \(data.count) bytes>"
+        print("📥 [GATEWAY] raw message: \(rawString)")
+
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            print("❌ [GATEWAY] Failed to parse message as JSON object: \(rawString)")
             delegate?.gatewayDidFailWithError(.invalidMessage)
             return
         }

@@ -4,7 +4,7 @@ import Speech
 struct VoiceChatView: View {
     @StateObject private var viewModel: VoiceChatViewModel
     @StateObject private var coordinator: VoiceChatCoordinator
-    @State private var isPaired = false
+    @State private var isPaired = NodePairingManager(keychain: RealKeychain()).isPaired
 
     init() {
         let vm = VoiceChatViewModel()
