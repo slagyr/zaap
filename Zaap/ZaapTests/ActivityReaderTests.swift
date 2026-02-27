@@ -1,3 +1,4 @@
+import HealthKit
 import XCTest
 @testable import Zaap
 
@@ -48,7 +49,8 @@ final class ActivityReaderTests: XCTestCase {
 
     // MARK: - Failure paths (HealthKit unavailable in simulator)
 
-    func testRequestAuthorizationThrowsWhenHealthKitUnavailable() async {
+    func testRequestAuthorizationThrowsWhenHealthKitUnavailable() async throws {
+        try XCTSkipIf(HKHealthStore.isHealthDataAvailable(), "HealthKit is available on this simulator")
         let reader = ActivityReader()
         do {
             try await reader.requestAuthorization()
@@ -58,7 +60,8 @@ final class ActivityReaderTests: XCTestCase {
         }
     }
 
-    func testFetchTodaySummaryThrowsWhenHealthKitUnavailable() async {
+    func testFetchTodaySummaryThrowsWhenHealthKitUnavailable() async throws {
+        try XCTSkipIf(HKHealthStore.isHealthDataAvailable(), "HealthKit is available on this simulator")
         let reader = ActivityReader()
         do {
             _ = try await reader.fetchTodaySummary()

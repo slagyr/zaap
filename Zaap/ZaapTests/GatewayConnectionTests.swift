@@ -293,12 +293,12 @@ final class GatewayConnectionTests: XCTestCase {
         XCTAssertEqual(device?["nonce"] as? String, "test-nonce-123")
 
         let client = params?["client"] as? [String: Any]
-        XCTAssertEqual(client?["id"] as? String, "ios-node")
+        XCTAssertEqual(client?["id"] as? String, "openclaw-ios")
         XCTAssertEqual(client?["mode"] as? String, "node")
         XCTAssertEqual(client?["platform"] as? String, "ios")
 
         let caps = params?["caps"] as? [String]
-        XCTAssertEqual(caps, ["voice"])
+        XCTAssertEqual(caps, [])
     }
 
     func testChallengeWithKeychainErrorReportsNoIdentity() async throws {

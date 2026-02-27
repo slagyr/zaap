@@ -1,3 +1,4 @@
+import HealthKit
 import XCTest
 @testable import Zaap
 
@@ -36,7 +37,8 @@ final class HeartRateReaderTests: XCTestCase {
 
     // MARK: - Failure paths (HealthKit unavailable in simulator)
 
-    func testRequestAuthorizationThrowsWhenHealthKitUnavailable() async {
+    func testRequestAuthorizationThrowsWhenHealthKitUnavailable() async throws {
+        try XCTSkipIf(HKHealthStore.isHealthDataAvailable(), "HealthKit is available on this simulator")
         let reader = HeartRateReader()
         do {
             try await reader.requestAuthorization()
@@ -45,7 +47,8 @@ final class HeartRateReaderTests: XCTestCase {
         }
     }
 
-    func testFetchHeartRateSamplesThrowsWhenHealthKitUnavailable() async {
+    func testFetchHeartRateSamplesThrowsWhenHealthKitUnavailable() async throws {
+        try XCTSkipIf(HKHealthStore.isHealthDataAvailable(), "HealthKit is available on this simulator")
         let reader = HeartRateReader()
         do {
             _ = try await reader.fetchHeartRateSamples()
@@ -54,7 +57,8 @@ final class HeartRateReaderTests: XCTestCase {
         }
     }
 
-    func testFetchRestingHeartRateThrowsWhenHealthKitUnavailable() async {
+    func testFetchRestingHeartRateThrowsWhenHealthKitUnavailable() async throws {
+        try XCTSkipIf(HKHealthStore.isHealthDataAvailable(), "HealthKit is available on this simulator")
         let reader = HeartRateReader()
         do {
             _ = try await reader.fetchRestingHeartRate()
@@ -63,7 +67,8 @@ final class HeartRateReaderTests: XCTestCase {
         }
     }
 
-    func testFetchDailySummaryThrowsWhenHealthKitUnavailable() async {
+    func testFetchDailySummaryThrowsWhenHealthKitUnavailable() async throws {
+        try XCTSkipIf(HKHealthStore.isHealthDataAvailable(), "HealthKit is available on this simulator")
         let reader = HeartRateReader()
         do {
             _ = try await reader.fetchDailySummary(for: Date())
@@ -72,7 +77,8 @@ final class HeartRateReaderTests: XCTestCase {
         }
     }
 
-    func testFetchDailySummaryNoArgThrowsWhenHealthKitUnavailable() async {
+    func testFetchDailySummaryNoArgThrowsWhenHealthKitUnavailable() async throws {
+        try XCTSkipIf(HKHealthStore.isHealthDataAvailable(), "HealthKit is available on this simulator")
         let reader = HeartRateReader()
         do {
             _ = try await reader.fetchDailySummary()
