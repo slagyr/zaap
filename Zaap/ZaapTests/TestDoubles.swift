@@ -272,10 +272,12 @@ final class MockSpeechSynthesizer: SpeechSynthesizing {
     var isSpeakingValue = false
     var isSpeaking: Bool { isSpeakingValue }
     var spokenTexts: [String] = []
+    var spokenUtterances: [AVSpeechUtterance] = []
     var stopCalled = false
 
     func speak(_ utterance: AVSpeechUtterance) {
         spokenTexts.append(utterance.speechString)
+        spokenUtterances.append(utterance)
     }
 
     @discardableResult
