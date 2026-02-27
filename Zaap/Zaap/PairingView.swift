@@ -49,6 +49,8 @@ final class VoicePairingViewModel: ObservableObject, GatewayConnectionDelegate {
             return
         }
         status = .connecting
+        // Always disconnect first to reset state (may be stuck in reconnecting)
+        gateway.disconnect()
         connect(to: url)
     }
 

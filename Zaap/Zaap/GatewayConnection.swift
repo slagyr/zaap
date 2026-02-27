@@ -271,6 +271,8 @@ final class GatewayConnection {
         let event = json["event"] as? String
         let payload = json["payload"] as? [String: Any]
 
+        print("📨 [GATEWAY] parsed: type=\(type) event=\(event ?? "-") ok=\(json["ok"] ?? "-")")
+
         if type == "event" && event == "connect.challenge" {
             // Protocol: {type:"event", event:"connect.challenge", payload:{nonce, ts}}
             handleChallenge(json)
@@ -366,6 +368,7 @@ final class GatewayConnection {
             ]
 
             let data = try JSONSerialization.data(withJSONObject: connectMessage)
+            print("📤 [GATEWAY] sending connect: role=operator token=\(authToken.isEmpty ? "empty" : "\(authToken.count)chars")")
             Task {
                 do {
                     try await webSocket?.send(.data(data))
