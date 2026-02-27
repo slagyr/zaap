@@ -5,7 +5,7 @@ struct VoiceChatView: View {
     @StateObject private var viewModel: VoiceChatViewModel
     @StateObject private var coordinator: VoiceChatCoordinator
     @StateObject private var sessionPicker: SessionPickerViewModel
-    @State private var isPaired = NodePairingManager(keychain: RealKeychain()).isPaired
+    @State private var isPaired = false
 
     init() {
         let vm = VoiceChatViewModel()

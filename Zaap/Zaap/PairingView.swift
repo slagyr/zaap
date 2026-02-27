@@ -131,7 +131,6 @@ struct VoicePairingView: View {
         """
     }
 
-    @State private var copiedDeviceId = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -147,45 +146,6 @@ struct VoicePairingView: View {
 
             if !viewModel.nodeId.isEmpty {
                 VStack(spacing: 12) {
-                    // Device ID with copy button
-                    VStack(spacing: 6) {
-                        Label("Device ID", systemImage: "cpu")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundColor(.primary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
-                        HStack(spacing: 10) {
-                            Text(viewModel.nodeId)
-                                .font(.system(.callout, design: .monospaced))
-                                .textSelection(.enabled)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-
-                            Spacer()
-
-                            Button {
-                                UIPasteboard.general.string = viewModel.nodeId
-                                copiedDeviceId = true
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                    copiedDeviceId = false
-                                }
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Image(systemName: copiedDeviceId ? "checkmark" : "doc.on.doc")
-                                    Text(copiedDeviceId ? "Copied" : "Copy")
-                                }
-                                .font(.caption.weight(.medium))
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(copiedDeviceId ? Color.green.opacity(0.2) : Color.blue.opacity(0.15))
-                                .foregroundColor(copiedDeviceId ? .green : .blue)
-                                .cornerRadius(6)
-                            }
-                        }
-                    }
-
-                    Divider()
-
                     // Key fingerprint
                     VStack(spacing: 4) {
                         Label("Key Fingerprint", systemImage: "key")
