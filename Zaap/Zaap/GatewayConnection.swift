@@ -487,7 +487,8 @@ extension GatewayConnection: SessionListing {
             guard let key = dict["key"] as? String else { return nil }
             let title = dict["title"] as? String ?? dict["derivedTitle"] as? String ?? "Untitled"
             let lastMessage = dict["lastMessage"] as? String
-            return GatewaySession(key: key, title: title, lastMessage: lastMessage)
+            let channelType = dict["channelType"] as? String
+            return GatewaySession(key: key, title: title, lastMessage: lastMessage, channelType: channelType)
         }
         continuation.resume(returning: sessions)
     }

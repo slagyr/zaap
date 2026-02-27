@@ -93,6 +93,7 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
     private var recognitionTask: SpeechRecognitionTaskProtocol?
     private var recognitionRequest: (any SpeechRecognitionRequesting)?
     private var silenceTimer: TimerToken?
+    private var lastEmittedLength = 0
 
     init(speechRecognizer: any SpeechRecognizing,
          audioEngine: AudioEngine,
@@ -116,6 +117,9 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
 
     func startListening() {
         guard !isListening else { return }
+
+        lastEmittedLength = 0
+        currentTranscript = ""
 
         guard speechRecognizer.authorizationStatus == .authorized else {
             onError?(.notAuthorized)
@@ -187,6 +191,8 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         audioEngine.removeTap(onBus: 0)
         audioEngine.stop()
         isListening = false
+        currentTranscript = ""
+        lastEmittedLength = 0
     }
 
     // MARK: - Private
@@ -201,10 +207,11 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
     }
 
     private func emitUtteranceIfValid() {
-        let transcript = currentTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard transcript.count >= minimumTranscriptLength else { return }
-        onUtteranceComplete?(transcript)
-        currentTranscript = ""
+        let full = currentTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+        let newPortion = String(full.dropFirst(lastEmittedLength)).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard newPortion.count >= minimumTranscriptLength else { return }
+        onUtteranceComplete?(newPortion)
+        lastEmittedLength = full.count
         silenceTimer?.invalidate()
         silenceTimer = nil
         restartRecognition()

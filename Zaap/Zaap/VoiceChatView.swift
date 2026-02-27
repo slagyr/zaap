@@ -158,6 +158,7 @@ struct VoiceChatView: View {
                 .clipShape(Circle())
         }
         .accessibilityLabel(micAccessibilityLabel)
+        .disabled(!sessionPicker.isSessionSelected)
     }
 
     private var micIconName: String {

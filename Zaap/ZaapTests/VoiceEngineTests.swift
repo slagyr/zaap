@@ -496,6 +496,99 @@ final class VoiceEngineTests: XCTestCase {
         XCTAssertEqual(engine.currentTranscript, "Second thing", "New task should start with fresh transcript")
     }
 
+    // MARK: - Transcript Accumulation Fix (Utterance Offset)
+
+    @MainActor
+    func testStopListeningClearsCurrentTranscript() async {
+        engine.startListening()
+        await simulateResultAndWait("Hello world test", isFinal: false)
+        XCTAssertEqual(engine.currentTranscript, "Hello world test")
+
+        engine.stopListening()
+        XCTAssertEqual(engine.currentTranscript, "", "stopListening should clear currentTranscript")
+    }
+
+    @MainActor
+    func testSecondUtteranceEmitsOnlyNewPortion() async {
+        var emittedTranscripts: [String] = []
+        engine.onUtteranceComplete = { text in emittedTranscripts.append(text) }
+
+        engine.startListening()
+        await simulateResultAndWait("First utterance", isFinal: false)
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(emittedTranscripts, ["First utterance"])
+
+        // After emit+restart, new task created. Simulate cumulative text on it.
+        let latestTask = speechRecognizer.allCreatedTasks.last!
+        latestTask.simulateResult("First utterance second part", isFinal: false)
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(emittedTranscripts, ["First utterance", "second part"],
+                       "Should only emit the new portion after the last emitted offset")
+    }
+
+    @MainActor
+    func testStartListeningResetsEmittedOffset() async {
+        var emittedTranscripts: [String] = []
+        engine.onUtteranceComplete = { text in emittedTranscripts.append(text) }
+
+        engine.startListening()
+        await simulateResultAndWait("Hello world test", isFinal: false)
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        engine.stopListening()
+
+        let newTask = MockRecognitionTask()
+        speechRecognizer.recognitionTaskToReturn = newTask
+        engine.startListening()
+        newTask.simulateResult("New session text", isFinal: false)
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(emittedTranscripts, ["Hello world test", "New session text"])
+    }
+
+    @MainActor
+    func testLateCallbackAfterEmitDoesNotReEmitOldText() async {
+        var emittedTranscripts: [String] = []
+        engine.onUtteranceComplete = { text in emittedTranscripts.append(text) }
+
+        engine.startListening()
+        await simulateResultAndWait("Complete sentence here", isFinal: false)
+
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(emittedTranscripts, ["Complete sentence here"])
+
+        let latestTask = speechRecognizer.allCreatedTasks.last!
+        latestTask.simulateResult("Complete sentence here", isFinal: false)
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(emittedTranscripts, ["Complete sentence here"],
+                       "Late callback with same text should not cause re-emission")
+    }
+
     @MainActor
     func testEngineRemainsListeningAfterUtteranceEmission() async {
         engine.onUtteranceComplete = { _ in }

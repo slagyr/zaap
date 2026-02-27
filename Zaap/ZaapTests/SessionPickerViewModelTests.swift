@@ -43,8 +43,8 @@ final class SessionPickerViewModelTests: XCTestCase {
 
     func testLoadSessionsPopulatesList() async {
         lister.sessionsToReturn = [
-            GatewaySession(key: "abc-123", title: "Morning chat", lastMessage: "Good morning!"),
-            GatewaySession(key: "def-456", title: "Project discussion", lastMessage: nil)
+            GatewaySession(key: "abc-123", title: "Morning chat", lastMessage: "Good morning!", channelType: "discord"),
+            GatewaySession(key: "def-456", title: "Project discussion", lastMessage: nil, channelType: "discord")
         ]
 
         await viewModel.loadSessions()
@@ -90,14 +90,14 @@ final class SessionPickerViewModelTests: XCTestCase {
     // MARK: - GatewaySession Model
 
     func testGatewaySessionIdentifiable() {
-        let session = GatewaySession(key: "test-key", title: "Test", lastMessage: nil)
+        let session = GatewaySession(key: "test-key", title: "Test", lastMessage: nil, channelType: "discord")
         XCTAssertEqual(session.id, "test-key")
     }
 
     func testGatewaySessionEquality() {
-        let a = GatewaySession(key: "k1", title: "T1", lastMessage: "m1")
-        let b = GatewaySession(key: "k1", title: "T1", lastMessage: "m1")
-        let c = GatewaySession(key: "k2", title: "T1", lastMessage: "m1")
+        let a = GatewaySession(key: "k1", title: "T1", lastMessage: "m1", channelType: "discord")
+        let b = GatewaySession(key: "k1", title: "T1", lastMessage: "m1", channelType: "discord")
+        let c = GatewaySession(key: "k2", title: "T1", lastMessage: "m1", channelType: "discord")
         XCTAssertEqual(a, b)
         XCTAssertNotEqual(a, c)
     }
