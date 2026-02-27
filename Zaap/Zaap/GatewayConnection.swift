@@ -120,7 +120,7 @@ final class GatewayConnection {
 
     // MARK: - Connect / Disconnect
 
-    func connect() {
+    func connect(to url: URL) {
         print("🔧 [GATEWAY] connect(to: \(url.absoluteString)) called")
         print("🔧 [GATEWAY] Current state: \(state)")
         
@@ -272,6 +272,17 @@ final class GatewayConnection {
         } else if type == "res" && (payload?["type"] as? String) == "hello-ok" {
             // Protocol: {type:"res", id, ok:true, payload:{type:"hello-ok", ...}}
             handleHelloOk(payload: payload)
+        } else if type == "res", let ok = json["ok"] as? Bool, !ok {
+            // Failed response — check for pairing required (1008)
+            let error = json["error"] as? [String: Any]
+            let code = error?["code"] as? Int ?? 0
+            let msg = error?["message"] as? String ?? "Connection failed"
+            if code == 1008 {
+                // Pairing required: surface to delegate so UI can prompt user to approve
+                delegate?.gatewayDidFailWithError(.challengeFailed("pairing_required"))
+            } else {
+                delegate?.gatewayDidFailWithError(.challengeFailed(msg))
+            }
         } else if type == "event" {
             // All other gateway events
             let eventName = event ?? ""
@@ -301,24 +312,19 @@ final class GatewayConnection {
             let identity = try pairingManager.generateIdentity()
 
             // Use stored device token if already paired; otherwise use gateway bearer token from settings.
+            // Empty token is valid — gateway will respond with 1008 (pairing required) if not yet approved.
             let authToken = pairingManager.loadToken() ?? SettingsManager.shared.gatewayToken
-            
-            // Ensure we have a valid token before proceeding
-            guard !authToken.isEmpty else {
-                delegate?.gatewayDidFailWithError(.challengeFailed("No authentication token available. Configure Gateway Bearer Token in Settings."))
-                return
-            }
 
             let sig = try pairingManager.signChallenge(
                 nonce: nonce,
                 deviceId: identity.nodeId,
-                clientId: "ios-node",
-                clientMode: "node",
-                role: "node",
-                scopes: [],
+                clientId: "zaap-ios",
+                clientMode: "operator",
+                role: "operator",
+                scopes: ["operator.read", "operator.write"],
                 token: authToken,
                 platform: "ios",
-                deviceFamily: "mobile"
+                deviceFamily: "iphone"
             )
 
             // Protocol: type must be "req" (not "request"), auth in "auth" sub-key.
@@ -330,19 +336,20 @@ final class GatewayConnection {
                     "minProtocol": 3,
                     "maxProtocol": 3,
                     "client": [
-                        "id": "ios-node",
-                        "mode": "node",
+                        "id": "zaap-ios",
+                        "mode": "operator",
                         "platform": "ios",
-                        "version": "1.0"
+                        "deviceFamily": "iphone",
+                        "version": "1.0.0"
                     ] as [String: Any],
-                    "role": "node",
-                    "scopes": [],
-                    "caps": ["voice"],
+                    "role": "operator",
+                    "scopes": ["operator.read", "operator.write"],
+                    "caps": [],
                     "commands": [],
                     "permissions": [:] as [String: Any],
                     "auth": ["token": authToken] as [String: Any],
                     "locale": "en-US",
-                    "userAgent": "zaap-ios/1.0",
+                    "userAgent": "zaap-ios/1.0.0",
                     "device": [
                         "id": identity.nodeId,
                         "publicKey": identity.publicKeyBase64,
