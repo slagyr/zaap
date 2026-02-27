@@ -1,0 +1,12 @@
+{:number "009"
+ :status :active
+ :stories [{:id "zaap-eky" :title "Fix mic button: derive channelType from session key, auto-select agent:main:main, remove Discord-only filter"}]
+ :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
+              "No force unwraps (!) anywhere in codebase"
+              "All new Swift files must be added to project.pbxproj"
+              "Tests must pass before commit — run xcodebuild test first"
+              "No third-party dependencies — Apple frameworks only"]
+ :notes ["Theme: Voice Session — fix session picker so voice always works"
+         "agent:main:main always exists in OpenClaw — use as default session"
+         "channelType must be derived from session key (gateway does not send this field)"
+         "Mic button must never be permanently disabled"]}
