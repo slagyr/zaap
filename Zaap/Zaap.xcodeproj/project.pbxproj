@@ -47,6 +47,7 @@
 		I10003 /* DashboardViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = I20003 /* DashboardViewModelTests.swift */; };
 		J10001 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = J20001 /* MainTabView.swift */; };
 		J10002 /* MainTabViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = J20002 /* MainTabViewTests.swift */; };
+		J10003 /* SettingsViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = J20003 /* SettingsViewTests.swift */; };
 		K10001 /* WebhookTestService.swift in Sources */ = {isa = PBXBuildFile; fileRef = K20001 /* WebhookTestService.swift */; };
 		K10002 /* WebhookTestServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = K20002 /* WebhookTestServiceTests.swift */; };
 		L10001 /* RequestLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = L20001 /* RequestLog.swift */; };
@@ -133,6 +134,7 @@
 		I20003 /* DashboardViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModelTests.swift; sourceTree = "<group>"; };
 		J20001 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		J20002 /* MainTabViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabViewTests.swift; sourceTree = "<group>"; };
+		J20003 /* SettingsViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewTests.swift; sourceTree = "<group>"; };
 		K20001 /* WebhookTestService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebhookTestService.swift; sourceTree = "<group>"; };
 		K20002 /* WebhookTestServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebhookTestServiceTests.swift; sourceTree = "<group>"; };
 		L20001 /* RequestLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestLog.swift; sourceTree = "<group>"; };
@@ -237,7 +239,8 @@
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
 				A40003 /* Preview Content */,
-			);
+			
+				3624365445114D269D36F93A /* SessionPickerViewModel.swift */,);
 			path = Zaap;
 			sourceTree = "<group>";
 		};
@@ -278,6 +281,7 @@
 				G20003 /* DeliveryLogServiceTests.swift */,
 				I20003 /* DashboardViewModelTests.swift */,
 				J20002 /* MainTabViewTests.swift */,
+				J20003 /* SettingsViewTests.swift */,
 				K20002 /* WebhookTestServiceTests.swift */,
 				L20002 /* RequestLogTests.swift */,
 				M20002 /* NodePairingManagerTests.swift */,
@@ -424,7 +428,8 @@
 				U10001 /* PairingViewModel.swift in Sources */,
 				U10003 /* PairingSectionView.swift in Sources */,
 				U10004 /* PairingView.swift in Sources */,
-			);
+			
+				E6606BBF48384523A4EAF3E7 /* SessionPickerViewModel.swift in Sources */,);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		E60001 /* Sources */ = {
@@ -448,6 +453,7 @@
 				G10003 /* DeliveryLogServiceTests.swift in Sources */,
 				I10003 /* DashboardViewModelTests.swift in Sources */,
 				J10002 /* MainTabViewTests.swift in Sources */,
+				J10003 /* SettingsViewTests.swift in Sources */,
 				K10002 /* WebhookTestServiceTests.swift in Sources */,
 				L10002 /* RequestLogTests.swift in Sources */,
 				M10002 /* NodePairingManagerTests.swift in Sources */,

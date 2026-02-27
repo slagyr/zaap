@@ -12,6 +12,7 @@ struct SettingsView: View {
 
     @Bindable var settings: SettingsManager
     var testService: WebhookTestService?
+    var gatewayTestService: GatewayTestService?
     @ObservedObject var requestLog: RequestLog = .shared
     var gatewayBrowser: GatewayBrowserViewModel?
     var pairingViewModel: PairingViewModel?
@@ -20,6 +21,7 @@ struct SettingsView: View {
     @State private var isGatewayTokenVisible = false
     @State private var isTesting = false
     @State private var testResult: WebhookTestService.TestResult?
+    @State private var gatewayTestResult: GatewayTestService.TestResult?
     @State private var locationSendStatus: SendNowStatus = .idle
     @State private var sleepSendStatus: SendNowStatus = .idle
     @State private var workoutSendStatus: SendNowStatus = .idle
@@ -214,9 +216,19 @@ struct SettingsView: View {
                     HStack {
                         Image(systemName: testResult.success ? "checkmark.circle.fill" : "xmark.circle.fill")
                             .foregroundStyle(testResult.success ? .green : .red)
-                        Text(testResult.success ? "Connection successful" : (testResult.errorMessage ?? "Unknown error"))
+                        Text(testResult.success ? "Webhook: OK" : "Webhook: \(testResult.errorMessage ?? "Failed")")
                             .font(.subheadline)
                             .foregroundStyle(testResult.success ? .green : .red)
+                    }
+                }
+
+                if let gatewayTestResult {
+                    HStack {
+                        Image(systemName: gatewayTestResult.success ? "checkmark.circle.fill" : "xmark.circle.fill")
+                            .foregroundStyle(gatewayTestResult.success ? .green : .red)
+                        Text(gatewayTestResult.success ? "Gateway: OK" : "Gateway: \(gatewayTestResult.errorMessage ?? "Failed")")
+                            .font(.subheadline)
+                            .foregroundStyle(gatewayTestResult.success ? .green : .red)
                     }
                 }
             }
@@ -457,8 +469,16 @@ struct SettingsView: View {
     private func runTest() async {
         isTesting = true
         testResult = nil
-        let service = testService ?? WebhookTestService(settings: settings)
-        testResult = await service.testConnection()
+        gatewayTestResult = nil
+
+        let webhookService = testService ?? WebhookTestService(settings: settings)
+        let gwService = gatewayTestService ?? GatewayTestService(settings: settings)
+
+        async let webhookResult = webhookService.testConnection()
+        async let gwResult = gwService.testConnection()
+
+        testResult = await webhookResult
+        gatewayTestResult = await gwResult
         isTesting = false
     }
 }
@@ -481,6 +501,6 @@ private final class SpeechFinishMonitor: NSObject, AVSpeechSynthesizerDelegate {
 
 #Preview {
     NavigationStack {
-        SettingsView(settings: SettingsManager(defaults: UserDefaults(suiteName: "preview") ?? .standard), testService: nil)
+        SettingsView(settings: SettingsManager(defaults: UserDefaults(suiteName: "preview") ?? .standard), testService: nil, gatewayTestService: nil)
     }
 }
