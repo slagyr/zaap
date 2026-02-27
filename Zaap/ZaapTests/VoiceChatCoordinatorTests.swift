@@ -219,4 +219,40 @@ final class VoiceChatCoordinatorTests: XCTestCase {
         // The coordinator should set itself as the gateway's delegate
         XCTAssertNotNil(gateway.delegate)
     }
+
+    // MARK: - Challenge Failed → Needs Re-pairing
+
+    func testChallengeFailedSendsNeedsRepairing() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+
+        var repairingReceived = false
+        let cancellable = coordinator.needsRepairingPublisher.sink {
+            repairingReceived = true
+        }
+
+        gateway.simulateError(.challengeFailed("pairing_required"))
+
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(repairingReceived)
+        _ = cancellable
+    }
+
+    func testNotPairedErrorSendsNeedsRepairing() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+
+        var repairingReceived = false
+        let cancellable = coordinator.needsRepairingPublisher.sink {
+            repairingReceived = true
+        }
+
+        gateway.simulateError(.challengeFailed("pairing_required:abc123"))
+
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(repairingReceived)
+        _ = cancellable
+    }
 }

@@ -241,6 +241,10 @@ final class MockGatewayConnecting: GatewayConnecting {
     func simulateEvent(_ event: String, payload: [String: Any]) {
         delegate?.gatewayDidReceiveEvent(event, payload: payload)
     }
+
+    func simulateError(_ error: GatewayConnectionError) {
+        delegate?.gatewayDidFailWithError(error)
+    }
 }
 
 // MARK: - Mock Response Speaking
