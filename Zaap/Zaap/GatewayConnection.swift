@@ -280,13 +280,16 @@ final class GatewayConnection {
             // Protocol: {type:"res", id, ok:true, payload:{type:"hello-ok", ...}}
             handleHelloOk(payload: payload)
         } else if type == "res", let ok = json["ok"] as? Bool, !ok {
-            // Failed response — check for pairing required (1008)
+            // Failed response — check for pairing required
             let error = json["error"] as? [String: Any]
-            let code = error?["code"] as? Int ?? 0
+            let code = error?["code"] as? String ?? ""
             let msg = error?["message"] as? String ?? "Connection failed"
-            if code == 1008 {
-                // Pairing required: surface to delegate so UI can prompt user to approve
-                delegate?.gatewayDidFailWithError(.challengeFailed("pairing_required"))
+            let details = error?["details"] as? [String: Any]
+            let requestId = details?["requestId"] as? String ?? ""
+            if code == "NOT_PAIRED" || code == "PAIRING_REQUIRED" {
+                // Surface requestId so UI can tell user what to approve
+                let payload = requestId.isEmpty ? "pairing_required" : "pairing_required:\(requestId)"
+                delegate?.gatewayDidFailWithError(.challengeFailed(payload))
             } else {
                 delegate?.gatewayDidFailWithError(.challengeFailed(msg))
             }
@@ -368,7 +371,7 @@ final class GatewayConnection {
             ]
 
             let data = try JSONSerialization.data(withJSONObject: connectMessage)
-            print("📤 [GATEWAY] sending connect: role=operator token=\(authToken.isEmpty ? "empty" : "\(authToken.count)chars")")
+            print("📤 [GATEWAY] sending connect: role=node token=\(authToken.isEmpty ? "empty" : "\(authToken.count)chars")")
             Task {
                 do {
                     try await webSocket?.send(.data(data))

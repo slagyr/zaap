@@ -19,6 +19,7 @@ final class VoicePairingViewModel: ObservableObject, GatewayConnectionDelegate {
     @Published private(set) var status: VoicePairingStatus = .idle
     @Published private(set) var nodeId: String = ""
     @Published private(set) var publicKeyFingerprint: String = ""
+    @Published private(set) var approvalRequestId: String = ""
 
     private let pairingManager: NodePairingManager
     private let gateway: GatewayConnection
@@ -82,7 +83,12 @@ final class VoicePairingViewModel: ObservableObject, GatewayConnectionDelegate {
 
     nonisolated func gatewayDidFailWithError(_ error: GatewayConnectionError) {
         Task { @MainActor in
-            if case .challengeFailed(let msg) = error, msg == "pairing_required" {
+            if case .challengeFailed(let msg) = error, msg.hasPrefix("pairing_required") {
+                // Extract requestId if present (format: "pairing_required:<requestId>")
+                let parts = msg.split(separator: ":", maxSplits: 1)
+                if parts.count == 2 {
+                    self.approvalRequestId = String(parts[1])
+                }
                 // Not yet approved — show awaiting state and retry after a delay
                 self.status = .awaitingApproval
                 guard let url = SettingsManager.shared.voiceWebSocketURL else { return }
@@ -256,8 +262,17 @@ struct VoicePairingView: View {
             Label("Connecting to gateway...", systemImage: "network")
                 .foregroundColor(.blue)
         case .awaitingApproval:
-            Label("Awaiting approval on gateway...", systemImage: "clock")
-                .foregroundColor(.orange)
+            VStack(spacing: 6) {
+                Label("Awaiting approval on gateway...", systemImage: "clock")
+                    .foregroundColor(.orange)
+                if !viewModel.approvalRequestId.isEmpty {
+                    Text("openclaw nodes approve \(viewModel.approvalRequestId)")
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundColor(.secondary)
+                        .textSelection(.enabled)
+                        .multilineTextAlignment(.center)
+                }
+            }
         case .paired:
             Label("Paired!", systemImage: "checkmark.circle.fill")
                 .foregroundColor(.green)
