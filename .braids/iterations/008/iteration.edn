@@ -1,5 +1,5 @@
 {:number "008"
- :status :active
+ :status :complete
  :stories [{:id "zaap-8kq" :title "Fix voice transcript accumulation — restart recognition task after each utterance"}
            {:id "zaap-a76" :title "Fix session picker: always show picker, not static text when sessions empty"}
            {:id "zaap-0wt" :title "Fix persistent transcript accumulation: reset currentTranscript in stopListening()"}
