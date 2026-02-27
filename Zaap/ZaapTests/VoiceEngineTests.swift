@@ -290,8 +290,9 @@ final class VoiceEngineTests: XCTestCase {
     }
 
     @MainActor
-    func testSilenceTimerClearsTranscriptAfterEmitting() async {
-        engine.onUtteranceComplete = { _ in }
+    func testSilenceTimerTracksEmittedOffset() async {
+        var emitted: String?
+        engine.onUtteranceComplete = { emitted = $0 }
 
         engine.startListening()
         await simulateResultAndWait("Hello world there", isFinal: false)
@@ -299,7 +300,7 @@ final class VoiceEngineTests: XCTestCase {
         await Task.yield()
         RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
 
-        XCTAssertEqual(engine.currentTranscript, "")
+        XCTAssertEqual(emitted, "Hello world there")
     }
 
     // MARK: - Final Results
