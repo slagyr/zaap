@@ -23,7 +23,7 @@ final class WebhookTestService {
         }
 
         do {
-            let ping = PingPayload(type: "ping", timestamp: Date())
+            let ping = PingPayload(type: "ping", message: "ping", timestamp: Date())
             try await webhookClient.postForeground(ping, to: "/ping")
             return TestResult(success: true, errorMessage: nil)
         } catch {
@@ -34,5 +34,6 @@ final class WebhookTestService {
 
 private struct PingPayload: Encodable {
     let type: String
+    let message: String
     let timestamp: Date
 }
