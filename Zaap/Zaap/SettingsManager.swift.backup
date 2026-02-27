@@ -127,18 +127,13 @@ final class SettingsManager {
         webhookURLValue?.appending(path: path)
     }
 
-    /// Includes gateway bearer token for authentication (like browser Control UI).
+    /// WebSocket URL for the voice gateway connection.
+    /// Uses the same hostname as the webhook settings (ws:// for local, wss:// for remote).
     var voiceWebSocketURL: URL? {
         let h = hostname
         guard !h.isEmpty else { return nil }
         let scheme = isLocalHostname ? "ws" : "wss"
-        
-        // Add gateway bearer token as URL parameter (required for Funnel auth)
-        if !gatewayToken.isEmpty {
-            return URL(string: "\(scheme)://\(h)?token=\(gatewayToken)")
-        } else {
-            return URL(string: "\(scheme)://\(h)")
-        }
+        return URL(string: "\(scheme)://\(h)")
     }
 
     /// True when minimum configuration is present (valid hostname + non-empty token).
