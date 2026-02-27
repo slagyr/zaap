@@ -1,11 +1,16 @@
 {:number "008"
  :status :active
  :stories [{:id "zaap-8kq" :title "Fix voice transcript accumulation — restart recognition task after each utterance"}
-           {:id "zaap-a76" :title "Fix session picker: always show picker, not static text when sessions empty"}]
+           {:id "zaap-a76" :title "Fix session picker: always show picker, not static text when sessions empty"}
+           {:id "zaap-0wt" :title "Fix persistent transcript accumulation: reset currentTranscript in stopListening()"}
+           {:id "zaap-yhg" :title "Session picker: show Discord sessions only, require selection before voice"}
+           {:id "zaap-09m" :title "Voice tab UI: compact controls to give more room for chat transcript"}]
  :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
               "No force unwraps (!) anywhere in codebase"
               "All new Swift files must be added to project.pbxproj"
               "Tests must pass before commit — run xcodebuild test first"
               "No third-party dependencies — Apple frameworks only"]
- :notes ["Theme: Voice Polish — fix transcript accumulation and session picker UX"
-         "zaap-8kq is P0 — must land first, zaap-a76 can follow"]}
+ :notes ["Theme: Voice Polish — transcript fix, session picker UX, compact controls"
+         "zaap-0wt P0 — transcript accumulation fix (utterance offset approach)"
+         "zaap-yhg P1 — load Discord sessions from gateway, require selection"
+         "zaap-09m P2 — compact bottom toolbar UI"]}
