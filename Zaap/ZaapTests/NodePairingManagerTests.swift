@@ -25,8 +25,12 @@ final class NodePairingManagerTests: XCTestCase {
     func testGenerateIdentityNodeIdIsSha256OfPublicKey() throws {
         let identity = try manager.generateIdentity()
 
-        // Decode the public key, hash it, and verify nodeId matches
-        let publicKeyData = Data(base64Encoded: identity.publicKeyBase64)!
+        // Decode the base64url public key, hash it, and verify nodeId matches
+        let base64 = identity.publicKeyBase64
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        let padded = base64 + String(repeating: "=", count: (4 - base64.count % 4) % 4)
+        let publicKeyData = Data(base64Encoded: padded)!
         let hash = SHA256.hash(data: publicKeyData)
         let expectedNodeId = hash.map { String(format: "%02x", $0) }.joined()
 
@@ -116,11 +120,23 @@ final class NodePairingManagerTests: XCTestCase {
         let result = try signChallenge(nonce: nonce)
 
         // Verify signature using the public key
-        let publicKeyData = Data(base64Encoded: identity.publicKeyBase64)!
+        // Decode base64url public key
+        let pubBase64 = identity.publicKeyBase64
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        let pubPadded = pubBase64 + String(repeating: "=", count: (4 - pubBase64.count % 4) % 4)
+        let publicKeyData = Data(base64Encoded: pubPadded)!
         let publicKey = try Curve25519.Signing.PublicKey(rawRepresentation: publicKeyData)
-        let signatureData = Data(base64Encoded: result.signature)!
+        // Decode base64url signature
+        let sigBase64 = result.signature
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        let sigPadded = sigBase64 + String(repeating: "=", count: (4 - sigBase64.count % 4) % 4)
+        let signatureData = Data(base64Encoded: sigPadded)!
         let scopesStr = testScopes.joined(separator: ",")
-        let payload = ["v2", testDeviceId, testClientId, testClientMode, testRole, scopesStr, String(result.signedAt), testToken, nonce].joined(separator: "|")
+        // v3 payload includes platform and deviceFamily
+        let payload = ["v3", testDeviceId, testClientId, testClientMode, testRole, scopesStr,
+                       String(result.signedAt), testToken, nonce, "ios", "mobile"].joined(separator: "|")
         let message = payload.data(using: .utf8)!
 
         XCTAssertTrue(publicKey.isValidSignature(signatureData, for: message))

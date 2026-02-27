@@ -316,7 +316,9 @@ final class GatewayConnection {
                 clientMode: "node",
                 role: "node",
                 scopes: [],
-                token: authToken
+                token: authToken,
+                platform: "ios",
+                deviceFamily: "mobile"
             )
 
             // Protocol: type must be "req" (not "request"), auth in "auth" sub-key.

@@ -10,6 +10,7 @@ enum NodePairingError: Error, Equatable {
 /// Result of identity generation.
 struct NodeIdentity: Equatable {
     let nodeId: String
+    /// Raw 32-byte Ed25519 public key, base64url-encoded (no padding).
     let publicKeyBase64: String
 }
 
@@ -51,7 +52,7 @@ class NodePairingManager {
             cachedPrivateKey = privateKey
             let identity = NodeIdentity(
                 nodeId: Self.sha256Hex(existingPublicKeyData),
-                publicKeyBase64: existingPublicKeyData.base64EncodedString()
+                publicKeyBase64: Self.base64urlEncode(existingPublicKeyData)
             )
             cachedIdentity = identity
             return identity
@@ -67,15 +68,15 @@ class NodePairingManager {
         cachedPrivateKey = privateKey
         let identity = NodeIdentity(
             nodeId: Self.sha256Hex(publicKeyData),
-            publicKeyBase64: publicKeyData.base64EncodedString()
+            publicKeyBase64: Self.base64urlEncode(publicKeyData)
         )
         cachedIdentity = identity
         return identity
     }
 
-    /// Sign a nonce for the connect handshake.
-    /// Builds a v2 payload matching the gateway's buildDeviceAuthPayload format:
-    /// "v2|deviceId|clientId|clientMode|role|scopes|signedAtMs|token|nonce"
+    /// Sign a nonce for the connect handshake (v3 protocol).
+    /// Payload: "v3|deviceId|clientId|clientMode|role|scopes|signedAtMs|token|nonce|platform|deviceFamily"
+    /// Signature is base64url-encoded (no padding).
     func signChallenge(
         nonce: String,
         deviceId: String,
@@ -83,7 +84,9 @@ class NodePairingManager {
         clientMode: String,
         role: String,
         scopes: [String],
-        token: String
+        token: String,
+        platform: String = "ios",
+        deviceFamily: String = "mobile"
     ) throws -> ChallengeSignature {
         guard let privateKey = cachedPrivateKey else {
             throw NodePairingError.noIdentity
@@ -91,12 +94,14 @@ class NodePairingManager {
 
         let signedAtMs = Int(Date().timeIntervalSince1970 * 1000)
         let scopesStr = scopes.joined(separator: ",")
-        let payload = ["v2", deviceId, clientId, clientMode, role, scopesStr, String(signedAtMs), token, nonce].joined(separator: "|")
+        let payload = ["v3", deviceId, clientId, clientMode, role, scopesStr,
+                       String(signedAtMs), token, nonce, platform, deviceFamily]
+            .joined(separator: "|")
         let message = payload.data(using: .utf8)!
         let signature = try privateKey.signature(for: message)
 
         return ChallengeSignature(
-            signature: signature.base64EncodedString(),
+            signature: Self.base64urlEncode(signature),
             signedAt: signedAtMs
         )
     }
@@ -162,5 +167,13 @@ class NodePairingManager {
     private static func sha256Hex(_ data: Data) -> String {
         let hash = SHA256.hash(data: data)
         return hash.map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// Encode data as base64url (RFC 4648) without padding.
+    static func base64urlEncode(_ data: Data) -> String {
+        return data.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
     }
 }
