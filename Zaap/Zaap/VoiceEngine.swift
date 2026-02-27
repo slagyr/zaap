@@ -207,6 +207,49 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         currentTranscript = ""
         silenceTimer?.invalidate()
         silenceTimer = nil
+        restartRecognition()
+    }
+
+    private func restartRecognition() {
+        // Tear down the current recognition task so the next callback does not
+        // restore the old accumulated transcript into currentTranscript.
+        recognitionTask?.cancel()
+        recognitionTask = nil
+        recognitionRequest = nil
+
+        // Remove the existing audio tap (it weakly held the old request).
+        audioEngine.removeTap(onBus: 0)
+
+        // Create a fresh request + tap so audio keeps flowing uninterrupted.
+        let request = RealSpeechRecognitionRequest()
+        recognitionRequest = request
+
+        let format = audioEngine.inputFormat(forBus: 0)
+        audioEngine.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak request] buffer in
+            if let pcmBuffer = buffer as Any as? AVAudioPCMBuffer {
+                request?.append(pcmBuffer)
+            }
+        }
+
+        recognitionTask = speechRecognizer.recognitionTask(with: request) { [weak self] result, error in
+            Task { @MainActor in
+                guard let self = self else { return }
+                if let error = error {
+                    guard self.isListening else { return }
+                    self.onError?(.recognitionFailed(error.localizedDescription))
+                    return
+                }
+                guard let result = result else { return }
+
+                self.currentTranscript = result.bestTranscriptionString
+                self.onPartialTranscript?(self.currentTranscript)
+                self.resetSilenceTimer()
+
+                if result.isFinal {
+                    self.emitUtteranceIfValid()
+                }
+            }
+        }
     }
 }
 
