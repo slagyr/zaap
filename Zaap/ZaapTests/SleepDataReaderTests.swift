@@ -1,3 +1,4 @@
+import HealthKit
 import XCTest
 @testable import Zaap
 
@@ -45,7 +46,8 @@ final class SleepDataReaderTests: XCTestCase {
 
     // MARK: - Failure paths (HealthKit unavailable in simulator)
 
-    func testRequestAuthorizationThrowsWhenHealthKitUnavailable() async {
+    func testRequestAuthorizationThrowsWhenHealthKitUnavailable() async throws {
+        try XCTSkipIf(HKHealthStore.isHealthDataAvailable(), "HealthKit is available on this simulator")
         let reader = SleepDataReader()
         do {
             try await reader.requestAuthorization()
@@ -54,7 +56,8 @@ final class SleepDataReaderTests: XCTestCase {
         }
     }
 
-    func testFetchSleepSamplesThrowsWhenHealthKitUnavailable() async {
+    func testFetchSleepSamplesThrowsWhenHealthKitUnavailable() async throws {
+        try XCTSkipIf(HKHealthStore.isHealthDataAvailable(), "HealthKit is available on this simulator")
         let reader = SleepDataReader()
         do {
             _ = try await reader.fetchSleepSamples()
@@ -63,7 +66,8 @@ final class SleepDataReaderTests: XCTestCase {
         }
     }
 
-    func testFetchLastNightSummaryThrowsWhenHealthKitUnavailable() async {
+    func testFetchLastNightSummaryThrowsWhenHealthKitUnavailable() async throws {
+        try XCTSkipIf(HKHealthStore.isHealthDataAvailable(), "HealthKit is available on this simulator")
         let reader = SleepDataReader()
         do {
             _ = try await reader.fetchLastNightSummary()

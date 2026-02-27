@@ -1,3 +1,4 @@
+import AVFoundation
 import XCTest
 @testable import Zaap
 
@@ -266,17 +267,19 @@ final class ResponseSpeakerTests: XCTestCase {
 
     // MARK: - Voice from Settings (DI)
 
-    func testSpeakImmediateUsesVoiceIdentifierFromSettings() {
+    func testSpeakImmediateUsesVoiceIdentifierFromSettings() throws {
+        let voiceId = "com.apple.voice.compact.en-US.Samantha"
+        let resolvedVoice = AVSpeechSynthesisVoice(identifier: voiceId)
+        try XCTSkipUnless(resolvedVoice != nil && resolvedVoice!.identifier == voiceId, "Voice \(voiceId) not installed on this simulator")
         let mock = MockSpeechSynthesizer()
         let defaults = UserDefaults(suiteName: "test-\(UUID().uuidString)")!
         let settings = SettingsManager(defaults: defaults)
-        settings.ttsVoiceIdentifier = "com.apple.voice.compact.en-US.Samantha"
+        settings.ttsVoiceIdentifier = voiceId
         let speaker = ResponseSpeaker(synthesizer: mock, settings: settings)
 
         speaker.speakImmediate("Hello")
 
-        XCTAssertEqual(mock.spokenUtterances.first?.voice?.identifier,
-                       "com.apple.voice.compact.en-US.Samantha")
+        XCTAssertEqual(mock.spokenUtterances.first?.voice?.identifier, voiceId)
     }
 
     func testSpeakImmediateUsesSystemDefaultWhenVoiceIdentifierEmpty() {
@@ -291,7 +294,10 @@ final class ResponseSpeakerTests: XCTestCase {
         XCTAssertEqual(mock.spokenUtterances.first?.voice?.language, "en-US")
     }
 
-    func testSpeakImmediatePicksUpVoiceChangeBetweenCalls() {
+    func testSpeakImmediatePicksUpVoiceChangeBetweenCalls() throws {
+        let voiceId = "com.apple.voice.compact.en-US.Samantha"
+        let resolvedVoice = AVSpeechSynthesisVoice(identifier: voiceId)
+        try XCTSkipUnless(resolvedVoice != nil && resolvedVoice!.identifier == voiceId, "Voice \(voiceId) not installed on this simulator")
         let mock = MockSpeechSynthesizer()
         let defaults = UserDefaults(suiteName: "test-\(UUID().uuidString)")!
         let settings = SettingsManager(defaults: defaults)
@@ -301,7 +307,7 @@ final class ResponseSpeakerTests: XCTestCase {
         speaker.speakImmediate("First")
         let firstVoice = mock.spokenUtterances[0].voice
 
-        settings.ttsVoiceIdentifier = "com.apple.voice.compact.en-US.Samantha"
+        settings.ttsVoiceIdentifier = voiceId
         speaker.speakImmediate("Second")
         let secondVoice = mock.spokenUtterances[1].voice
 

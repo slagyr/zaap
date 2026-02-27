@@ -4,6 +4,7 @@ import XCTest
 @MainActor
 final class RequestLogTests: XCTestCase {
 
+
     // MARK: - RequestLogEntry
 
     func testEntryIsSuccessForStatusIn200Range() {
@@ -27,7 +28,7 @@ final class RequestLogTests: XCTestCase {
     // MARK: - RequestLog ring buffer
 
     func testAppendAddsEntry() {
-        let log = RequestLog(capacity: 10)
+        let log = RequestLog(capacity: 10, skipLoad: true)
         let entry = RequestLogEntry(path: "/hooks/ping", statusCode: 200, responseTimeMs: 10, requestBody: "{}")
         log.append(entry)
         XCTAssertEqual(log.entries.count, 1)
@@ -35,7 +36,7 @@ final class RequestLogTests: XCTestCase {
     }
 
     func testRingBufferEvictsOldestWhenOverCapacity() {
-        let log = RequestLog(capacity: 3)
+        let log = RequestLog(capacity: 3, skipLoad: true)
         for i in 0..<5 {
             log.append(RequestLogEntry(path: "/hooks/\(i)", statusCode: 200, responseTimeMs: i, requestBody: "{}"))
         }
@@ -45,12 +46,12 @@ final class RequestLogTests: XCTestCase {
     }
 
     func testDefaultCapacityIsTen() {
-        let log = RequestLog()
-        XCTAssertEqual(log.capacity, 10)
+        let log = RequestLog(skipLoad: true)
+        XCTAssertEqual(log.capacity, 100)
     }
 
     func testClearRemovesAllEntries() {
-        let log = RequestLog(capacity: 10)
+        let log = RequestLog(capacity: 10, skipLoad: true)
         log.append(RequestLogEntry(path: "/hooks/ping", statusCode: 200, responseTimeMs: 10, requestBody: "{}"))
         log.append(RequestLogEntry(path: "/hooks/sleep", statusCode: 200, responseTimeMs: 20, requestBody: "{}"))
         log.clear()
@@ -154,7 +155,7 @@ final class RequestLogTests: XCTestCase {
     }
 
     func testEntriesOrderIsChronological() {
-        let log = RequestLog(capacity: 10)
+        let log = RequestLog(capacity: 10, skipLoad: true)
         let early = Date(timeIntervalSince1970: 1000)
         let late = Date(timeIntervalSince1970: 2000)
         log.append(RequestLogEntry(timestamp: early, path: "/hooks/a", statusCode: 200, responseTimeMs: 10, requestBody: "{}"))

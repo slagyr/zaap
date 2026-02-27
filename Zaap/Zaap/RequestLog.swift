@@ -94,9 +94,9 @@ final class RequestLog: ObservableObject {
         return d
     }()
 
-    init(capacity: Int = 100) {
+    init(capacity: Int = 100, skipLoad: Bool = false) {
         self.capacity = capacity
-        self.entries = Self.load()
+        self.entries = skipLoad ? [] : Self.load()
     }
 
     func append(_ entry: RequestLogEntry) {
