@@ -35,12 +35,17 @@ struct SettingsView: View {
     @StateObject private var seeder = HealthDataSeeder()
     #endif
 
+
+    // MARK: - Token Field Labels
+    let hooksTokenLabel = "Hooks Bearer Token"
+    let gatewayTokenLabel = "Gateway Bearer Token"
+
     var body: some View {
         Form {
             Section {
+                #if targetEnvironment(simulator)
                 Toggle("Use development config?", isOn: $settings.useDevConfig)
 
-                #if targetEnvironment(simulator)
                 Button {
                     seeder.seedAll()
                 } label: {
@@ -72,10 +77,15 @@ struct SettingsView: View {
             } header: {
                 Text("Configuration")
             } footer: {
+                #if targetEnvironment(simulator)
                 Text(settings.useDevConfig
                      ? "Development: localhost:8788 (for testing)"
                      : "Production: REDACTED_HOSTNAME")
                     .font(.caption)
+                #else
+                Text("Production: REDACTED_HOSTNAME")
+                    .font(.caption)
+                #endif
             }
 
             if let pairingVM = pairingViewModel {
@@ -123,44 +133,54 @@ struct SettingsView: View {
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
 
-                HStack {
-                    Group {
-                        if isTokenVisible {
-                            TextField("Hooks Bearer Token", text: $settings.authToken)
-                        } else {
-                            SecureField("Hooks Bearer Token", text: $settings.authToken)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(hooksTokenLabel)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    HStack {
+                        Group {
+                            if isTokenVisible {
+                                TextField("Token", text: $settings.authToken)
+                            } else {
+                                SecureField("Token", text: $settings.authToken)
+                            }
                         }
-                    }
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
 
-                    Button {
-                        isTokenVisible.toggle()
-                    } label: {
-                        Image(systemName: isTokenVisible ? "eye.slash" : "eye")
-                            .foregroundStyle(.secondary)
+                        Button {
+                            isTokenVisible.toggle()
+                        } label: {
+                            Image(systemName: isTokenVisible ? "eye.slash" : "eye")
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
 
-                HStack {
-                    Group {
-                        if isGatewayTokenVisible {
-                            TextField("Gateway Bearer Token", text: $settings.gatewayToken)
-                        } else {
-                            SecureField("Gateway Bearer Token", text: $settings.gatewayToken)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(gatewayTokenLabel)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    HStack {
+                        Group {
+                            if isGatewayTokenVisible {
+                                TextField("Token", text: $settings.gatewayToken)
+                            } else {
+                                SecureField("Token", text: $settings.gatewayToken)
+                            }
                         }
-                    }
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
 
-                    Button {
-                        isGatewayTokenVisible.toggle()
-                    } label: {
-                        Image(systemName: isGatewayTokenVisible ? "eye.slash" : "eye")
-                            .foregroundStyle(.secondary)
+                        Button {
+                            isGatewayTokenVisible.toggle()
+                        } label: {
+                            Image(systemName: isGatewayTokenVisible ? "eye.slash" : "eye")
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
 
             } header: {
