@@ -50,6 +50,8 @@
 		J10003 /* SettingsViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = J20003 /* SettingsViewTests.swift */; };
 		K10001 /* WebhookTestService.swift in Sources */ = {isa = PBXBuildFile; fileRef = K20001 /* WebhookTestService.swift */; };
 		K10002 /* WebhookTestServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = K20002 /* WebhookTestServiceTests.swift */; };
+		K10003 /* GatewayTestService.swift in Sources */ = {isa = PBXBuildFile; fileRef = K20003 /* GatewayTestService.swift */; };
+		K10004 /* GatewayTestServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = K20004 /* GatewayTestServiceTests.swift */; };
 		L10001 /* RequestLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = L20001 /* RequestLog.swift */; };
 		L10002 /* RequestLogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = L20002 /* RequestLogTests.swift */; };
 		L10003 /* RequestLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = L20003 /* RequestLogView.swift */; };
@@ -137,6 +139,8 @@
 		J20003 /* SettingsViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewTests.swift; sourceTree = "<group>"; };
 		K20001 /* WebhookTestService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebhookTestService.swift; sourceTree = "<group>"; };
 		K20002 /* WebhookTestServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebhookTestServiceTests.swift; sourceTree = "<group>"; };
+		K20003 /* GatewayTestService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayTestService.swift; sourceTree = "<group>"; };
+		K20004 /* GatewayTestServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayTestServiceTests.swift; sourceTree = "<group>"; };
 		L20001 /* RequestLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestLog.swift; sourceTree = "<group>"; };
 		L20002 /* RequestLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestLogTests.swift; sourceTree = "<group>"; };
 		L20003 /* RequestLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestLogView.swift; sourceTree = "<group>"; };
@@ -218,6 +222,7 @@
 				I20002 /* DashboardView.swift */,
 				J20001 /* MainTabView.swift */,
 				K20001 /* WebhookTestService.swift */,
+				K20003 /* GatewayTestService.swift */,
 				L20001 /* RequestLog.swift */,
 				L20003 /* RequestLogView.swift */,
 				M20001 /* NodePairingManager.swift */,
@@ -283,6 +288,7 @@
 				J20002 /* MainTabViewTests.swift */,
 				J20003 /* SettingsViewTests.swift */,
 				K20002 /* WebhookTestServiceTests.swift */,
+				K20004 /* GatewayTestServiceTests.swift */,
 				L20002 /* RequestLogTests.swift */,
 				M20002 /* NodePairingManagerTests.swift */,
 				N20002 /* ResponseSpeakerTests.swift */,
@@ -411,6 +417,7 @@
 				I10002 /* DashboardView.swift in Sources */,
 				J10001 /* MainTabView.swift in Sources */,
 				K10001 /* WebhookTestService.swift in Sources */,
+				K10003 /* GatewayTestService.swift in Sources */,
 				L10001 /* RequestLog.swift in Sources */,
 				L10003 /* RequestLogView.swift in Sources */,
 				M10001 /* NodePairingManager.swift in Sources */,
@@ -455,6 +462,7 @@
 				J10002 /* MainTabViewTests.swift in Sources */,
 				J10003 /* SettingsViewTests.swift in Sources */,
 				K10002 /* WebhookTestServiceTests.swift in Sources */,
+				K10004 /* GatewayTestServiceTests.swift in Sources */,
 				L10002 /* RequestLogTests.swift in Sources */,
 				M10002 /* NodePairingManagerTests.swift in Sources */,
 				N10002 /* ResponseSpeakerTests.swift in Sources */,

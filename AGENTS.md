@@ -60,14 +60,32 @@ Checklist before closing a multi-component bead:
 - [ ] Callbacks wired (partial results, errors, completion)
 - [ ] `xcodebuild build` passes
 
-## Session Completion
+## ✅ Tests Must Pass Before Commit
 
-Work is NOT complete until `git push` succeeds.
+**Never commit or push with failing tests.** Run the full test suite and confirm green before closing any bead:
 
 ```bash
+cd ~/Projects/zaap/Zaap && xcodebuild test -scheme Zaap \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' 2>&1 | grep -E "FAILED|SUCCEEDED"
+```
+
+If tests fail:
+- Fix the failures — do **not** delete or skip tests to make them pass
+- If a test is legitimately wrong (e.g. testing for old behaviour you just changed), update the test to match the new correct behaviour
+- If a test is environment-specific (e.g. HealthKit on simulator), use `XCTSkipIf` with a clear reason
+
+## Session Completion
+
+Work is NOT complete until tests pass **and** `git push` succeeds.
+
+```bash
+# 1. Run tests — must be green
+cd ~/Projects/zaap/Zaap && xcodebuild test -scheme Zaap \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' 2>&1 | grep -E "FAILED|SUCCEEDED"
+
+# 2. Commit and push
 git add -A && git commit -m "<summary> (<bead-id>)"
 git pull --rebase
-bd sync
 git push
 ```
 

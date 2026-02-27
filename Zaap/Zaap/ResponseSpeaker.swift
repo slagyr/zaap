@@ -24,13 +24,15 @@ enum SpeakerState: Equatable {
 final class ResponseSpeaker: NSObject, AVSpeechSynthesizerDelegate {
 
     private let synthesizer: SpeechSynthesizing
+    private let settings: SettingsManager
     private var buffer: String = ""
 
     /// Current speaker state, observable by UI.
     private(set) var state: SpeakerState = .idle
 
-    init(synthesizer: SpeechSynthesizing) {
+    init(synthesizer: SpeechSynthesizing, settings: SettingsManager = .shared) {
         self.synthesizer = synthesizer
+        self.settings = settings
         super.init()
         self.synthesizer.delegate = self
     }
@@ -76,7 +78,7 @@ final class ResponseSpeaker: NSObject, AVSpeechSynthesizerDelegate {
         guard !trimmed.isEmpty else { return }
 
         let utterance = AVSpeechUtterance(string: trimmed)
-        let voiceId = SettingsManager.shared.ttsVoiceIdentifier
+        let voiceId = settings.ttsVoiceIdentifier
         utterance.voice = voiceId.isEmpty
             ? AVSpeechSynthesisVoice(language: "en-US")
             : AVSpeechSynthesisVoice(identifier: voiceId) ?? AVSpeechSynthesisVoice(language: "en-US")

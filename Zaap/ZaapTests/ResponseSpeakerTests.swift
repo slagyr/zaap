@@ -263,4 +263,48 @@ final class ResponseSpeakerTests: XCTestCase {
         XCTAssertEqual(mock.spokenTexts.count, 1)
         XCTAssertEqual(mock.spokenTexts.first, "Wow!")
     }
+
+    // MARK: - Voice from Settings (DI)
+
+    func testSpeakImmediateUsesVoiceIdentifierFromSettings() {
+        let mock = MockSpeechSynthesizer()
+        let defaults = UserDefaults(suiteName: "test-\(UUID().uuidString)")!
+        let settings = SettingsManager(defaults: defaults)
+        settings.ttsVoiceIdentifier = "com.apple.voice.compact.en-US.Samantha"
+        let speaker = ResponseSpeaker(synthesizer: mock, settings: settings)
+
+        speaker.speakImmediate("Hello")
+
+        XCTAssertEqual(mock.spokenUtterances.first?.voice?.identifier,
+                       "com.apple.voice.compact.en-US.Samantha")
+    }
+
+    func testSpeakImmediateUsesSystemDefaultWhenVoiceIdentifierEmpty() {
+        let mock = MockSpeechSynthesizer()
+        let defaults = UserDefaults(suiteName: "test-\(UUID().uuidString)")!
+        let settings = SettingsManager(defaults: defaults)
+        settings.ttsVoiceIdentifier = ""
+        let speaker = ResponseSpeaker(synthesizer: mock, settings: settings)
+
+        speaker.speakImmediate("Hello")
+
+        XCTAssertEqual(mock.spokenUtterances.first?.voice?.language, "en-US")
+    }
+
+    func testSpeakImmediatePicksUpVoiceChangeBetweenCalls() {
+        let mock = MockSpeechSynthesizer()
+        let defaults = UserDefaults(suiteName: "test-\(UUID().uuidString)")!
+        let settings = SettingsManager(defaults: defaults)
+        settings.ttsVoiceIdentifier = ""
+        let speaker = ResponseSpeaker(synthesizer: mock, settings: settings)
+
+        speaker.speakImmediate("First")
+        let firstVoice = mock.spokenUtterances[0].voice
+
+        settings.ttsVoiceIdentifier = "com.apple.voice.compact.en-US.Samantha"
+        speaker.speakImmediate("Second")
+        let secondVoice = mock.spokenUtterances[1].voice
+
+        XCTAssertNotEqual(firstVoice?.identifier, secondVoice?.identifier)
+    }
 }

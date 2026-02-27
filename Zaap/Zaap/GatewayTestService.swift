@@ -1,6 +1,6 @@
 import Foundation
 
-/// Tests the gateway WebSocket connection by attempting a ping.
+/// Tests connectivity to the OpenClaw gateway WebSocket endpoint.
 final class GatewayTestService {
 
     struct TestResult {
@@ -14,37 +14,32 @@ final class GatewayTestService {
         self.settings = settings
     }
 
-    /// Attempts to connect to the gateway WebSocket and reports success/failure.
+    /// Attempts a basic WebSocket connection to verify gateway reachability.
     func testConnection() async -> TestResult {
         guard let url = settings.voiceWebSocketURL else {
             return TestResult(success: false, errorMessage: "Gateway URL not configured")
         }
 
-        var request = URLRequest(url: url)
-        let token = settings.gatewayToken
-        if !token.isEmpty {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
+        return await withCheckedContinuation { continuation in
+            let session = URLSession(configuration: .default)
+            let task = session.webSocketTask(with: url)
+            task.resume()
 
-        let session = URLSession(configuration: .default)
-        let wsTask = session.webSocketTask(with: request)
-        wsTask.resume()
-
-        do {
-            try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
-                wsTask.sendPing { error in
-                    if let error = error {
-                        cont.resume(throwing: error)
-                    } else {
-                        cont.resume()
-                    }
+            // We just need to see if the connection succeeds (challenge received)
+            task.receive { result in
+                task.cancel(with: .normalClosure, reason: nil)
+                switch result {
+                case .success:
+                    continuation.resume(returning: TestResult(success: true, errorMessage: nil))
+                case .failure(let error):
+                    continuation.resume(returning: TestResult(success: false, errorMessage: error.localizedDescription))
                 }
             }
-            wsTask.cancel(with: .goingAway, reason: nil)
-            return TestResult(success: true, errorMessage: nil)
-        } catch {
-            wsTask.cancel(with: .goingAway, reason: nil)
-            return TestResult(success: false, errorMessage: error.localizedDescription)
+
+            // Timeout after 10 seconds
+            DispatchQueue.global().asyncAfter(deadline: .now() + 10) {
+                task.cancel(with: .normalClosure, reason: nil)
+            }
         }
     }
 }
