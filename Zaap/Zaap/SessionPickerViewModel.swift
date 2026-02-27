@@ -52,3 +52,4 @@ final class SessionPickerViewModel: ObservableObject {
         selectedSessionKey
     }
 }
+
