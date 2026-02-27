@@ -325,10 +325,10 @@ final class GatewayConnection {
             let sig = try pairingManager.signChallenge(
                 nonce: nonce,
                 deviceId: identity.nodeId,
-                clientId: "zaap-ios",
-                clientMode: "operator",
-                role: "operator",
-                scopes: ["operator.read", "operator.write"],
+                clientId: "openclaw-ios",
+                clientMode: "node",
+                role: "node",
+                scopes: [],
                 token: authToken,
                 platform: "ios",
                 deviceFamily: "iphone"
@@ -343,14 +343,14 @@ final class GatewayConnection {
                     "minProtocol": 3,
                     "maxProtocol": 3,
                     "client": [
-                        "id": "zaap-ios",
-                        "mode": "operator",
+                        "id": "openclaw-ios",
+                        "mode": "node",
                         "platform": "ios",
                         "deviceFamily": "iphone",
                         "version": "1.0.0"
                     ] as [String: Any],
-                    "role": "operator",
-                    "scopes": ["operator.read", "operator.write"],
+                    "role": "node",
+                    "scopes": [],
                     "caps": [],
                     "commands": [],
                     "permissions": [:] as [String: Any],
