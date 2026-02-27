@@ -487,9 +487,22 @@ extension GatewayConnection: SessionListing {
             guard let key = dict["key"] as? String else { return nil }
             let title = dict["title"] as? String ?? dict["derivedTitle"] as? String ?? "Untitled"
             let lastMessage = dict["lastMessage"] as? String
-            let channelType = dict["channelType"] as? String
+            let channelType: String? = dict["channelType"] as? String ?? Self.deriveChannelType(from: key)
             return GatewaySession(key: key, title: title, lastMessage: lastMessage, channelType: channelType)
         }
         continuation.resume(returning: sessions)
+    }
+
+    /// Derive channelType from session key format: "agent:main:<channel>:<id>"
+    static func deriveChannelType(from key: String) -> String? {
+        if key == "agent:main:main" {
+            return "main"
+        }
+        let parts = key.split(separator: ":")
+        // Format: agent:main:<channelType>:<channelId>
+        if parts.count >= 3 {
+            return String(parts[2])
+        }
+        return nil
     }
 }

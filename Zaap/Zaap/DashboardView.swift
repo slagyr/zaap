@@ -75,5 +75,6 @@ struct DashboardView: View {
                 .padding(.horizontal)
             }
         }
+        .toolbar(.hidden, for: .navigationBar)
     }
 }

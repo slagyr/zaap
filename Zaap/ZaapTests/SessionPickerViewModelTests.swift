@@ -103,26 +103,24 @@ final class SessionPickerViewModelTests: XCTestCase {
     }
 }
 
-// MARK: - Discord Filtering & Auto-Select Extensions
+// MARK: - All Sessions & Auto-Select Extensions
 
 @MainActor
 extension SessionPickerViewModelTests {
 
-    func testLoadSessionsFiltersToDiscordOnly() async {
+    func testLoadSessionsShowsAllSessionTypes() async {
         lister.sessionsToReturn = [
-            GatewaySession(key: "d1", title: "Discord chat", lastMessage: nil, channelType: "discord"),
-            GatewaySession(key: "w1", title: "WhatsApp chat", lastMessage: nil, channelType: "whatsapp"),
-            GatewaySession(key: "d2", title: "Another Discord", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:main:discord:123", title: "Discord chat", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:main:whatsapp:456", title: "WhatsApp chat", lastMessage: nil, channelType: "whatsapp"),
+            GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main"),
         ]
 
         await viewModel.loadSessions()
 
-        XCTAssertEqual(viewModel.sessions.count, 2)
-        XCTAssertEqual(viewModel.sessions[0].key, "d1")
-        XCTAssertEqual(viewModel.sessions[1].key, "d2")
+        XCTAssertEqual(viewModel.sessions.count, 3)
     }
 
-    func testLoadSessionsFiltersOutNilChannelType() async {
+    func testLoadSessionsIncludesNilChannelType() async {
         lister.sessionsToReturn = [
             GatewaySession(key: "d1", title: "Discord", lastMessage: nil, channelType: "discord"),
             GatewaySession(key: "n1", title: "Unknown", lastMessage: nil, channelType: nil),
@@ -130,49 +128,58 @@ extension SessionPickerViewModelTests {
 
         await viewModel.loadSessions()
 
-        XCTAssertEqual(viewModel.sessions.count, 1)
-        XCTAssertEqual(viewModel.sessions[0].key, "d1")
+        XCTAssertEqual(viewModel.sessions.count, 2)
     }
 
-    func testLoadSessionsAutoSelectsFirstSession() async {
+    func testLoadSessionsAutoSelectsMainSession() async {
         lister.sessionsToReturn = [
-            GatewaySession(key: "d1", title: "Most recent", lastMessage: nil, channelType: "discord"),
-            GatewaySession(key: "d2", title: "Older", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:main:discord:123", title: "Discord", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main"),
+            GatewaySession(key: "agent:main:discord:456", title: "Other", lastMessage: nil, channelType: "discord"),
         ]
 
         await viewModel.loadSessions()
 
-        XCTAssertEqual(viewModel.selectedSessionKey, "d1")
+        XCTAssertEqual(viewModel.selectedSessionKey, "agent:main:main")
+    }
+
+    func testLoadSessionsFallsBackToFirstWhenNoMainSession() async {
+        lister.sessionsToReturn = [
+            GatewaySession(key: "agent:main:discord:123", title: "Discord", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:main:discord:456", title: "Other", lastMessage: nil, channelType: "discord"),
+        ]
+
+        await viewModel.loadSessions()
+
+        XCTAssertEqual(viewModel.selectedSessionKey, "agent:main:discord:123")
     }
 
     func testLoadSessionsDoesNotOverrideExistingSelection() async {
-        viewModel.selectedSessionKey = "d2"
+        viewModel.selectedSessionKey = "agent:main:discord:456"
         lister.sessionsToReturn = [
-            GatewaySession(key: "d1", title: "Most recent", lastMessage: nil, channelType: "discord"),
-            GatewaySession(key: "d2", title: "Older", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main"),
+            GatewaySession(key: "agent:main:discord:456", title: "Other", lastMessage: nil, channelType: "discord"),
         ]
 
         await viewModel.loadSessions()
 
-        XCTAssertEqual(viewModel.selectedSessionKey, "d2")
+        XCTAssertEqual(viewModel.selectedSessionKey, "agent:main:discord:456")
     }
 
     func testLoadSessionsClearsSelectionIfSelectedSessionNoLongerExists() async {
         viewModel.selectedSessionKey = "gone"
         lister.sessionsToReturn = [
-            GatewaySession(key: "d1", title: "Only one", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main"),
         ]
 
         await viewModel.loadSessions()
 
-        XCTAssertEqual(viewModel.selectedSessionKey, "d1")
+        XCTAssertEqual(viewModel.selectedSessionKey, "agent:main:main")
     }
 
-    func testLoadSessionsNoDiscordSessionsClearsSelection() async {
+    func testLoadSessionsEmptyResultClearsSelection() async {
         viewModel.selectedSessionKey = "old"
-        lister.sessionsToReturn = [
-            GatewaySession(key: "w1", title: "WhatsApp", lastMessage: nil, channelType: "whatsapp"),
-        ]
+        lister.sessionsToReturn = []
 
         await viewModel.loadSessions()
 

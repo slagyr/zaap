@@ -464,3 +464,127 @@ final class GatewayConnectionTests: XCTestCase {
         return .data(data)
     }
 }
+
+// MARK: - Session List: Derive channelType from Key
+
+extension GatewayConnectionTests {
+
+    func testSessionListDerivesDiscordChannelTypeFromKey() async throws {
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage(["type": "res", "id": "1", "ok": true, "payload": ["type": "hello-ok"]])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+        connection.connect(to: url)
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        var sessions: [GatewaySession] = []
+        let expectation = XCTestExpectation(description: "sessions received")
+
+        Task {
+            sessions = try await self.connection.listSessions(limit: 20, activeMinutes: nil, includeDerivedTitles: true, includeLastMessage: true)
+            expectation.fulfill()
+        }
+
+        try await Task.sleep(nanoseconds: 50_000_000)
+        let pendingId = connection.pendingSessionListContinuation?.0 ?? ""
+        mockTask.enqueueMessage([
+            "type": "res",
+            "id": pendingId,
+            "ok": true,
+            "payload": [
+                "sessions": [
+                    ["key": "agent:main:discord:123456", "title": "Discord Chat"]
+                ]
+            ]
+        ])
+
+        await fulfillment(of: [expectation], timeout: 2.0)
+        XCTAssertEqual(sessions.count, 1)
+        XCTAssertEqual(sessions[0].channelType, "discord")
+    }
+
+    func testSessionListDerivesMainChannelTypeFromKey() async throws {
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage(["type": "res", "id": "1", "ok": true, "payload": ["type": "hello-ok"]])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+        connection.connect(to: url)
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        var sessions: [GatewaySession] = []
+        let expectation = XCTestExpectation(description: "sessions received")
+
+        Task {
+            sessions = try await self.connection.listSessions(limit: 20, activeMinutes: nil, includeDerivedTitles: true, includeLastMessage: true)
+            expectation.fulfill()
+        }
+
+        try await Task.sleep(nanoseconds: 50_000_000)
+        let pendingId = connection.pendingSessionListContinuation?.0 ?? ""
+        mockTask.enqueueMessage([
+            "type": "res",
+            "id": pendingId,
+            "ok": true,
+            "payload": [
+                "sessions": [
+                    ["key": "agent:main:main", "title": "Main Session"]
+                ]
+            ]
+        ])
+
+        await fulfillment(of: [expectation], timeout: 2.0)
+        XCTAssertEqual(sessions.count, 1)
+        XCTAssertEqual(sessions[0].channelType, "main")
+    }
+
+    func testSessionListPreservesExplicitChannelType() async throws {
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage(["type": "res", "id": "1", "ok": true, "payload": ["type": "hello-ok"]])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+        connection.connect(to: url)
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        var sessions: [GatewaySession] = []
+        let expectation = XCTestExpectation(description: "sessions received")
+
+        Task {
+            sessions = try await self.connection.listSessions(limit: 20, activeMinutes: nil, includeDerivedTitles: true, includeLastMessage: true)
+            expectation.fulfill()
+        }
+
+        try await Task.sleep(nanoseconds: 50_000_000)
+        let pendingId = connection.pendingSessionListContinuation?.0 ?? ""
+        mockTask.enqueueMessage([
+            "type": "res",
+            "id": pendingId,
+            "ok": true,
+            "payload": [
+                "sessions": [
+                    ["key": "agent:main:discord:123", "title": "Chat", "channelType": "discord"]
+                ]
+            ]
+        ])
+
+        await fulfillment(of: [expectation], timeout: 2.0)
+        XCTAssertEqual(sessions[0].channelType, "discord")
+    }
+
+    func testDeriveChannelTypeFromDiscordKey() {
+        XCTAssertEqual(GatewayConnection.deriveChannelType(from: "agent:main:discord:123"), "discord")
+    }
+
+    func testDeriveChannelTypeFromMainKey() {
+        XCTAssertEqual(GatewayConnection.deriveChannelType(from: "agent:main:main"), "main")
+    }
+
+    func testDeriveChannelTypeFromWhatsappKey() {
+        XCTAssertEqual(GatewayConnection.deriveChannelType(from: "agent:main:whatsapp:456"), "whatsapp")
+    }
+}

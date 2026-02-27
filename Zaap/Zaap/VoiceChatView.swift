@@ -42,7 +42,7 @@ struct VoiceChatView: View {
                 })
             }
         }
-        .navigationTitle("Voice")
+        .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             // Check if device is already paired with gateway
             let mgr = NodePairingManager(keychain: RealKeychain())
@@ -63,7 +63,7 @@ struct VoiceChatView: View {
 
     private var micUI: some View {
         VStack(spacing: 0) {
-            // Conversation log
+            // Conversation log — fills all remaining vertical space
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 12) {
@@ -87,6 +87,14 @@ struct VoiceChatView: View {
                     }
                     .padding()
                 }
+                .overlay {
+                    // Hint floats in transcript area, doesn't add toolbar height
+                    if viewModel.conversationLog.isEmpty && viewModel.state == .idle {
+                        Text("Tap the mic to start")
+                            .foregroundColor(.secondary)
+                            .font(.subheadline)
+                    }
+                }
                 .onChange(of: viewModel.conversationLog.count) { _, _ in
                     if let last = viewModel.conversationLog.last {
                         withAnimation {
@@ -96,46 +104,68 @@ struct VoiceChatView: View {
                 }
             }
 
-            SessionPickerView(viewModel: sessionPicker)
-                .padding(.horizontal)
-
             Divider()
 
-            // Status & mic button
-            VStack(spacing: 12) {
-                statusView
+            // Compact single-row toolbar: [session picker] --- [status] --- [mic 44pt]
+            HStack(spacing: 12) {
+                compactSessionPicker
+                Spacer()
+                statusDot
                 micButton
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.vertical, 8)
         }
     }
 
-    @ViewBuilder
-    private var statusView: some View {
-        switch viewModel.state {
-        case .idle:
-            Text("Tap to start")
-                .foregroundColor(.secondary)
-        case .listening:
-            HStack(spacing: 8) {
-                WaveformIndicator()
-                Text("Listening...")
-                    .foregroundColor(.blue)
+    // MARK: - Compact Session Picker (Menu style)
+
+    private var compactSessionPicker: some View {
+        Menu {
+            Picker("Session", selection: $sessionPicker.selectedSessionKey) {
+                Text("New conversation")
+                    .tag(nil as String?)
+                ForEach(sessionPicker.sessions) { session in
+                    Text(session.title)
+                        .tag(session.key as String?)
+                }
             }
-        case .processing:
-            HStack(spacing: 8) {
-                ProgressView()
-                Text("Thinking...")
-                    .foregroundColor(.orange)
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "bubble.left.fill")
+                    .font(.system(size: 14))
+                Text(sessionPicker.selectedSessionTitle)
+                    .lineLimit(1)
+                    .font(.subheadline)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 10))
             }
-        case .speaking:
-            HStack(spacing: 8) {
-                SpeakerIndicator()
-                Text("Speaking...")
-                    .foregroundColor(.green)
-            }
+            .foregroundColor(.primary)
         }
     }
+
+    // MARK: - Status Dot (compact indicator)
+
+    @ViewBuilder
+    private var statusDot: some View {
+        switch viewModel.state {
+        case .idle:
+            EmptyView()
+        case .listening:
+            Circle()
+                .fill(Color.blue)
+                .frame(width: 10, height: 10)
+        case .processing:
+            ProgressView()
+                .controlSize(.small)
+        case .speaking:
+            Circle()
+                .fill(Color.green)
+                .frame(width: 10, height: 10)
+        }
+    }
+
+    // MARK: - Mic Button (44pt compact)
 
     private var micButton: some View {
         Button(action: {
@@ -151,8 +181,8 @@ struct VoiceChatView: View {
             }
         }) {
             Image(systemName: micIconName)
-                .font(.system(size: 32))
-                .frame(width: 72, height: 72)
+                .font(.system(size: 20))
+                .frame(width: 44, height: 44)
                 .foregroundColor(.white)
                 .background(micButtonColor)
                 .clipShape(Circle())

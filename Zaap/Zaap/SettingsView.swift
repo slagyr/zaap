@@ -325,7 +325,7 @@ struct SettingsView: View {
             RequestLogView(log: requestLog)
 
         }
-        .navigationTitle("Settings")
+        .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             gatewayBrowser?.startSearching()
             loadAvailableVoices()

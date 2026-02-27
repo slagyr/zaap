@@ -40,13 +40,15 @@ final class SessionPickerViewModel: ObservableObject {
                 includeDerivedTitles: true,
                 includeLastMessage: true
             )
-            sessions = result.filter { $0.channelType == "discord" }
+            sessions = result
         } catch {
             sessions = []
         }
-        // Auto-select: keep current selection if still valid, otherwise pick first
+        // Auto-select: keep current selection if still valid, otherwise prefer agent:main:main, fallback to first
         if let selected = selectedSessionKey, sessions.contains(where: { $0.key == selected }) {
             // Keep existing selection
+        } else if let mainSession = sessions.first(where: { $0.key == "agent:main:main" }) {
+            selectedSessionKey = mainSession.key
         } else {
             selectedSessionKey = sessions.first?.key
         }
@@ -57,6 +59,15 @@ final class SessionPickerViewModel: ObservableObject {
     /// Returns the selected key, or nil if no session is selected.
     var activeSessionKey: String? {
         selectedSessionKey
+    }
+
+    /// Display title for the currently selected session.
+    var selectedSessionTitle: String {
+        if let key = selectedSessionKey,
+           let session = sessions.first(where: { $0.key == key }) {
+            return session.title
+        }
+        return "New conversation"
     }
 
     /// Whether a session is selected and voice can start.
