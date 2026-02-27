@@ -133,7 +133,7 @@ final class RealAudioSessionConfigurator: AudioSessionConfiguring {
 
     func configureForVoice() throws {
         let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.playAndRecord, options: [.defaultToSpeaker, .allowBluetooth])
+        try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetooth])
         try session.setActive(true)
     }
 
