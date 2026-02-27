@@ -89,12 +89,16 @@ final class VoicePairingViewModel: ObservableObject, GatewayConnectionDelegate {
                 if parts.count == 2 {
                     self.approvalRequestId = String(parts[1])
                 }
-                // Not yet approved — show awaiting state and retry after a delay
+                // Stop the gateway's built-in reconnect loop so we control retry timing
+                self.gateway.disconnect()
                 self.status = .awaitingApproval
                 guard let url = SettingsManager.shared.voiceWebSocketURL else { return }
-                try? await Task.sleep(nanoseconds: 5_000_000_000) // 5s poll
-                if self.status == .awaitingApproval {
-                    self.connect(to: url)
+                // Poll every 5s until approved
+                while self.status == .awaitingApproval {
+                    try? await Task.sleep(nanoseconds: 5_000_000_000)
+                    if self.status == .awaitingApproval {
+                        self.connect(to: url)
+                    }
                 }
             } else {
                 self.status = .failed(error.localizedDescription)
@@ -206,7 +210,7 @@ struct VoicePairingView: View {
                 .padding(.horizontal)
             }
 
-            Text("To enable voice, approve this device on your gateway:\n\nopenclaw nodes pending\nopenclaw nodes approve <id>")
+            Text("To enable voice, approve this device on your gateway:\n\nopenclaw devices list\nopenclaw devices approve <id>")
                 .font(.callout)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
