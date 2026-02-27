@@ -44,34 +44,30 @@ final class VoicePairingViewModel: ObservableObject, GatewayConnectionDelegate {
     // MARK: - Actions
 
     func requestPairing() {
-        print("🔧 [DEBUG] requestPairing() called")
-        
         guard let url = SettingsManager.shared.voiceWebSocketURL else {
-            print("❌ [DEBUG] Gateway URL is nil!")
             status = .failed("Gateway URL not configured. Add it in Settings.")
             return
         }
-        
-        print("✅ [DEBUG] Gateway URL: \(url.absoluteString)")
-        print("🔧 [DEBUG] Setting status to .connecting")
         status = .connecting
-        
-        print("🔧 [DEBUG] Calling gateway.connect(to: \(url.absoluteString))")
+        connect(to: url)
+    }
+
+    private func connect(to url: URL) {
         gateway.connect(to: url)
-        print("🔧 [DEBUG] gateway.connect() call completed")
     }
 
     // MARK: - GatewayConnectionDelegate
 
     nonisolated func gatewayDidConnect() {
+        // hello-ok received — token already stored by GatewayConnection.handleHelloOk
         Task { @MainActor in
-            self.status = .awaitingApproval
-            try? await self.gateway.sendPairRequest()
+            self.status = .paired
         }
     }
 
     nonisolated func gatewayDidDisconnect() {
         Task { @MainActor in
+            // Only reset if still actively trying (not awaiting approval — we poll in that case)
             if self.status == .connecting {
                 self.status = .failed("Disconnected from gateway")
             }
@@ -79,18 +75,22 @@ final class VoicePairingViewModel: ObservableObject, GatewayConnectionDelegate {
     }
 
     nonisolated func gatewayDidReceiveEvent(_ event: String, payload: [String: Any]) {
-        Task { @MainActor in
-            // Accept a token from any pairing-related event
-            if let token = payload["token"] as? String, !token.isEmpty {
-                try? self.pairingManager.storeToken(token)
-                self.status = .paired
-            }
-        }
+        // Not needed for new pairing flow — token arrives via hello-ok in GatewayConnection
     }
 
     nonisolated func gatewayDidFailWithError(_ error: GatewayConnectionError) {
         Task { @MainActor in
-            self.status = .failed(error.localizedDescription)
+            if case .challengeFailed(let msg) = error, msg == "pairing_required" {
+                // Not yet approved — show awaiting state and retry after a delay
+                self.status = .awaitingApproval
+                guard let url = SettingsManager.shared.voiceWebSocketURL else { return }
+                try? await Task.sleep(nanoseconds: 5_000_000_000) // 5s poll
+                if self.status == .awaitingApproval {
+                    self.connect(to: url)
+                }
+            } else {
+                self.status = .failed(error.localizedDescription)
+            }
         }
     }
 }
