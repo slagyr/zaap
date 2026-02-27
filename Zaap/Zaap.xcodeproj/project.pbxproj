@@ -244,8 +244,8 @@
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
 				A40003 /* Preview Content */,
-			
-				3624365445114D269D36F93A /* SessionPickerViewModel.swift */,);
+				3624365445114D269D36F93A /* SessionPickerViewModel.swift */,
+			);
 			path = Zaap;
 			sourceTree = "<group>";
 		};
@@ -435,8 +435,8 @@
 				U10001 /* PairingViewModel.swift in Sources */,
 				U10003 /* PairingSectionView.swift in Sources */,
 				U10004 /* PairingView.swift in Sources */,
-			
-				E6606BBF48384523A4EAF3E7 /* SessionPickerViewModel.swift in Sources */,);
+				E6606BBF48384523A4EAF3E7 /* SessionPickerViewModel.swift in Sources */,
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		E60001 /* Sources */ = {

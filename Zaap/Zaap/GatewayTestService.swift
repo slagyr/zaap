@@ -1,6 +1,14 @@
 import Foundation
 
-/// Tests connectivity to the OpenClaw gateway WebSocket endpoint.
+/// Abstracts URLSession for testability.
+protocol URLSessionProtocol {
+    func data(for request: URLRequest) async throws -> (Data, URLResponse)
+}
+
+extension URLSession: URLSessionProtocol {}
+
+/// Tests connectivity to the OpenClaw gateway using the gateway bearer token.
+/// Sends an HTTP GET to /health on the gateway hostname.
 final class GatewayTestService {
 
     struct TestResult {
@@ -8,38 +16,44 @@ final class GatewayTestService {
         let errorMessage: String?
     }
 
+    private let session: URLSessionProtocol
     private let settings: SettingsManager
 
-    init(settings: SettingsManager = .shared) {
+    init(session: URLSessionProtocol = URLSession.shared, settings: SettingsManager = .shared) {
+        self.session = session
         self.settings = settings
     }
 
-    /// Attempts a basic WebSocket connection to verify gateway reachability.
     func testConnection() async -> TestResult {
-        guard let url = settings.voiceWebSocketURL else {
-            return TestResult(success: false, errorMessage: "Gateway URL not configured")
+        let hostname = settings.hostname
+        guard !hostname.isEmpty else {
+            return TestResult(success: false, errorMessage: "Gateway hostname not configured")
+        }
+        guard !settings.gatewayToken.isEmpty else {
+            return TestResult(success: false, errorMessage: "Gateway bearer token not configured")
         }
 
-        return await withCheckedContinuation { continuation in
-            let session = URLSession(configuration: .default)
-            let task = session.webSocketTask(with: url)
-            task.resume()
+        let scheme = settings.isLocalHostname ? "http" : "https"
+        guard let url = URL(string: "\(scheme)://\(hostname)/health") else {
+            return TestResult(success: false, errorMessage: "Invalid gateway URL")
+        }
 
-            // We just need to see if the connection succeeds (challenge received)
-            task.receive { result in
-                task.cancel(with: .normalClosure, reason: nil)
-                switch result {
-                case .success:
-                    continuation.resume(returning: TestResult(success: true, errorMessage: nil))
-                case .failure(let error):
-                    continuation.resume(returning: TestResult(success: false, errorMessage: error.localizedDescription))
-                }
-            }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(settings.gatewayToken)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 10
 
-            // Timeout after 10 seconds
-            DispatchQueue.global().asyncAfter(deadline: .now() + 10) {
-                task.cancel(with: .normalClosure, reason: nil)
+        do {
+            let (_, response) = try await session.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                return TestResult(success: false, errorMessage: "Invalid response")
             }
+            guard (200...299).contains(httpResponse.statusCode) else {
+                return TestResult(success: false, errorMessage: "Gateway returned HTTP \(httpResponse.statusCode)")
+            }
+            return TestResult(success: true, errorMessage: nil)
+        } catch {
+            return TestResult(success: false, errorMessage: error.localizedDescription)
         }
     }
 }
