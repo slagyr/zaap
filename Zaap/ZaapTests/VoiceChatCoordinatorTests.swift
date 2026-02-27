@@ -213,6 +213,55 @@ final class VoiceChatCoordinatorTests: XCTestCase {
         XCTAssertNotEqual(gateway.sentTranscripts[0].sessionKey, gateway.sentTranscripts[1].sessionKey)
     }
 
+    // MARK: - Stop Session Stops Speaking
+
+    func testStopSessionPreventsIncomingResponseFromSpeaking() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+
+        voiceEngine.onUtteranceComplete?("Hello")
+        try await Task.sleep(nanoseconds: 50_000_000)
+        coordinator.stopSession()
+
+        speaker.bufferedTokens = []
+        speaker.flushCalled = false
+
+        gateway.simulateEvent("chat", payload: [
+            "state": "final",
+            "message": ["content": [["text": "Hi there!"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(speaker.bufferedTokens.isEmpty, "Speaker should not buffer tokens after session stopped")
+        XCTAssertFalse(speaker.flushCalled, "Speaker should not flush after session stopped")
+    }
+
+    func testStopSessionPreventsLegacyTokensFromSpeaking() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        coordinator.stopSession()
+
+        speaker.bufferedTokens = []
+        speaker.flushCalled = false
+
+        gateway.simulateEvent("chat.event", payload: [
+            "type": "token",
+            "text": "Late response"
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(speaker.bufferedTokens.isEmpty, "Speaker should not buffer legacy tokens after session stopped")
+
+        gateway.simulateEvent("chat.event", payload: [
+            "type": "done"
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertFalse(speaker.flushCalled, "Speaker should not flush legacy done after session stopped")
+    }
+
     // MARK: - Gateway Delegate
 
     func testGatewayDelegateIsSetOnInit() {

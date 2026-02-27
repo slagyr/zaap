@@ -192,10 +192,14 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         case "token":
             if let text = payload["text"] as? String {
                 viewModel.handleResponseToken(text)
-                speaker.bufferToken(text)
+                if isActive {
+                    speaker.bufferToken(text)
+                }
             }
         case "done":
-            speaker.flush()
+            if isActive {
+                speaker.flush()
+            }
             viewModel.handleResponseComplete()
             voiceEngine.startListening()
         default:
@@ -222,11 +226,13 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
                 viewModel.setResponseText(t)
             }
         case "final":
-            // Final carries the complete response — speak it, then resume or idle
-            if let t = text, !t.isEmpty {
+            // Final carries the complete response — speak it only if session is still active
+            if isActive, let t = text, !t.isEmpty {
                 speaker.bufferToken(t)
             }
-            speaker.flush()
+            if isActive {
+                speaker.flush()
+            }
             viewModel.handleResponseComplete() // → .listening state
             if isActive {
                 voiceEngine.startListening()
