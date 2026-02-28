@@ -57,6 +57,8 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     weak var sessionPicker: SessionPickerViewModel?
     let needsRepairingPublisher = PassthroughSubject<Void, Never>()
     var logHandler: (String) -> Void = { print($0) }
+    var micRestartDelay: TimeInterval = 0.5
+    private var micRestartTask: Task<Void, Never>?
 
     init(viewModel: VoiceChatViewModel,
          voiceEngine: VoiceEngineProtocol,
@@ -72,10 +74,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         speaker.onStateChange = { [weak self] newState in
             guard let self = self, self.isSessionActive else { return }
             if newState == .idle, self.isConversationModeOn {
-                self.voiceEngine.startListening()
-                if self.viewModel.state == .idle {
-                    self.viewModel.tapMic() // idle → listening
-                }
+                self.scheduleMicRestart()
             }
         }
 
@@ -121,6 +120,8 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         guard isSessionActive else { return }
         if isConversationModeOn {
             isConversationModeOn = false
+            micRestartTask?.cancel()
+            micRestartTask = nil
             voiceEngine.stopListening()
             if viewModel.state == .listening {
                 viewModel.tapMic() // listening → idle
@@ -144,6 +145,8 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
         voiceEngine.stopListening()
         speaker.interrupt()
+        micRestartTask?.cancel()
+        micRestartTask = nil
         isSessionActive = false
         isConversationModeOn = false
 
@@ -155,6 +158,20 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         // If nothing was sent, reset to idle immediately.
         if !hasPending, viewModel.state != .idle {
             viewModel.tapMic()
+        }
+    }
+
+    // MARK: - Mic Restart Delay
+
+    private func scheduleMicRestart() {
+        micRestartTask?.cancel()
+        micRestartTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: UInt64(micRestartDelay * 1_000_000_000))
+            guard !Task.isCancelled, isSessionActive, isConversationModeOn else { return }
+            voiceEngine.startListening()
+            if viewModel.state == .idle {
+                viewModel.tapMic() // idle → listening
+            }
         }
     }
 

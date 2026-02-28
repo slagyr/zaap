@@ -24,6 +24,7 @@ final class VoiceChatCoordinatorTests: XCTestCase {
             gateway: gateway,
             speaker: speaker
         )
+        coordinator.micRestartDelay = 0.05 // Short delay for tests (50ms)
     }
 
     // MARK: - Start/Stop Session
@@ -438,13 +439,20 @@ extension VoiceChatCoordinatorTests {
 
         voiceEngine.startListeningCalled = false
 
-        // Speaker finishes TTS — should auto-restart mic
+        // Speaker finishes TTS — should auto-restart mic after delay
         speaker.onStateChange?(.idle)
 
+        // Mic should NOT restart immediately
+        XCTAssertFalse(voiceEngine.startListeningCalled,
+                       "Voice engine should NOT restart immediately — delay required")
+
+        // Wait for the restart delay to elapse
+        try await Task.sleep(nanoseconds: 100_000_000) // 100ms > 50ms delay
+
         XCTAssertTrue(voiceEngine.startListeningCalled,
-                      "Voice engine should auto-restart when speaker finishes in conversation mode")
+                      "Voice engine should auto-restart after delay when speaker finishes")
         XCTAssertEqual(viewModel.state, .listening,
-                       "View model should transition to listening when speaker finishes in conversation mode")
+                       "View model should transition to listening after delayed restart")
     }
 
     func testMicNotResumedAfterSessionStopped() async throws {
@@ -557,11 +565,63 @@ extension VoiceChatCoordinatorTests {
         viewModel.handleResponseComplete()
         voiceEngine.startListeningCalled = false
 
-        // Speaker finishes — should auto-restart mic
+        // Speaker finishes — should auto-restart mic after delay
         speaker.onStateChange?(.idle)
+        try await Task.sleep(nanoseconds: 100_000_000)
 
         XCTAssertTrue(voiceEngine.startListeningCalled,
                       "Speaker finishing should restart mic after conversation mode toggled back on")
+    }
+
+    // MARK: - Mic Restart Delay
+
+    func testMicRestartDelayCancelledWhenConversationModeToggledOff() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        voiceEngine.onUtteranceComplete?("Hello")
+        viewModel.handleResponseToken("Hi")
+        viewModel.handleResponseComplete()
+        voiceEngine.startListeningCalled = false
+
+        // Speaker finishes — delay starts
+        speaker.onStateChange?(.idle)
+
+        // Toggle off conversation mode during the delay
+        coordinator.toggleConversationMode()
+
+        // Wait for the delay to elapse
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertFalse(voiceEngine.startListeningCalled,
+                       "Mic should NOT restart if conversation mode was toggled off during delay")
+    }
+
+    func testMicRestartDelayCancelledWhenSessionStopped() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        voiceEngine.onUtteranceComplete?("Hello")
+        viewModel.handleResponseToken("Hi")
+        viewModel.handleResponseComplete()
+        voiceEngine.startListeningCalled = false
+
+        // Speaker finishes — delay starts
+        speaker.onStateChange?(.idle)
+
+        // Stop session during the delay
+        coordinator.stopSession()
+        voiceEngine.startListeningCalled = false
+
+        // Wait for the delay to elapse
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertFalse(voiceEngine.startListeningCalled,
+                       "Mic should NOT restart if session was stopped during delay")
     }
 
     // MARK: - isConversationModeOn Published Property
