@@ -16,7 +16,7 @@ struct VoiceChatView: View {
             timerFactory: RealTimerFactory()
         )
         let gateway = GatewayConnection(
-            pairingManager: NodePairingManager(keychain: RealKeychain()),
+            pairingManager: NodePairingManager(),
             webSocketFactory: URLSessionWebSocketFactory(),
             networkMonitor: NWNetworkMonitor()
         )
@@ -45,7 +45,7 @@ struct VoiceChatView: View {
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             // Check if device is already paired with gateway
-            let mgr = NodePairingManager(keychain: RealKeychain())
+            let mgr = NodePairingManager()
             isPaired = mgr.isPaired
             if isPaired {
                 Task { await sessionPicker.loadSessions() }
@@ -56,7 +56,7 @@ struct VoiceChatView: View {
         }
         .onReceive(coordinator.needsRepairingPublisher) {
             // Auth failed — token is stale or invalid, force re-pairing
-            NodePairingManager(keychain: RealKeychain()).clearPairing()
+            NodePairingManager().clearPairing()
             isPaired = false
         }
     }
@@ -84,6 +84,11 @@ struct VoiceChatView: View {
                         if !viewModel.responseText.isEmpty {
                             ConversationBubble(entry: ConversationEntry(role: .agent, text: viewModel.responseText))
                         }
+
+                        // Invisible anchor for auto-scroll
+                        Color.clear
+                            .frame(height: 1)
+                            .id("bottom-anchor")
                     }
                     .padding()
                 }
@@ -96,10 +101,18 @@ struct VoiceChatView: View {
                     }
                 }
                 .onChange(of: viewModel.conversationLog.count) { _, _ in
-                    if let last = viewModel.conversationLog.last {
-                        withAnimation {
-                            proxy.scrollTo(last.id, anchor: .bottom)
-                        }
+                    withAnimation {
+                        proxy.scrollTo("bottom-anchor", anchor: .bottom)
+                    }
+                }
+                .onChange(of: viewModel.partialTranscript) { _, _ in
+                    withAnimation {
+                        proxy.scrollTo("bottom-anchor", anchor: .bottom)
+                    }
+                }
+                .onChange(of: viewModel.responseText) { _, _ in
+                    withAnimation {
+                        proxy.scrollTo("bottom-anchor", anchor: .bottom)
                     }
                 }
             }
