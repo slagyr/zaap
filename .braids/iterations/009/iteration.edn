@@ -9,7 +9,8 @@
            {:id "zaap-6xh" :title "Mic button: blue/red two-state only P2"}
            {:id "zaap-1nr" :title "Pairing flow shows Disconnected in red before approval P2"}
            {:id "zaap-8vk" :title "Remove New conversation from session selector P2"}
-           {:id "zaap-6vv" :title "Voice tab filters to selected session only P1"}]
+           {:id "zaap-6vv" :title "Voice tab filters to selected session only P1"}
+           {:id "zaap-g3w" :title "Session picker: fix RPC population, filter to discord + main only P1"}]
  :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
               "No force unwraps (!) anywhere in codebase"
               "All new Swift files must be added to project.pbxproj"
