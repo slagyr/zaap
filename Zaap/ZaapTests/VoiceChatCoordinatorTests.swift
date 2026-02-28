@@ -223,7 +223,7 @@ final class VoiceChatCoordinatorTests: XCTestCase {
 
     func testStopSessionPreventsIncomingResponseFromSpeaking() async throws {
         let url = URL(string: "wss://gateway.local:18789")!
-        coordinator.startSession(gatewayURL: url)
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:test")
         gateway.simulateConnect()
 
         voiceEngine.onUtteranceComplete?("Hello")
@@ -234,6 +234,7 @@ final class VoiceChatCoordinatorTests: XCTestCase {
         speaker.flushCalled = false
 
         gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:test",
             "state": "final",
             "message": ["content": [["text": "Hi there!"]]]
         ])
