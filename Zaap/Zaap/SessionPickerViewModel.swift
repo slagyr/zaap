@@ -21,9 +21,9 @@ protocol SessionListing: AnyObject {
 
 @MainActor
 final class SessionPickerViewModel: ObservableObject {
-    @Published private(set) var sessions: [GatewaySession] = []
+    @Published private(set) var sessions: [GatewaySession] = [GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main")]
     @Published private(set) var isLoading = false
-    @Published var selectedSessionKey: String? = nil
+    @Published var selectedSessionKey: String? = "agent:main:main"
 
     private let sessionLister: SessionListing
 
