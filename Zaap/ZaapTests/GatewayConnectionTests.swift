@@ -588,3 +588,90 @@ extension GatewayConnectionTests {
         XCTAssertEqual(GatewayConnection.deriveChannelType(from: "agent:main:whatsapp:456"), "whatsapp")
     }
 }
+
+// MARK: - Continuation Cleanup on Disconnect
+
+extension GatewayConnectionTests {
+
+    func testDisconnectResumesPendingSessionContinuationWithError() async throws {
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage(["type": "res", "id": "1", "ok": true, "payload": ["type": "hello-ok"]])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+        connection.connect(to: url)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(connection.state, .connected)
+
+        // Start a listSessions call that will suspend on its continuation
+        let expectation = XCTestExpectation(description: "listSessions completes")
+        var caughtError: Error?
+
+        Task {
+            do {
+                _ = try await self.connection.listSessions(
+                    limit: 20, activeMinutes: nil,
+                    includeDerivedTitles: true, includeLastMessage: true
+                )
+            } catch {
+                caughtError = error
+            }
+            expectation.fulfill()
+        }
+
+        // Wait for the continuation to be set
+        try await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertNotNil(connection.pendingSessionListContinuation)
+
+        // Disconnect while the request is pending
+        connection.disconnect()
+
+        await fulfillment(of: [expectation], timeout: 2.0)
+
+        XCTAssertNotNil(caughtError, "listSessions should throw when gateway disconnects")
+        XCTAssertNil(connection.pendingSessionListContinuation,
+                     "pendingSessionListContinuation should be nil after disconnect")
+    }
+
+    func testHandleDisconnectResumesPendingSessionContinuationWithError() async throws {
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage(["type": "res", "id": "1", "ok": true, "payload": ["type": "hello-ok"]])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+        connection.connect(to: url)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertEqual(connection.state, .connected)
+
+        // Start a listSessions call that will suspend on its continuation
+        let expectation = XCTestExpectation(description: "listSessions completes")
+        var caughtError: Error?
+
+        Task {
+            do {
+                _ = try await self.connection.listSessions(
+                    limit: 20, activeMinutes: nil,
+                    includeDerivedTitles: true, includeLastMessage: true
+                )
+            } catch {
+                caughtError = error
+            }
+            expectation.fulfill()
+        }
+
+        // Wait for the continuation to be set
+        try await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertNotNil(connection.pendingSessionListContinuation)
+
+        // Simulate network disconnect (triggers handleDisconnect)
+        mockTask.simulateDisconnect()
+
+        await fulfillment(of: [expectation], timeout: 2.0)
+
+        XCTAssertNotNil(caughtError, "listSessions should throw when gateway disconnects unexpectedly")
+        XCTAssertNil(connection.pendingSessionListContinuation,
+                     "pendingSessionListContinuation should be nil after network disconnect")
+    }
+}

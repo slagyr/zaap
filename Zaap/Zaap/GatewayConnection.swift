@@ -144,6 +144,7 @@ final class GatewayConnection {
         reconnectTask = nil
         receiveTask?.cancel()
         receiveTask = nil
+        cancelPendingSessionListContinuation()
         webSocket?.cancel(with: .normalClosure, reason: nil)
         webSocket = nil
         state = .disconnected
@@ -406,6 +407,7 @@ final class GatewayConnection {
     private func handleDisconnect() {
         webSocket = nil
         receiveTask = nil
+        cancelPendingSessionListContinuation()
         if !intentionalDisconnect {
             state = .disconnected
             delegate?.gatewayDidDisconnect()
@@ -430,6 +432,13 @@ final class GatewayConnection {
     }
 
     // MARK: - Helpers
+
+    private func cancelPendingSessionListContinuation() {
+        if let (_, continuation) = pendingSessionListContinuation {
+            pendingSessionListContinuation = nil
+            continuation.resume(throwing: GatewayConnectionError.connectionFailed("Disconnected"))
+        }
+    }
 
     private func jsonString(_ dict: [String: Any]) -> String? {
         guard let data = try? JSONSerialization.data(withJSONObject: dict) else { return nil }
