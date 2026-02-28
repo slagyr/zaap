@@ -72,8 +72,15 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             if newState == .speaking {
                 self.voiceEngine.stopListening()
             } else if newState == .idle {
-                // Push-to-talk: when speaker finishes, return to idle.
-                // Do NOT auto-restart mic — user must tap the button again.
+                // Auto-restart mic after TTS finishes with a delay to let audio tail clear.
+                // NOTE: In the iOS Simulator there is no hardware AEC so some echo may occur.
+                // On a real device .voiceChat mode provides hardware echo cancellation.
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5s
+                    guard self.isActive else { return }
+                    self.voiceEngine.startListening()
+                    self.viewModel.tapMic() // idle → listening
+                }
             }
         }
 
