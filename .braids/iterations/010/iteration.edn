@@ -1,0 +1,12 @@
+{:number "010"
+ :status :active
+ :stories [{:id "zaap-7yv" :title "Echo cancellation still broken — TTS transcribed as user speech"}
+           {:id "zaap-je2" :title "Hide recognition-canceled errors from chat transcript"}]
+ :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
+              "No force unwraps (!) anywhere in codebase"
+              "Tests must pass before commit — run xcodebuild test first"
+              "No third-party dependencies — Apple frameworks only"
+              "Acceptance criteria in each bead MUST be verified before closing"]
+ :notes ["Theme: Voice Quality — eliminate echo feedback and clean up error display"
+         "zaap-7yv P0: add 500-1000ms delay after TTS ends before restarting mic"
+         "zaap-je2 P1: filter error code 301 / 'canceled' from speech recognizer errors"]}
