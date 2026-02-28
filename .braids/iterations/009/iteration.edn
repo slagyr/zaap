@@ -1,5 +1,5 @@
 {:number "009"
- :status :complete
+ :status :active
  :stories [{:id "zaap-eky" :title "Fix mic button: derive channelType from session key, auto-select agent:main:main, remove Discord-only filter"}
            {:id "zaap-09m" :title "Voice tab UI: compact single-row toolbar at bottom (ACTUALLY change the layout)"}
            {:id "zaap-k20" :title "Remove navigation titles from all tabs (Voice, Settings, Dashboard)"}
