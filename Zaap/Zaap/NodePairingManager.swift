@@ -136,12 +136,11 @@ class NodePairingManager {
 
     /// Clear all pairing data from Keychain.
     func clearPairing() {
-        keychain.delete(key: Self.privateKeyTag)
-        keychain.delete(key: Self.publicKeyTag)
+        // Only clear the pairing token — NOT the keypair.
+        // The keypair is the device's stable identity; regenerating it creates a new
+        // device ID and floods the gateway with redundant pending pair requests.
         keychain.delete(key: Self.tokenTag)
         keychain.delete(key: Self.gatewayURLTag)
-        cachedPrivateKey = nil
-        cachedIdentity = nil
     }
 
     /// Build a node.pair.request JSON-RPC message.
