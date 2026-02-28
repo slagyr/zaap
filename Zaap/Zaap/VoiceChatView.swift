@@ -216,9 +216,7 @@ struct VoiceChatView: View {
     private var micButtonColor: Color {
         switch viewModel.state {
         case .idle: return .blue
-        case .listening: return .red
-        case .processing: return .orange
-        case .speaking: return .green
+        case .listening, .processing, .speaking: return .red
         }
     }
 
