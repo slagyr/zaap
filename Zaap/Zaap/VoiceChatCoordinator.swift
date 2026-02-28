@@ -116,6 +116,23 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         }
     }
 
+    func toggleConversationMode() {
+        guard isActive else { return }
+        if conversationMode {
+            conversationMode = false
+            voiceEngine.stopListening()
+            if viewModel.state == .listening {
+                viewModel.tapMic() // listening → idle
+            }
+        } else {
+            conversationMode = true
+            voiceEngine.startListening()
+            if viewModel.state == .idle {
+                viewModel.tapMic() // idle → listening
+            }
+        }
+    }
+
     func stopSession() {
         // Flush any partial transcript before stopping, so in-flight speech isn't lost
         let pending = voiceEngine.currentTranscript.trimmingCharacters(in: .whitespacesAndNewlines)

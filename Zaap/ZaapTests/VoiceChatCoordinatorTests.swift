@@ -485,4 +485,83 @@ extension VoiceChatCoordinatorTests {
                        "Chat final should not directly restart mic — only speaker finishing does")
     }
 
+    // MARK: - Tapping Mic Toggles Conversation Mode
+
+    func testTapMicWhileListeningTurnsOffConversationMode() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Session active, conversation mode on, listening
+        XCTAssertEqual(viewModel.state, .listening)
+
+        // User taps mic to turn off conversation mode
+        coordinator.toggleConversationMode()
+
+        XCTAssertEqual(viewModel.state, .idle,
+                       "Tapping mic while listening should transition to idle")
+        XCTAssertTrue(voiceEngine.stopListeningCalled,
+                      "Tapping mic while listening should stop voice engine")
+    }
+
+    func testTapMicWhileIdleTurnsOnConversationMode() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Turn off conversation mode first
+        coordinator.toggleConversationMode()
+        voiceEngine.startListeningCalled = false
+
+        // Now tap mic again to turn conversation mode back on
+        coordinator.toggleConversationMode()
+
+        XCTAssertEqual(viewModel.state, .listening,
+                       "Tapping mic while idle should transition to listening")
+        XCTAssertTrue(voiceEngine.startListeningCalled,
+                      "Tapping mic while idle should start voice engine")
+    }
+
+    func testConversationModeOffPreventsAutoRestartAfterSpeaker() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Turn off conversation mode
+        coordinator.toggleConversationMode()
+        voiceEngine.startListeningCalled = false
+
+        // Simulate speaker finishing — should NOT auto-restart mic
+        speaker.onStateChange?(.idle)
+
+        XCTAssertFalse(voiceEngine.startListeningCalled,
+                       "Speaker finishing should NOT restart mic when conversation mode is off")
+    }
+
+    func testConversationModeOnAfterToggleReenablesAutoRestart() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Toggle off then on
+        coordinator.toggleConversationMode()
+        coordinator.toggleConversationMode()
+
+        // Simulate a full cycle
+        voiceEngine.onUtteranceComplete?("Hello")
+        viewModel.handleResponseToken("Hi")
+        viewModel.handleResponseComplete()
+        voiceEngine.startListeningCalled = false
+
+        // Speaker finishes — should auto-restart mic
+        speaker.onStateChange?(.idle)
+
+        XCTAssertTrue(voiceEngine.startListeningCalled,
+                      "Speaker finishing should restart mic after conversation mode toggled back on")
+    }
+
 }
