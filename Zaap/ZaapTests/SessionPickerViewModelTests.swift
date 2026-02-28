@@ -85,9 +85,8 @@ final class SessionPickerViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.activeSessionKey, "abc-123")
     }
 
-    func testNoSelectionReturnsNil() {
-        viewModel.selectedSessionKey = nil
-        XCTAssertNil(viewModel.activeSessionKey)
+    func testDefaultSelectionIsMain() {
+        XCTAssertEqual(viewModel.activeSessionKey, "agent:main:main")
     }
 
     // MARK: - GatewaySession Model
@@ -103,6 +102,12 @@ final class SessionPickerViewModelTests: XCTestCase {
         let c = GatewaySession(key: "k2", title: "T1", lastMessage: "m1", channelType: "discord")
         XCTAssertEqual(a, b)
         XCTAssertNotEqual(a, c)
+    }
+
+    // MARK: - isSessionSelected always true
+
+    func testIsSessionSelectedAlwaysTrue() {
+        XCTAssertTrue(viewModel.isSessionSelected)
     }
 }
 
@@ -198,13 +203,25 @@ extension SessionPickerViewModelTests {
         XCTAssertEqual(viewModel.selectedSessionKey, "agent:main:main")
     }
 
-    func testIsSessionSelectedReturnsFalseWhenNoSelection() {
-        viewModel.selectedSessionKey = nil
-        XCTAssertFalse(viewModel.isSessionSelected)
+    func testSelectedSessionTitleReturnsMatchingTitle() async {
+        lister.sessionsToReturn = [
+            GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main"),
+            GatewaySession(key: "agent:main:discord:123", title: "Discord chat", lastMessage: nil, channelType: "discord"),
+        ]
+        await viewModel.loadSessions()
+        viewModel.selectedSessionKey = "agent:main:discord:123"
+
+        XCTAssertEqual(viewModel.selectedSessionTitle, "Discord chat")
     }
 
-    func testIsSessionSelectedReturnsTrueWhenSelected() {
-        viewModel.selectedSessionKey = "abc"
-        XCTAssertTrue(viewModel.isSessionSelected)
+    func testSelectedSessionTitleDefaultsToMain() {
+        XCTAssertEqual(viewModel.selectedSessionTitle, "Main")
+    }
+
+    func testSelectedSessionTitleDoesNotContainNewConversation() async {
+        lister.sessionsToReturn = []
+        await viewModel.loadSessions()
+
+        XCTAssertNotEqual(viewModel.selectedSessionTitle, "New conversation")
     }
 }
