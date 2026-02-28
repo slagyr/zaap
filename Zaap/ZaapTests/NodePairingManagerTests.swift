@@ -207,15 +207,18 @@ final class NodePairingManagerTests: XCTestCase {
 
     // MARK: - Clear Pairing
 
-    func testClearPairingRemovesAllKeys() throws {
+    func testClearPairingRemovesTokenButPreservesKeypair() throws {
         _ = try manager.generateIdentity()
         try manager.storeToken("token")
         try manager.storeGatewayURL(URL(string: "ws://localhost:18789")!)
 
         manager.clearPairing()
 
-        XCTAssertTrue(mockKeychain.savedKeys.isEmpty)
+        // Token and gateway URL must be cleared
         XCTAssertFalse(manager.isPaired)
+        // Keypair must be PRESERVED — clearing it changes the device ID and causes re-pair floods
+        XCTAssertNotNil(mockKeychain.savedKeys["co.airworthy.zaap.node.privateKey"] ?? mockKeychain.savedKeys["co.airworthy.zaap.node.publicKey"],
+                        "Keypair must survive clearPairing()")
     }
 
     // MARK: - Pairing Request Message
