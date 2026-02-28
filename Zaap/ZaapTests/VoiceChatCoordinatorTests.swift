@@ -660,3 +660,89 @@ extension VoiceChatCoordinatorTests {
     }
 
 }
+
+// MARK: - Gateway Event Logging
+
+extension VoiceChatCoordinatorTests {
+
+    func testLogsRawPayloadOnGatewayEvent() async throws {
+        var loggedMessages: [String] = []
+        coordinator.logHandler = { loggedMessages.append($0) }
+
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:log")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:log",
+            "state": "delta",
+            "message": ["content": [["text": "Hello"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        let hasRawPayload = loggedMessages.contains { $0.contains("[VOICE]") && $0.contains("event=chat") }
+        XCTAssertTrue(hasRawPayload, "Should log raw event info. Got: \(loggedMessages)")
+    }
+
+    func testLogsWhenTextExtractionReturnsNil() async throws {
+        var loggedMessages: [String] = []
+        coordinator.logHandler = { loggedMessages.append($0) }
+
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:log")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Send chat event with malformed message — no text field
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:log",
+            "state": "delta",
+            "message": ["content": [["type": "image"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        let hasNilTextLog = loggedMessages.contains { $0.contains("text extraction returned nil") }
+        XCTAssertTrue(hasNilTextLog, "Should log when text extraction returns nil. Got: \(loggedMessages)")
+    }
+
+    func testLogsWhenSessionKeyMismatchDropsEvent() async throws {
+        var loggedMessages: [String] = []
+        coordinator.logHandler = { loggedMessages.append($0) }
+
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:abc")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        gateway.simulateEvent("chat.event", payload: [
+            "sessionKey": "agent:main:discord:xyz",
+            "type": "token",
+            "text": "Wrong session"
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        let hasDropLog = loggedMessages.contains { $0.contains("dropping") && $0.contains("session key mismatch") }
+        XCTAssertTrue(hasDropLog, "Should log when event dropped due to session key mismatch. Got: \(loggedMessages)")
+    }
+
+    func testLogsWhenChatEventSessionKeyMismatchDropsEvent() async throws {
+        var loggedMessages: [String] = []
+        coordinator.logHandler = { loggedMessages.append($0) }
+
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:abc")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:discord:xyz",
+            "state": "final",
+            "message": ["content": [["text": "Wrong"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        let hasDropLog = loggedMessages.contains { $0.contains("dropping") && $0.contains("session key") }
+        XCTAssertTrue(hasDropLog, "Should log when chat event dropped due to session key mismatch. Got: \(loggedMessages)")
+    }
+}

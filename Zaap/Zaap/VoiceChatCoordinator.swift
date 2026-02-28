@@ -56,6 +56,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     @Published private(set) var isConversationModeOn = false
     weak var sessionPicker: SessionPickerViewModel?
     let needsRepairingPublisher = PassthroughSubject<Void, Never>()
+    var logHandler: (String) -> Void = { print($0) }
 
     init(viewModel: VoiceChatViewModel,
          voiceEngine: VoiceEngineProtocol,
@@ -212,11 +213,12 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     // MARK: - Gateway → ResponseSpeaker
 
     private func handleGatewayEvent(_ event: String, payload: [String: Any]) {
-        // Always process incoming responses (agent may reply after user taps stop)
+        logHandler("📥 [VOICE] event=\(event) sessionActive=\(isSessionActive) keys=\(Array(payload.keys))")
 
         // Filter by session key — only process events for the active session
         if let eventSessionKey = payload["sessionKey"] as? String,
            eventSessionKey != sessionKey {
+            logHandler("🚫 [VOICE] dropping event=\(event): session key mismatch (event=\(eventSessionKey) active=\(sessionKey))")
             return
         }
 
@@ -242,15 +244,22 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             }
             viewModel.handleResponseComplete()
         default:
-            break
+            logHandler("⚠️ [VOICE] unhandled legacy event type=\(type)")
         }
     }
 
     private func handleChatEvent(_ payload: [String: Any]) {
         // Require matching session key — ignore events from other sessions
         guard let eventSessionKey = payload["sessionKey"] as? String,
-              eventSessionKey == sessionKey else { return }
-        guard let state = payload["state"] as? String else { return }
+              eventSessionKey == sessionKey else {
+            let eventKey = payload["sessionKey"] as? String ?? "<missing>"
+            logHandler("🚫 [VOICE] dropping chat event: session key mismatch (event=\(eventKey) active=\(sessionKey))")
+            return
+        }
+        guard let state = payload["state"] as? String else {
+            logHandler("⚠️ [VOICE] chat event missing 'state' field")
+            return
+        }
 
         // Extract text from message.content[0].text
         let text: String? = {
@@ -261,25 +270,29 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             return t
         }()
 
+        if text == nil {
+            logHandler("⚠️ [VOICE] chat state=\(state): text extraction returned nil from payload")
+        }
+
         switch state {
         case "delta":
-            // Delta carries the full accumulated text so far — SET (don't append)
             if let t = text, !t.isEmpty {
                 viewModel.setResponseText(t)
             }
         case "final":
-            // Final carries the complete response — speak it only if session is still active
+            logHandler("📥 [VOICE] chat final: text=\(text?.prefix(50) ?? "nil") sessionActive=\(isSessionActive)")
             if isSessionActive, let t = text, !t.isEmpty {
                 speaker.bufferToken(t)
             }
             if isSessionActive {
                 speaker.flush()
             }
-            viewModel.handleResponseComplete() // → .idle; speaker.onStateChange restarts mic
+            viewModel.handleResponseComplete()
         case "error":
+            logHandler("❌ [VOICE] chat error event received")
             viewModel.handleResponseComplete()
         default:
-            break
+            logHandler("⚠️ [VOICE] unhandled chat state=\(state)")
         }
     }
 }
