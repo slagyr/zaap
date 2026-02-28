@@ -43,7 +43,7 @@ extension ResponseSpeaker: ResponseSpeaking {}
 /// Wires the voice pipeline together:
 /// VoiceEngine transcript → GatewayConnection voice.transcript event
 /// → receive chat.event stream → ResponseSpeaker speaks response.
-/// Handles interrupts when user speaks while TTS is playing.
+/// In conversation mode, mic stays hot across the listen→process→speak cycle (trusts AEC).
 @MainActor
 final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
@@ -53,6 +53,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     private let speaker: ResponseSpeaking
     private var sessionKey: String = ""
     private var isActive = false
+    private var conversationMode = false
     weak var sessionPicker: SessionPickerViewModel?
     let needsRepairingPublisher = PassthroughSubject<Void, Never>()
 
@@ -69,16 +70,9 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
         speaker.onStateChange = { [weak self] newState in
             guard let self = self, self.isActive else { return }
-            if newState == .speaking {
-                self.voiceEngine.stopListening()
-            } else if newState == .idle {
-                // Auto-restart mic after TTS finishes with a delay to let audio tail clear.
-                // NOTE: In the iOS Simulator there is no hardware AEC so some echo may occur.
-                // On a real device .voiceChat mode provides hardware echo cancellation.
-                Task { @MainActor in
-                    try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5s
-                    guard self.isActive else { return }
-                    self.voiceEngine.startListening()
+            if newState == .idle, self.conversationMode {
+                self.voiceEngine.startListening()
+                if self.viewModel.state == .idle {
                     self.viewModel.tapMic() // idle → listening
                 }
             }
@@ -111,6 +105,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     func startSession(gatewayURL: URL, sessionKey: String? = nil) {
         self.sessionKey = sessionKey ?? UUID().uuidString
         isActive = true
+        conversationMode = true
         if gateway.state == .connected {
             // Already connected — go straight to listening
             viewModel.tapMic() // idle → listening
@@ -132,6 +127,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         voiceEngine.stopListening()
         speaker.interrupt()
         isActive = false
+        conversationMode = false
 
         // Don't disconnect — keep gateway connected so the response can still arrive
         // and next tap reuses the connection without handshake delay.
@@ -262,7 +258,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             if isActive {
                 speaker.flush()
             }
-            viewModel.handleResponseComplete() // → .idle (push-to-talk)
+            viewModel.handleResponseComplete() // → .idle; speaker.onStateChange restarts mic
         case "error":
             viewModel.handleResponseComplete()
         default:

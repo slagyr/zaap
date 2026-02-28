@@ -406,11 +406,11 @@ final class VoiceChatCoordinatorTests: XCTestCase {
     }
 }
 
-// MARK: - Echo Cancellation (mic muting while TTS speaks)
+// MARK: - Conversation Mode (mic stays hot across listen→process→speak)
 
 extension VoiceChatCoordinatorTests {
 
-    func testMicStopsWhenSpeakerStartsSpeaking() async throws {
+    func testMicContinuesWhenSpeakerStartsSpeaking() async throws {
         let url = URL(string: "wss://gateway.local:18789")!
         coordinator.startSession(gatewayURL: url)
         gateway.simulateConnect()
@@ -418,27 +418,33 @@ extension VoiceChatCoordinatorTests {
 
         voiceEngine.stopListeningCalled = false
 
-        // Simulate speaker transitioning to speaking
+        // Speaker starts — mic should NOT stop (trust AEC)
         speaker.onStateChange?(.speaking)
 
-        XCTAssertTrue(voiceEngine.stopListeningCalled,
-                      "Voice engine should stop listening when speaker starts speaking")
+        XCTAssertFalse(voiceEngine.stopListeningCalled,
+                       "Voice engine should NOT stop listening when speaker starts (trust AEC)")
     }
 
-    func testMicDoesNotResumeWhenSpeakerFinishes() async throws {
+    func testMicRestartsWhenSpeakerFinishes() async throws {
         let url = URL(string: "wss://gateway.local:18789")!
         coordinator.startSession(gatewayURL: url)
         gateway.simulateConnect()
         try await Task.sleep(nanoseconds: 50_000_000)
 
-        // Speaker starts then stops
-        speaker.onStateChange?(.speaking)
+        // Simulate full conversation cycle: utterance → response → speaker finishes
+        voiceEngine.onUtteranceComplete?("Hello")
+        viewModel.handleResponseToken("Hi there")
+        viewModel.handleResponseComplete() // → .idle
+
         voiceEngine.startListeningCalled = false
 
+        // Speaker finishes TTS — should auto-restart mic
         speaker.onStateChange?(.idle)
 
-        XCTAssertFalse(voiceEngine.startListeningCalled,
-                       "Voice engine should NOT auto-resume after speaker finishes (push-to-talk)")
+        XCTAssertTrue(voiceEngine.startListeningCalled,
+                      "Voice engine should auto-restart when speaker finishes in conversation mode")
+        XCTAssertEqual(viewModel.state, .listening,
+                       "View model should transition to listening when speaker finishes in conversation mode")
     }
 
     func testMicNotResumedAfterSessionStopped() async throws {
@@ -457,9 +463,9 @@ extension VoiceChatCoordinatorTests {
                        "Voice engine should NOT resume listening after session stopped")
     }
 
-    func testChatFinalDoesNotRestartMic() async throws {
+    func testChatFinalDoesNotDirectlyRestartMic() async throws {
         let url = URL(string: "wss://gateway.local:18789")!
-        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:ptt")
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:conv")
         gateway.simulateConnect()
         try await Task.sleep(nanoseconds: 50_000_000)
 
@@ -467,16 +473,16 @@ extension VoiceChatCoordinatorTests {
         viewModel.handleResponseToken("Response")
         voiceEngine.startListeningCalled = false
 
+        // Chat final arrives but speaker hasn't finished yet
         gateway.simulateEvent("chat", payload: [
-            "sessionKey": "agent:main:main:ptt",
+            "sessionKey": "agent:main:main:conv",
             "state": "final",
             "message": ["content": [["text": "Hello!"]]]
         ])
         try await Task.sleep(nanoseconds: 50_000_000)
 
         XCTAssertFalse(voiceEngine.startListeningCalled,
-                       "Mic should NOT auto-restart after chat final (push-to-talk)")
-        XCTAssertEqual(viewModel.state, .idle)
+                       "Chat final should not directly restart mic — only speaker finishing does")
     }
 
 }
