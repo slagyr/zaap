@@ -313,7 +313,6 @@ final class ResponseSpeakerTests: XCTestCase {
 
         XCTAssertNotEqual(firstVoice?.identifier, secondVoice?.identifier)
     }
-}
 
     // MARK: - onStateChange Callback
 
@@ -353,3 +352,5 @@ final class ResponseSpeakerTests: XCTestCase {
 
         XCTAssertEqual(callCount, 0)
     }
+}
+
