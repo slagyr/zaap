@@ -2,7 +2,13 @@
  :status :complete
  :stories [{:id "zaap-eky" :title "Fix mic button: derive channelType from session key, auto-select agent:main:main, remove Discord-only filter"}
            {:id "zaap-09m" :title "Voice tab UI: compact single-row toolbar at bottom (ACTUALLY change the layout)"}
-           {:id "zaap-k20" :title "Remove navigation titles from all tabs (Voice, Settings, Dashboard)"}]
+           {:id "zaap-k20" :title "Remove navigation titles from all tabs (Voice, Settings, Dashboard)"}
+           {:id "zaap-jgm" :title "Echo cancellation not working — mic feedback loop P0"}
+           {:id "zaap-8kt" :title "Device ID changes on each pairing request — should be stable P1"}
+           {:id "zaap-a8k" :title "Chat transcript does not auto-scroll P1"}
+           {:id "zaap-6xh" :title "Mic button: blue/red two-state only P2"}
+           {:id "zaap-1nr" :title "Pairing flow shows Disconnected in red before approval P2"}
+           {:id "zaap-8vk" :title "Remove New conversation from session selector P2"}]
  :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
               "No force unwraps (!) anywhere in codebase"
               "All new Swift files must be added to project.pbxproj"
