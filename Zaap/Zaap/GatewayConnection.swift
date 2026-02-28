@@ -334,7 +334,7 @@ final class GatewayConnection {
                 clientId: "openclaw-ios",
                 clientMode: "node",
                 role: "node",
-                scopes: [],
+                scopes: ["operator.read"],
                 token: authToken,
                 platform: "ios",
                 deviceFamily: "iphone"
@@ -356,7 +356,7 @@ final class GatewayConnection {
                         "version": "1.0.0"
                     ] as [String: Any],
                     "role": "node",
-                    "scopes": [],
+                    "scopes": ["operator.read"],
                     "caps": [],
                     "commands": [],
                     "permissions": [:] as [String: Any],
