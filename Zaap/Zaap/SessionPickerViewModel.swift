@@ -40,9 +40,15 @@ final class SessionPickerViewModel: ObservableObject {
                 includeDerivedTitles: true,
                 includeLastMessage: true
             )
-            sessions = result
+            // Ensure agent:main:main is always present as fallback
+            let mainFallback = GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main")
+            var merged = result
+            if !merged.contains(where: { $0.key == "agent:main:main" }) {
+                merged.insert(mainFallback, at: 0)
+            }
+            sessions = merged
         } catch {
-            sessions = []
+            // Keep existing sessions (including static fallback) on failure
         }
         // Auto-select: keep current selection if still valid, otherwise prefer agent:main:main, fallback to first
         if let selected = selectedSessionKey, sessions.contains(where: { $0.key == selected }) {
