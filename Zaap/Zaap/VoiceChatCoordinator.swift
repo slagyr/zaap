@@ -53,6 +53,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     private let speaker: ResponseSpeaking
     private var sessionKey: String = ""
     private var isActive = false
+    weak var sessionPicker: SessionPickerViewModel?
     let needsRepairingPublisher = PassthroughSubject<Void, Never>()
 
     init(viewModel: VoiceChatViewModel,
@@ -164,6 +165,8 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
     nonisolated func gatewayDidConnect() {
         Task { @MainActor in
+            // Load sessions whenever gateway connects (not just during active voice session)
+            await sessionPicker?.loadSessions()
             guard isActive else { return }
             // Gateway is ready — transition UI to listening and start capturing voice
             viewModel.tapMic() // idle → listening

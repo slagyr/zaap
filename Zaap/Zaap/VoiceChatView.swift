@@ -29,7 +29,9 @@ struct VoiceChatView: View {
         )
         _viewModel = StateObject(wrappedValue: vm)
         _coordinator = StateObject(wrappedValue: coord)
-        _sessionPicker = StateObject(wrappedValue: SessionPickerViewModel(sessionLister: gateway))
+        let picker = SessionPickerViewModel(sessionLister: gateway)
+        coord.sessionPicker = picker
+        _sessionPicker = StateObject(wrappedValue: picker)
     }
 
     var body: some View {
@@ -47,9 +49,7 @@ struct VoiceChatView: View {
             // Check if device is already paired with gateway
             let mgr = NodePairingManager()
             isPaired = mgr.isPaired
-            if isPaired {
-                Task { await sessionPicker.loadSessions() }
-            }
+            // Sessions load automatically when gateway connects (see VoiceChatCoordinator.gatewayDidConnect)
             // Request microphone + speech recognition authorization
             AVAudioSession.sharedInstance().requestRecordPermission { _ in }
             SFSpeechRecognizer.requestAuthorization { _ in }
