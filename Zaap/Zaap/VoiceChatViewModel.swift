@@ -71,11 +71,11 @@ final class VoiceChatViewModel: ObservableObject {
         }
     }
 
-    func handleResponseComplete() {
+    func handleResponseComplete(continueListening: Bool = false) {
         if !responseText.isEmpty {
             conversationLog.append(ConversationEntry(role: .agent, text: responseText))
         }
         responseText = ""
-        state = .idle
+        state = continueListening ? .listening : .idle
     }
 }

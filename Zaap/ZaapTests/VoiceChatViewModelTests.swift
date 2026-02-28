@@ -161,4 +161,44 @@ final class VoiceChatViewModelTests: XCTestCase {
         vm.tapMic()
         XCTAssertEqual(vm.state, .idle)
     }
+
+    // MARK: - Conversation Mode Cycling
+
+    func testResponseCompleteWithContinueListeningTransitionsToListening() {
+        let vm = VoiceChatViewModel()
+        vm.tapMic()
+        vm.handleUtteranceComplete("Hello")
+        vm.handleResponseToken("Hi there")
+        vm.handleResponseComplete(continueListening: true)
+        XCTAssertEqual(vm.state, .listening)
+    }
+
+    func testResponseCompleteWithContinueListeningStillLogsResponse() {
+        let vm = VoiceChatViewModel()
+        vm.tapMic()
+        vm.handleUtteranceComplete("Hello")
+        vm.handleResponseToken("Hi there")
+        vm.handleResponseComplete(continueListening: true)
+        XCTAssertEqual(vm.conversationLog.count, 2)
+        XCTAssertEqual(vm.conversationLog[1].role, .agent)
+        XCTAssertEqual(vm.conversationLog[1].text, "Hi there")
+    }
+
+    func testResponseCompleteWithContinueListeningClearsResponseText() {
+        let vm = VoiceChatViewModel()
+        vm.tapMic()
+        vm.handleUtteranceComplete("Hello")
+        vm.handleResponseToken("Hi there")
+        vm.handleResponseComplete(continueListening: true)
+        XCTAssertEqual(vm.responseText, "")
+    }
+
+    func testResponseCompleteDefaultsToIdle() {
+        let vm = VoiceChatViewModel()
+        vm.tapMic()
+        vm.handleUtteranceComplete("Hello")
+        vm.handleResponseToken("Hi there")
+        vm.handleResponseComplete()
+        XCTAssertEqual(vm.state, .idle)
+    }
 }
