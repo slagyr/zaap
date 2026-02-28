@@ -3,6 +3,7 @@ import Speech
 
 struct VoiceChatView: View {
     @StateObject private var viewModel: VoiceChatViewModel
+    @State private var showCopied = false
     @StateObject private var coordinator: VoiceChatCoordinator
     @StateObject private var sessionPicker: SessionPickerViewModel
     @State private var isPaired = false
@@ -123,6 +124,7 @@ struct VoiceChatView: View {
             HStack(spacing: 12) {
                 compactSessionPicker
                 Spacer()
+                copyButton
                 statusDot
                 micButton
             }
@@ -208,6 +210,29 @@ struct VoiceChatView: View {
         case .listening: return "mic.fill"
         case .processing: return "ellipsis"
         case .speaking: return "speaker.wave.2.fill"
+        }
+    }
+
+    private var copyButton: some View {
+        Button(action: copyTranscript) {
+            Image(systemName: showCopied ? "checkmark" : "doc.on.doc")
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+                .frame(width: 28, height: 28)
+        }
+        .accessibilityLabel("Copy transcript")
+    }
+
+    private func copyTranscript() {
+        let entries = viewModel.conversationLog.suffix(10)
+        let text = entries.map { entry in
+            let role = entry.role == .user ? "You" : "Zane"
+            return "[\(role)]: \(entry.text)"
+        }.joined(separator: "\n")
+        UIPasteboard.general.string = text
+        withAnimation { showCopied = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation { showCopied = false }
         }
     }
 
