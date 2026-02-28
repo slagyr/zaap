@@ -71,7 +71,14 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             if newState == .speaking {
                 self.voiceEngine.stopListening()
             } else if newState == .idle {
-                self.voiceEngine.startListening()
+                // Delay mic restart to let TTS audio tail clear from the input buffer.
+                // Without this delay the mic picks up the last syllables of TTS output
+                // and transcribes them as user speech (e.g. "fox face" from the 🦊 emoji).
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 800_000_000) // 800ms
+                    guard self.isActive else { return }
+                    self.voiceEngine.startListening()
+                }
             }
         }
 

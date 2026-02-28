@@ -156,6 +156,12 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
                     // Ignore errors that fire after we intentionally stopped listening
                     // (e.g. kAFAssistantErrorDomain 216 from cancelling the recognition task)
                     guard self.isListening else { return }
+                    // Swallow "canceled" errors — these fire when we intentionally
+                    // cancel the recognition task (stopListening / restartRecognition).
+                    let desc = error.localizedDescription.lowercased()
+                    let nsErr = error as NSError
+                    let isCanceled = desc.contains("cancel") || nsErr.code == 301 || nsErr.code == 216
+                    guard !isCanceled else { return }
                     self.onError?(.recognitionFailed(error.localizedDescription))
                     return
                 }
@@ -243,6 +249,9 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
                 guard let self = self else { return }
                 if let error = error {
                     guard self.isListening else { return }
+                    let desc2 = error.localizedDescription.lowercased()
+                    let nsErr2 = error as NSError
+                    guard !desc2.contains("cancel"), nsErr2.code != 301, nsErr2.code != 216 else { return }
                     self.onError?(.recognitionFailed(error.localizedDescription))
                     return
                 }
