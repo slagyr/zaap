@@ -16,21 +16,26 @@ enum VoicePairingStatus: Equatable {
 @MainActor
 final class VoicePairingViewModel: ObservableObject, GatewayConnectionDelegate {
 
-    @Published private(set) var status: VoicePairingStatus = .idle
+    @Published var status: VoicePairingStatus = .idle
     @Published private(set) var nodeId: String = ""
     @Published private(set) var publicKeyFingerprint: String = ""
     @Published private(set) var approvalRequestId: String = ""
 
     private let pairingManager: NodePairingManager
-    private let gateway: GatewayConnection
+    private let gateway: GatewayConnecting
 
-    init() {
-        let mgr = NodePairingManager()
-        let conn = GatewayConnection(
-            pairingManager: mgr,
-            webSocketFactory: URLSessionWebSocketFactory(),
-            networkMonitor: NWNetworkMonitor()
-        )
+    init(pairingManager: NodePairingManager? = nil, gateway: GatewayConnecting? = nil) {
+        let mgr = pairingManager ?? NodePairingManager()
+        let conn: GatewayConnecting
+        if let gateway = gateway {
+            conn = gateway
+        } else {
+            conn = GatewayConnection(
+                pairingManager: mgr,
+                webSocketFactory: URLSessionWebSocketFactory(),
+                networkMonitor: NWNetworkMonitor()
+            )
+        }
         self.pairingManager = mgr
         self.gateway = conn
         conn.delegate = self
@@ -70,8 +75,9 @@ final class VoicePairingViewModel: ObservableObject, GatewayConnectionDelegate {
 
     nonisolated func gatewayDidDisconnect() {
         Task { @MainActor in
-            // Only reset if still actively trying (not awaiting approval — we poll in that case)
-            if self.status == .connecting {
+            // Don't show error during connecting — the error callback handles pairing_required.
+            // Only show disconnect error if we were previously paired/connected.
+            if self.status == .paired {
                 self.status = .failed("Disconnected from gateway")
             }
         }

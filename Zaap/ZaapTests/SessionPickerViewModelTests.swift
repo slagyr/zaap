@@ -33,28 +33,28 @@ final class SessionPickerViewModelTests: XCTestCase {
 
     // MARK: - Initial State
 
-    func testInitialStateIsEmpty() {
-        XCTAssertTrue(viewModel.sessions.isEmpty)
+    func testInitialStateHasMainFallback() {
+        XCTAssertEqual(viewModel.sessions.count, 1)
+        XCTAssertEqual(viewModel.sessions[0].key, "agent:main:main")
         XCTAssertFalse(viewModel.isLoading)
-        XCTAssertNil(viewModel.selectedSessionKey)
+        XCTAssertEqual(viewModel.selectedSessionKey, "agent:main:main")
     }
 
     // MARK: - Load Sessions
 
-    func testLoadSessionsPopulatesList() async {
+    func testLoadSessionsPopulatesFilteredList() async {
         lister.sessionsToReturn = [
-            GatewaySession(key: "abc-123", title: "Morning chat", lastMessage: "Good morning!", channelType: "discord"),
-            GatewaySession(key: "def-456", title: "Project discussion", lastMessage: nil, channelType: "discord")
+            GatewaySession(key: "agent:main:discord:123", title: "Morning chat", lastMessage: "Good morning!", channelType: "discord"),
+            GatewaySession(key: "agent:main:discord:456", title: "Project discussion", lastMessage: nil, channelType: "discord")
         ]
 
         await viewModel.loadSessions()
 
-        XCTAssertEqual(viewModel.sessions.count, 2)
-        XCTAssertEqual(viewModel.sessions[0].key, "abc-123")
-        XCTAssertEqual(viewModel.sessions[0].title, "Morning chat")
-        XCTAssertEqual(viewModel.sessions[0].lastMessage, "Good morning!")
-        XCTAssertEqual(viewModel.sessions[1].key, "def-456")
-        XCTAssertEqual(viewModel.sessions[1].lastMessage, nil)
+        // 2 discord sessions + Main fallback = 3
+        XCTAssertEqual(viewModel.sessions.count, 3)
+        XCTAssertTrue(viewModel.sessions.contains(where: { $0.key == "agent:main:main" }))
+        XCTAssertTrue(viewModel.sessions.contains(where: { $0.key == "agent:main:discord:123" && $0.lastMessage == "Good morning!" }))
+        XCTAssertTrue(viewModel.sessions.contains(where: { $0.key == "agent:main:discord:456" && $0.lastMessage == nil }))
     }
 
     func testLoadSessionsSetsLoadingFalseAfterFetch() async {
@@ -62,12 +62,14 @@ final class SessionPickerViewModelTests: XCTestCase {
         XCTAssertFalse(viewModel.isLoading)
     }
 
-    func testLoadSessionsOnErrorClearsList() async {
+    func testLoadSessionsOnErrorKeepsMainFallback() async {
         lister.shouldThrow = NSError(domain: "test", code: 1)
 
         await viewModel.loadSessions()
 
-        XCTAssertTrue(viewModel.sessions.isEmpty)
+        // Main fallback always present even on error
+        XCTAssertEqual(viewModel.sessions.count, 1)
+        XCTAssertEqual(viewModel.sessions[0].key, "agent:main:main")
         XCTAssertFalse(viewModel.isLoading)
     }
 
@@ -84,6 +86,7 @@ final class SessionPickerViewModelTests: XCTestCase {
     }
 
     func testNoSelectionReturnsNil() {
+        viewModel.selectedSessionKey = nil
         XCTAssertNil(viewModel.activeSessionKey)
     }
 
@@ -103,32 +106,39 @@ final class SessionPickerViewModelTests: XCTestCase {
     }
 }
 
-// MARK: - All Sessions & Auto-Select Extensions
+// MARK: - Filtering & Auto-Select
 
 @MainActor
 extension SessionPickerViewModelTests {
 
-    func testLoadSessionsShowsAllSessionTypes() async {
+    func testLoadSessionsFiltersToMainAndDiscordOnly() async {
         lister.sessionsToReturn = [
             GatewaySession(key: "agent:main:discord:123", title: "Discord chat", lastMessage: nil, channelType: "discord"),
             GatewaySession(key: "agent:main:whatsapp:456", title: "WhatsApp chat", lastMessage: nil, channelType: "whatsapp"),
             GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main"),
-        ]
-
-        await viewModel.loadSessions()
-
-        XCTAssertEqual(viewModel.sessions.count, 3)
-    }
-
-    func testLoadSessionsIncludesNilChannelType() async {
-        lister.sessionsToReturn = [
-            GatewaySession(key: "d1", title: "Discord", lastMessage: nil, channelType: "discord"),
-            GatewaySession(key: "n1", title: "Unknown", lastMessage: nil, channelType: nil),
+            GatewaySession(key: "agent:main:cron:789", title: "Cron job", lastMessage: nil, channelType: "cron"),
         ]
 
         await viewModel.loadSessions()
 
         XCTAssertEqual(viewModel.sessions.count, 2)
+        XCTAssertTrue(viewModel.sessions.contains(where: { $0.key == "agent:main:main" }))
+        XCTAssertTrue(viewModel.sessions.contains(where: { $0.key == "agent:main:discord:123" }))
+        XCTAssertFalse(viewModel.sessions.contains(where: { $0.key.contains("whatsapp") }))
+        XCTAssertFalse(viewModel.sessions.contains(where: { $0.key.contains("cron") }))
+    }
+
+    func testLoadSessionsFiltersOutNonDiscordNonMainSessions() async {
+        lister.sessionsToReturn = [
+            GatewaySession(key: "agent:main:telegram:111", title: "Telegram", lastMessage: nil, channelType: "telegram"),
+            GatewaySession(key: "agent:scrapper:subagent:222", title: "Sub-agent", lastMessage: nil, channelType: nil),
+        ]
+
+        await viewModel.loadSessions()
+
+        // Only Main fallback should remain
+        XCTAssertEqual(viewModel.sessions.count, 1)
+        XCTAssertEqual(viewModel.sessions[0].key, "agent:main:main")
     }
 
     func testLoadSessionsAutoSelectsMainSession() async {
@@ -143,7 +153,7 @@ extension SessionPickerViewModelTests {
         XCTAssertEqual(viewModel.selectedSessionKey, "agent:main:main")
     }
 
-    func testLoadSessionsFallsBackToFirstWhenNoMainSession() async {
+    func testLoadSessionsFallsBackToMainFallbackWhenNoMainInResult() async {
         lister.sessionsToReturn = [
             GatewaySession(key: "agent:main:discord:123", title: "Discord", lastMessage: nil, channelType: "discord"),
             GatewaySession(key: "agent:main:discord:456", title: "Other", lastMessage: nil, channelType: "discord"),
@@ -151,7 +161,8 @@ extension SessionPickerViewModelTests {
 
         await viewModel.loadSessions()
 
-        XCTAssertEqual(viewModel.selectedSessionKey, "agent:main:discord:123")
+        // Main fallback is always inserted
+        XCTAssertEqual(viewModel.selectedSessionKey, "agent:main:main")
     }
 
     func testLoadSessionsDoesNotOverrideExistingSelection() async {
@@ -177,16 +188,18 @@ extension SessionPickerViewModelTests {
         XCTAssertEqual(viewModel.selectedSessionKey, "agent:main:main")
     }
 
-    func testLoadSessionsEmptyResultClearsSelection() async {
+    func testLoadSessionsEmptyResultSelectsMainFallback() async {
         viewModel.selectedSessionKey = "old"
         lister.sessionsToReturn = []
 
         await viewModel.loadSessions()
 
-        XCTAssertNil(viewModel.selectedSessionKey)
+        // Main fallback always present
+        XCTAssertEqual(viewModel.selectedSessionKey, "agent:main:main")
     }
 
     func testIsSessionSelectedReturnsFalseWhenNoSelection() {
+        viewModel.selectedSessionKey = nil
         XCTAssertFalse(viewModel.isSessionSelected)
     }
 

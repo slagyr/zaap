@@ -6,9 +6,6 @@ struct SessionPickerView: View {
     var body: some View {
         VStack(spacing: 8) {
             Picker("Session", selection: $viewModel.selectedSessionKey) {
-                Text("New conversation")
-                    .tag(nil as String?)
-
                 ForEach(viewModel.sessions) { session in
                     VStack(alignment: .leading) {
                         Text(session.title)
@@ -18,7 +15,7 @@ struct SessionPickerView: View {
                                 .foregroundColor(.secondary)
                         }
                     }
-                    .tag(session.key as String?)
+                    .tag(session.key)
                 }
             }
             .pickerStyle(.menu)

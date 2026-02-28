@@ -136,11 +136,9 @@ struct VoiceChatView: View {
     private var compactSessionPicker: some View {
         Menu {
             Picker("Session", selection: $sessionPicker.selectedSessionKey) {
-                Text("New conversation")
-                    .tag(nil as String?)
                 ForEach(sessionPicker.sessions) { session in
                     Text(session.title)
-                        .tag(session.key as String?)
+                        .tag(session.key)
                 }
             }
         } label: {

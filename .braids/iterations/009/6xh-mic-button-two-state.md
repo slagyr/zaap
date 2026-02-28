@@ -1,6 +1,21 @@
 # zaap-6xh: Mic button blue/red two-state only
 
-Simplified `micButtonColor` in `VoiceChatView.swift`:
-- Blue when idle, Red for all active states (listening/processing/speaking)
-- Removed orange and green from mic button
-- statusDot still distinguishes states visually (per AC)
+## Change
+
+Simplified `micButtonColor` in `VoiceChatView.swift` to return exactly two colors:
+- **Blue** when idle (tap to start)
+- **Red** when listening, processing, or speaking (tap to stop)
+
+Removed the orange (processing) and green (speaking) states from the mic button.
+
+## What Was NOT Changed
+
+- `statusDot` still uses distinct indicators per state — per AC, status indicators may appear elsewhere
+- `micIconName` still varies per state — icon differentiation is fine, only color was the issue
+
+## Verification
+
+```
+grep micButtonColor VoiceChatView.swift
+# Returns exactly: .blue and .red (no other colors)
+```
