@@ -190,6 +190,12 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     private func handleGatewayEvent(_ event: String, payload: [String: Any]) {
         // Always process incoming responses (agent may reply after user taps stop)
 
+        // Filter by session key — only process events for the active session
+        if let eventSessionKey = payload["sessionKey"] as? String,
+           eventSessionKey != sessionKey {
+            return
+        }
+
         // Handle gateway chat streaming events (delta/final from agent run)
         if event == "chat" {
             handleChatEvent(payload)
@@ -218,6 +224,9 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     }
 
     private func handleChatEvent(_ payload: [String: Any]) {
+        // Require matching session key — ignore events from other sessions
+        guard let eventSessionKey = payload["sessionKey"] as? String,
+              eventSessionKey == sessionKey else { return }
         guard let state = payload["state"] as? String else { return }
 
         // Extract text from message.content[0].text
