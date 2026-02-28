@@ -314,3 +314,42 @@ final class ResponseSpeakerTests: XCTestCase {
         XCTAssertNotEqual(firstVoice?.identifier, secondVoice?.identifier)
     }
 }
+
+    // MARK: - onStateChange Callback
+
+    func testOnStateChangeCalledWhenSpeaking() {
+        let synth = MockSpeechSynthesizer()
+        let speaker = ResponseSpeaker(synthesizer: synth)
+        var receivedStates: [SpeakerState] = []
+        speaker.onStateChange = { receivedStates.append($0) }
+
+        speaker.speakImmediate("Hello")
+
+        XCTAssertEqual(receivedStates, [.speaking])
+    }
+
+    func testOnStateChangeCalledWhenFinished() {
+        let synth = MockSpeechSynthesizer()
+        let speaker = ResponseSpeaker(synthesizer: synth)
+        var receivedStates: [SpeakerState] = []
+
+        speaker.speakImmediate("Hello")
+        speaker.onStateChange = { receivedStates.append($0) }
+
+        synth.isSpeakingValue = false
+        synth.simulateDidFinish()
+
+        XCTAssertEqual(receivedStates, [.idle])
+    }
+
+    func testOnStateChangeNotCalledForSameState() {
+        let synth = MockSpeechSynthesizer()
+        let speaker = ResponseSpeaker(synthesizer: synth)
+        var callCount = 0
+        speaker.onStateChange = { _ in callCount += 1 }
+
+        // Already idle, interrupt should not trigger callback
+        speaker.interrupt()
+
+        XCTAssertEqual(callCount, 0)
+    }

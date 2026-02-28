@@ -251,6 +251,7 @@ final class MockGatewayConnecting: GatewayConnecting {
 
 final class MockResponseSpeaking: ResponseSpeaking {
     var state: SpeakerState = .idle
+    var onStateChange: ((SpeakerState) -> Void)?
     var spokenTexts: [String] = []
     var bufferedTokens: [String] = []
     var flushCalled = false

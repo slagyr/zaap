@@ -28,7 +28,12 @@ final class ResponseSpeaker: NSObject, AVSpeechSynthesizerDelegate {
     private var buffer: String = ""
 
     /// Current speaker state, observable by UI.
-    private(set) var state: SpeakerState = .idle
+    private(set) var state: SpeakerState = .idle {
+        didSet {
+            if state != oldValue { onStateChange?(state) }
+        }
+    }
+    var onStateChange: ((SpeakerState) -> Void)?
 
     init(synthesizer: SpeechSynthesizing, settings: SettingsManager = .shared) {
         self.synthesizer = synthesizer

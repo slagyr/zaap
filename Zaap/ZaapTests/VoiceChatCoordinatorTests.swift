@@ -275,6 +275,99 @@ final class VoiceChatCoordinatorTests: XCTestCase {
         XCTAssertNotNil(gateway.delegate)
     }
 
+    // MARK: - Session Key Filtering
+
+    func testChatEventMatchingSessionKeyIsProcessed() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:abc")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("test")
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:abc",
+            "state": "delta",
+            "message": ["content": [["text": "Hello from correct session"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertEqual(viewModel.responseText, "Hello from correct session")
+    }
+
+    func testChatEventDifferentSessionKeyIsIgnored() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:abc")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("test")
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:discord:xyz",
+            "state": "delta",
+            "message": ["content": [["text": "Message from Discord"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertNotEqual(viewModel.responseText, "Message from Discord")
+    }
+
+    func testChatEventWithNoSessionKeyIsIgnored() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:abc")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("test")
+
+        gateway.simulateEvent("chat", payload: [
+            "state": "delta",
+            "message": ["content": [["text": "No session key message"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertNotEqual(viewModel.responseText, "No session key message")
+    }
+
+    func testChatFinalEventDifferentSessionKeyDoesNotSpeak() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:abc")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        speaker.bufferedTokens = []
+        speaker.flushCalled = false
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:discord:xyz",
+            "state": "final",
+            "message": ["content": [["text": "Wrong session response"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(speaker.bufferedTokens.isEmpty)
+        XCTAssertFalse(speaker.flushCalled)
+    }
+
+    func testLegacyTokenEventWithDifferentSessionKeyIsIgnored() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:abc")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        speaker.bufferedTokens = []
+
+        gateway.simulateEvent("chat.event", payload: [
+            "sessionKey": "agent:main:discord:xyz",
+            "type": "token",
+            "text": "Wrong session token"
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(speaker.bufferedTokens.isEmpty)
+    }
+
     // MARK: - Challenge Failed → Needs Re-pairing
 
     func testChallengeFailedSendsNeedsRepairing() async throws {
@@ -309,5 +402,57 @@ final class VoiceChatCoordinatorTests: XCTestCase {
 
         XCTAssertTrue(repairingReceived)
         _ = cancellable
+    }
+}
+
+// MARK: - Echo Cancellation (mic muting while TTS speaks)
+
+extension VoiceChatCoordinatorTests {
+
+    func testMicStopsWhenSpeakerStartsSpeaking() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        voiceEngine.stopListeningCalled = false
+
+        // Simulate speaker transitioning to speaking
+        speaker.onStateChange?(.speaking)
+
+        XCTAssertTrue(voiceEngine.stopListeningCalled,
+                      "Voice engine should stop listening when speaker starts speaking")
+    }
+
+    func testMicResumesWhenSpeakerFinishesSpeaking() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Speaker starts then stops
+        speaker.onStateChange?(.speaking)
+        voiceEngine.startListeningCalled = false
+
+        speaker.onStateChange?(.idle)
+
+        XCTAssertTrue(voiceEngine.startListeningCalled,
+                      "Voice engine should resume listening when speaker finishes")
+    }
+
+    func testMicNotResumedAfterSessionStopped() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        coordinator.stopSession()
+        voiceEngine.startListeningCalled = false
+
+        // Speaker finishes after session was stopped
+        speaker.onStateChange?(.idle)
+
+        XCTAssertFalse(voiceEngine.startListeningCalled,
+                       "Voice engine should NOT resume listening after session stopped")
     }
 }

@@ -249,3 +249,28 @@ final class NWNetworkMonitor: NetworkPathMonitoring {
         monitor.cancel()
     }
 }
+
+// MARK: - Simulator Keychain (UserDefaults-backed)
+
+/// A KeychainAccessing implementation backed by UserDefaults.
+/// Used in the iOS Simulator where the real Keychain is wiped on each reinstall,
+/// causing device IDs to change. UserDefaults persists across reinstalls in the simulator.
+final class SimulatorKeychain: KeychainAccessing {
+    private let defaults: UserDefaults
+
+    init(suiteName: String = "co.airworthy.zaap.simulatorkeychain") {
+        self.defaults = UserDefaults(suiteName: suiteName) ?? .standard
+    }
+
+    func save(key: String, data: Data) throws {
+        defaults.set(data, forKey: key)
+    }
+
+    func load(key: String) -> Data? {
+        return defaults.data(forKey: key)
+    }
+
+    func delete(key: String) {
+        defaults.removeObject(forKey: key)
+    }
+}

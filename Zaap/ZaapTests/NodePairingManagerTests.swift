@@ -247,3 +247,73 @@ final class NodePairingManagerTests: XCTestCase {
         XCTAssertNil(message)
     }
 }
+
+// MARK: - SimulatorKeychain Tests
+
+final class SimulatorKeychainTests: XCTestCase {
+
+    var keychain: SimulatorKeychain!
+    let testSuite = "co.airworthy.zaap.test"
+
+    override func setUp() {
+        super.setUp()
+        // Clean slate for each test
+        UserDefaults.standard.removePersistentDomain(forName: testSuite)
+        keychain = SimulatorKeychain(suiteName: testSuite)
+    }
+
+    override func tearDown() {
+        UserDefaults.standard.removePersistentDomain(forName: testSuite)
+        super.tearDown()
+    }
+
+    func testSaveAndLoadReturnsStoredData() throws {
+        let data = "hello".data(using: .utf8)!
+        try keychain.save(key: "testKey", data: data)
+
+        let loaded = keychain.load(key: "testKey")
+        XCTAssertEqual(loaded, data)
+    }
+
+    func testLoadReturnsNilForMissingKey() {
+        XCTAssertNil(keychain.load(key: "nonexistent"))
+    }
+
+    func testDeleteRemovesStoredData() throws {
+        let data = "hello".data(using: .utf8)!
+        try keychain.save(key: "testKey", data: data)
+
+        keychain.delete(key: "testKey")
+
+        XCTAssertNil(keychain.load(key: "testKey"))
+    }
+
+    func testSaveOverwritesExistingData() throws {
+        try keychain.save(key: "testKey", data: "first".data(using: .utf8)!)
+        try keychain.save(key: "testKey", data: "second".data(using: .utf8)!)
+
+        let loaded = keychain.load(key: "testKey")
+        XCTAssertEqual(loaded, "second".data(using: .utf8)!)
+    }
+
+    func testDataPersistsAcrossInstances() throws {
+        let data = "persist".data(using: .utf8)!
+        try keychain.save(key: "testKey", data: data)
+
+        let keychain2 = SimulatorKeychain(suiteName: testSuite)
+        XCTAssertEqual(keychain2.load(key: "testKey"), data)
+    }
+
+    func testNodePairingManagerWorksWithSimulatorKeychain() throws {
+        let manager = NodePairingManager(keychain: keychain)
+        let identity1 = try manager.generateIdentity()
+
+        // Simulate app restart with same UserDefaults-backed keychain
+        let keychain2 = SimulatorKeychain(suiteName: testSuite)
+        let manager2 = NodePairingManager(keychain: keychain2)
+        let identity2 = try manager2.generateIdentity()
+
+        XCTAssertEqual(identity1.nodeId, identity2.nodeId)
+        XCTAssertEqual(identity1.publicKeyBase64, identity2.publicKeyBase64)
+    }
+}

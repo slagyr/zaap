@@ -25,7 +25,7 @@ final class VoicePairingViewModel: ObservableObject, GatewayConnectionDelegate {
     private let gateway: GatewayConnection
 
     init() {
-        let mgr = NodePairingManager(keychain: RealKeychain())
+        let mgr = NodePairingManager()
         let conn = GatewayConnection(
             pairingManager: mgr,
             webSocketFactory: URLSessionWebSocketFactory(),

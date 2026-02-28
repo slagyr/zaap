@@ -177,3 +177,18 @@ class NodePairingManager {
             .replacingOccurrences(of: "=", with: "")
     }
 }
+
+// MARK: - Platform-Aware Convenience Init
+
+extension NodePairingManager {
+    /// Creates a NodePairingManager with the appropriate keychain for the current environment.
+    /// Uses SimulatorKeychain (UserDefaults-backed) on Simulator to avoid device ID changes on reinstall.
+    /// Uses RealKeychain (Security framework) on physical devices.
+    convenience init() {
+        #if targetEnvironment(simulator)
+        self.init(keychain: SimulatorKeychain())
+        #else
+        self.init(keychain: RealKeychain())
+        #endif
+    }
+}

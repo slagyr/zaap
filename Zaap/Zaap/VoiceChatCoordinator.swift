@@ -29,6 +29,7 @@ extension GatewayConnection: GatewayConnecting {}
 /// Abstracts ResponseSpeaker for testability.
 protocol ResponseSpeaking: AnyObject {
     var state: SpeakerState { get }
+    var onStateChange: ((SpeakerState) -> Void)? { get set }
     func speakImmediate(_ text: String)
     func bufferToken(_ token: String)
     func flush()
@@ -64,6 +65,15 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         self.speaker = speaker
 
         gateway.delegate = self
+
+        speaker.onStateChange = { [weak self] newState in
+            guard let self = self, self.isActive else { return }
+            if newState == .speaking {
+                self.voiceEngine.stopListening()
+            } else if newState == .idle {
+                self.voiceEngine.startListening()
+            }
+        }
 
         voiceEngine.onPartialTranscript = { [weak self] text in
             self?.viewModel.updatePartialTranscript(text)
