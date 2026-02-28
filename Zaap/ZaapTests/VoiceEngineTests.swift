@@ -108,19 +108,23 @@ final class MockTimerFactory: TimerScheduling {
     var lastInterval: TimeInterval?
     var lastFireHandler: (() -> Void)?
     var invalidateCalled = false
+    var allTokens: [MockTimerToken] = []
 
     func scheduleTimer(interval: TimeInterval, handler: @escaping () -> Void) -> TimerToken {
         lastInterval = interval
         lastFireHandler = handler
         let token = MockTimerToken()
         token.factory = self
+        allTokens.append(token)
         return token
     }
 }
 
 final class MockTimerToken: TimerToken {
     weak var factory: MockTimerFactory?
+    var invalidateCount = 0
     func invalidate() {
+        invalidateCount += 1
         factory?.invalidateCalled = true
     }
 }
@@ -602,5 +606,28 @@ final class VoiceEngineTests: XCTestCase {
         RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
 
         XCTAssertTrue(engine.isListening, "Engine should remain listening after emitting utterance")
+    }
+
+    // MARK: - Silence Timer Cleanup on Short Utterance
+
+    @MainActor
+    func testSilenceTimerInvalidatedWhenShortUtteranceRejected() async throws {
+        var emittedTranscript: String?
+        engine.onUtteranceComplete = { emittedTranscript = $0 }
+
+        engine.startListening()
+        await simulateResultAndWait("Hi", isFinal: false)
+
+        // Grab the token created by resetSilenceTimer during partial result
+        let timerToken = timerFactory.allTokens.last!
+        XCTAssertEqual(timerToken.invalidateCount, 0)
+
+        // Fire the timer — utterance is too short (2 chars < 3), should be rejected
+        timerFactory.lastFireHandler?()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertNil(emittedTranscript, "Short utterance should not be emitted")
+        XCTAssertGreaterThan(timerToken.invalidateCount, 0,
+                             "Silence timer should be invalidated even when utterance is too short to emit")
     }
 }

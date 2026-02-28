@@ -213,13 +213,14 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
     }
 
     private func emitUtteranceIfValid() {
+        silenceTimer?.invalidate()
+        silenceTimer = nil
+
         let full = currentTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
         let newPortion = String(full.dropFirst(lastEmittedLength)).trimmingCharacters(in: .whitespacesAndNewlines)
         guard newPortion.count >= minimumTranscriptLength else { return }
         onUtteranceComplete?(newPortion)
         lastEmittedLength = full.count
-        silenceTimer?.invalidate()
-        silenceTimer = nil
         restartRecognition()
     }
 
