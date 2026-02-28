@@ -72,14 +72,8 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             if newState == .speaking {
                 self.voiceEngine.stopListening()
             } else if newState == .idle {
-                // Delay mic restart to let TTS audio tail clear from the input buffer.
-                // Without this delay the mic picks up the last syllables of TTS output
-                // and transcribes them as user speech (e.g. "fox face" from the 🦊 emoji).
-                Task { @MainActor in
-                    try? await Task.sleep(nanoseconds: 800_000_000) // 800ms
-                    guard self.isActive else { return }
-                    self.voiceEngine.startListening()
-                }
+                // Push-to-talk: when speaker finishes, return to idle.
+                // Do NOT auto-restart mic — user must tap the button again.
             }
         }
 
@@ -227,7 +221,6 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
                 speaker.flush()
             }
             viewModel.handleResponseComplete()
-            voiceEngine.startListening()
         default:
             break
         }
@@ -262,19 +255,9 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             if isActive {
                 speaker.flush()
             }
-            viewModel.handleResponseComplete() // → .listening state
-            if isActive {
-                voiceEngine.startListening()
-            } else {
-                viewModel.tapMic() // listening → idle (session was stopped by user)
-            }
+            viewModel.handleResponseComplete() // → .idle (push-to-talk)
         case "error":
             viewModel.handleResponseComplete()
-            if isActive {
-                voiceEngine.startListening()
-            } else {
-                viewModel.tapMic()
-            }
         default:
             break
         }

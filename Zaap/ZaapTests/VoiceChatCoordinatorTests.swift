@@ -161,7 +161,7 @@ final class VoiceChatCoordinatorTests: XCTestCase {
         try await Task.sleep(nanoseconds: 50_000_000)
 
         XCTAssertTrue(speaker.flushCalled)
-        XCTAssertEqual(viewModel.state, .listening)
+        XCTAssertEqual(viewModel.state, .idle)
     }
 
     // MARK: - Interrupt: User speaks while TTS playing
@@ -425,7 +425,7 @@ extension VoiceChatCoordinatorTests {
                       "Voice engine should stop listening when speaker starts speaking")
     }
 
-    func testMicResumesWhenSpeakerFinishesSpeaking() async throws {
+    func testMicDoesNotResumeWhenSpeakerFinishes() async throws {
         let url = URL(string: "wss://gateway.local:18789")!
         coordinator.startSession(gatewayURL: url)
         gateway.simulateConnect()
@@ -437,8 +437,8 @@ extension VoiceChatCoordinatorTests {
 
         speaker.onStateChange?(.idle)
 
-        XCTAssertTrue(voiceEngine.startListeningCalled,
-                      "Voice engine should resume listening when speaker finishes")
+        XCTAssertFalse(voiceEngine.startListeningCalled,
+                       "Voice engine should NOT auto-resume after speaker finishes (push-to-talk)")
     }
 
     func testMicNotResumedAfterSessionStopped() async throws {
@@ -456,4 +456,27 @@ extension VoiceChatCoordinatorTests {
         XCTAssertFalse(voiceEngine.startListeningCalled,
                        "Voice engine should NOT resume listening after session stopped")
     }
+
+    func testChatFinalDoesNotRestartMic() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:ptt")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("test")
+        viewModel.handleResponseToken("Response")
+        voiceEngine.startListeningCalled = false
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:ptt",
+            "state": "final",
+            "message": ["content": [["text": "Hello!"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertFalse(voiceEngine.startListeningCalled,
+                       "Mic should NOT auto-restart after chat final (push-to-talk)")
+        XCTAssertEqual(viewModel.state, .idle)
+    }
+
 }

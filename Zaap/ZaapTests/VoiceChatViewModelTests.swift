@@ -93,13 +93,13 @@ final class VoiceChatViewModelTests: XCTestCase {
         XCTAssertEqual(vm.conversationLog[1].text, "Hi there")
     }
 
-    func testResponseCompleteTransitionsToListening() {
+    func testResponseCompleteTransitionsToIdle() {
         let vm = VoiceChatViewModel()
         vm.tapMic()
         vm.handleUtteranceComplete("Hello")
         vm.handleResponseToken("Hi there")
         vm.handleResponseComplete()
-        XCTAssertEqual(vm.state, .listening)
+        XCTAssertEqual(vm.state, .idle)
     }
 
     func testResponseCompleteClearsResponseText() {

@@ -76,6 +76,6 @@ final class VoiceChatViewModel: ObservableObject {
             conversationLog.append(ConversationEntry(role: .agent, text: responseText))
         }
         responseText = ""
-        state = .listening
+        state = .idle
     }
 }
