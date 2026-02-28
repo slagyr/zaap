@@ -52,8 +52,8 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     private let gateway: GatewayConnecting
     private let speaker: ResponseSpeaking
     private var sessionKey: String = ""
-    private var isActive = false
-    private var conversationMode = false
+    @Published private(set) var isSessionActive = false
+    @Published private(set) var isConversationModeOn = false
     weak var sessionPicker: SessionPickerViewModel?
     let needsRepairingPublisher = PassthroughSubject<Void, Never>()
 
@@ -69,8 +69,8 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         gateway.delegate = self
 
         speaker.onStateChange = { [weak self] newState in
-            guard let self = self, self.isActive else { return }
-            if newState == .idle, self.conversationMode {
+            guard let self = self, self.isSessionActive else { return }
+            if newState == .idle, self.isConversationModeOn {
                 self.voiceEngine.startListening()
                 if self.viewModel.state == .idle {
                     self.viewModel.tapMic() // idle → listening
@@ -104,8 +104,8 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
     func startSession(gatewayURL: URL, sessionKey: String? = nil) {
         self.sessionKey = sessionKey ?? UUID().uuidString
-        isActive = true
-        conversationMode = true
+        isSessionActive = true
+        isConversationModeOn = true
         if gateway.state == .connected {
             // Already connected — go straight to listening
             viewModel.tapMic() // idle → listening
@@ -117,15 +117,15 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     }
 
     func toggleConversationMode() {
-        guard isActive else { return }
-        if conversationMode {
-            conversationMode = false
+        guard isSessionActive else { return }
+        if isConversationModeOn {
+            isConversationModeOn = false
             voiceEngine.stopListening()
             if viewModel.state == .listening {
                 viewModel.tapMic() // listening → idle
             }
         } else {
-            conversationMode = true
+            isConversationModeOn = true
             voiceEngine.startListening()
             if viewModel.state == .idle {
                 viewModel.tapMic() // idle → listening
@@ -143,8 +143,8 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
         voiceEngine.stopListening()
         speaker.interrupt()
-        isActive = false
-        conversationMode = false
+        isSessionActive = false
+        isConversationModeOn = false
 
         // Don't disconnect — keep gateway connected so the response can still arrive
         // and next tap reuses the connection without handshake delay.
@@ -160,7 +160,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     // MARK: - Voice Engine → Gateway
 
     private func handleUtteranceComplete(_ text: String) {
-        guard isActive else { return }
+        guard isSessionActive else { return }
 
         // Interrupt speaker if currently speaking
         if speaker.state == .speaking {
@@ -181,7 +181,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         Task { @MainActor in
             // Load sessions whenever gateway connects (not just during active voice session)
             await sessionPicker?.loadSessions()
-            guard isActive else { return }
+            guard isSessionActive else { return }
             // Gateway is ready — transition UI to listening and start capturing voice
             viewModel.tapMic() // idle → listening
             voiceEngine.startListening()
@@ -232,12 +232,12 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         case "token":
             if let text = payload["text"] as? String {
                 viewModel.handleResponseToken(text)
-                if isActive {
+                if isSessionActive {
                     speaker.bufferToken(text)
                 }
             }
         case "done":
-            if isActive {
+            if isSessionActive {
                 speaker.flush()
             }
             viewModel.handleResponseComplete()
@@ -269,10 +269,10 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             }
         case "final":
             // Final carries the complete response — speak it only if session is still active
-            if isActive, let t = text, !t.isEmpty {
+            if isSessionActive, let t = text, !t.isEmpty {
                 speaker.bufferToken(t)
             }
-            if isActive {
+            if isSessionActive {
                 speaker.flush()
             }
             viewModel.handleResponseComplete() // → .idle; speaker.onStateChange restarts mic

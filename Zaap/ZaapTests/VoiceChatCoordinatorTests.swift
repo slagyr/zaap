@@ -564,4 +564,99 @@ extension VoiceChatCoordinatorTests {
                       "Speaker finishing should restart mic after conversation mode toggled back on")
     }
 
+    // MARK: - isConversationModeOn Published Property
+
+    func testIsConversationModeOnStartsFalse() {
+        XCTAssertFalse(coordinator.isConversationModeOn,
+                       "Conversation mode should be off before session starts")
+    }
+
+    func testIsConversationModeOnTrueAfterStartSession() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(coordinator.isConversationModeOn,
+                      "Conversation mode should be on after starting session")
+    }
+
+    func testIsConversationModeOnFalseAfterToggleOff() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        coordinator.toggleConversationMode()
+
+        XCTAssertFalse(coordinator.isConversationModeOn,
+                       "Conversation mode should be off after toggling off")
+    }
+
+    func testIsConversationModeOnTrueAfterToggleBackOn() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        coordinator.toggleConversationMode()
+        coordinator.toggleConversationMode()
+
+        XCTAssertTrue(coordinator.isConversationModeOn,
+                      "Conversation mode should be back on after toggling on again")
+    }
+
+    func testIsConversationModeOnFalseAfterStopSession() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        coordinator.stopSession()
+
+        XCTAssertFalse(coordinator.isConversationModeOn,
+                       "Conversation mode should be off after stopping session")
+    }
+
+    // MARK: - isSessionActive Published Property
+
+    func testIsSessionActiveStartsFalse() {
+        XCTAssertFalse(coordinator.isSessionActive,
+                       "Session should not be active before starting")
+    }
+
+    func testIsSessionActiveTrueAfterStartSession() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(coordinator.isSessionActive,
+                      "Session should be active after starting")
+    }
+
+    func testIsSessionActiveStillTrueAfterConversationModeToggleOff() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        coordinator.toggleConversationMode()
+
+        XCTAssertTrue(coordinator.isSessionActive,
+                      "Session should remain active when conversation mode toggled off")
+    }
+
+    func testIsSessionActiveFalseAfterStopSession() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        coordinator.stopSession()
+
+        XCTAssertFalse(coordinator.isSessionActive,
+                       "Session should not be active after stopping")
+    }
+
 }

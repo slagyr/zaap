@@ -182,15 +182,14 @@ struct VoiceChatView: View {
 
     private var micButton: some View {
         Button(action: {
-            switch viewModel.state {
-            case .idle:
+            if coordinator.isSessionActive {
+                coordinator.toggleConversationMode()
+            } else {
                 if let url = SettingsManager.shared.voiceWebSocketURL {
                     coordinator.startSession(gatewayURL: url, sessionKey: sessionPicker.activeSessionKey)
                 } else {
                     viewModel.updatePartialTranscript("⚠️ Configure gateway URL in Settings first")
                 }
-            default:
-                coordinator.stopSession()
             }
         }) {
             Image(systemName: micIconName)
@@ -205,12 +204,7 @@ struct VoiceChatView: View {
     }
 
     private var micIconName: String {
-        switch viewModel.state {
-        case .idle: return "mic"
-        case .listening: return "mic.fill"
-        case .processing: return "ellipsis"
-        case .speaking: return "speaker.wave.2.fill"
-        }
+        coordinator.isConversationModeOn ? "mic.fill" : "mic"
     }
 
     private var copyButton: some View {
@@ -237,19 +231,11 @@ struct VoiceChatView: View {
     }
 
     private var micButtonColor: Color {
-        switch viewModel.state {
-        case .idle: return .blue
-        case .listening, .processing, .speaking: return .red
-        }
+        coordinator.isConversationModeOn ? .red : .blue
     }
 
     private var micAccessibilityLabel: String {
-        switch viewModel.state {
-        case .idle: return "Start listening"
-        case .listening: return "Stop listening"
-        case .processing: return "Processing"
-        case .speaking: return "Stop speaking"
-        }
+        coordinator.isConversationModeOn ? "Turn off conversation mode" : "Turn on conversation mode"
     }
 }
 
