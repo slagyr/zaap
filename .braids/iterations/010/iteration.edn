@@ -1,5 +1,5 @@
 {:number "010"
- :status :active
+ :status :complete
  :stories [{:id "zaap-7yv" :title "Echo cancellation still broken — TTS transcribed as user speech"}
            {:id "zaap-je2" :title "Hide recognition-canceled errors from chat transcript"}]
  :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
