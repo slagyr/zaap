@@ -59,6 +59,8 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     var logHandler: (String) -> Void = { print($0) }
     var micRestartDelay: TimeInterval = 0.5
     private var micRestartTask: Task<Void, Never>?
+    private var recentSpokenTexts: [String] = []
+    private let maxSpokenTextHistory = 10
 
     init(viewModel: VoiceChatViewModel,
          voiceEngine: VoiceEngineProtocol,
@@ -73,7 +75,10 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
         speaker.onStateChange = { [weak self] newState in
             guard let self = self, self.isSessionActive else { return }
-            if newState == .idle, self.isConversationModeOn {
+            if newState == .speaking {
+                // Stop mic during TTS to prevent echo pickup (hardware AEC insufficient on device)
+                self.voiceEngine.stopListening()
+            } else if newState == .idle, self.isConversationModeOn {
                 self.scheduleMicRestart()
             }
         }
@@ -184,10 +189,47 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         }
     }
 
+    // MARK: - Echo Suppression
+
+    /// Track text that was sent to TTS so we can filter STT echo.
+    func trackSpokenText(_ text: String) {
+        let normalized = Self.normalizeForEchoComparison(text)
+        guard !normalized.isEmpty else { return }
+        recentSpokenTexts.append(normalized)
+        if recentSpokenTexts.count > maxSpokenTextHistory {
+            recentSpokenTexts.removeFirst()
+        }
+    }
+
+    /// Check if an STT transcript is likely echo of recently spoken TTS text.
+    private func isEcho(_ transcript: String) -> Bool {
+        let normalized = Self.normalizeForEchoComparison(transcript)
+        guard !normalized.isEmpty else { return false }
+        return recentSpokenTexts.contains { spoken in
+            spoken.contains(normalized) || normalized.contains(spoken)
+        }
+    }
+
+    /// Normalize text for echo comparison: lowercase, strip punctuation and extra whitespace.
+    static func normalizeForEchoComparison(_ text: String) -> String {
+        let lowered = text.lowercased()
+        let stripped = lowered.unicodeScalars.filter {
+            CharacterSet.alphanumerics.contains($0) || CharacterSet.whitespaces.contains($0)
+        }
+        let result = String(String.UnicodeScalarView(stripped))
+        return result.split(separator: " ").joined(separator: " ")
+    }
+
     // MARK: - Voice Engine → Gateway
 
     private func handleUtteranceComplete(_ text: String) {
         guard isSessionActive else { return }
+
+        // Filter echo: if STT transcript matches recently spoken TTS text, discard it
+        if isEcho(text) {
+            logHandler("🔇 [VOICE] filtered echo: \"\(text.prefix(50))\"")
+            return
+        }
 
         // Interrupt speaker if currently speaking
         if speaker.state == .speaking {
@@ -261,6 +303,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             if let text = payload["text"] as? String {
                 viewModel.handleResponseToken(text)
                 if isSessionActive {
+                    trackSpokenText(text)
                     speaker.bufferToken(text)
                 }
             }
@@ -307,7 +350,12 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             }
         case "final":
             logHandler("📥 [VOICE] chat final: text=\(text?.prefix(50) ?? "nil") sessionActive=\(isSessionActive)")
+            // Set authoritative final text before completing (zaap-9nl)
+            if let t = text, !t.isEmpty {
+                viewModel.setResponseText(t)
+            }
             if isSessionActive, let t = text, !t.isEmpty {
+                trackSpokenText(t)
                 speaker.bufferToken(t)
             }
             if isSessionActive {

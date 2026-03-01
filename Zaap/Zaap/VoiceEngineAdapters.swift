@@ -6,9 +6,9 @@ import Speech
 // MARK: - Real SFSpeechRecognizer Adapter
 
 final class RealSpeechRecognizer: SpeechRecognizing {
-    private let recognizer: SFSpeechRecognizer
+    private let recognizer: SFSpeechRecognizer?
 
-    var isAvailable: Bool { recognizer.isAvailable }
+    var isAvailable: Bool { recognizer?.isAvailable ?? false }
 
     var authorizationStatus: SpeechAuthorizationStatus {
         switch SFSpeechRecognizer.authorizationStatus() {
@@ -21,7 +21,7 @@ final class RealSpeechRecognizer: SpeechRecognizing {
     }
 
     init(locale: Locale = .current) {
-        self.recognizer = SFSpeechRecognizer(locale: locale) ?? SFSpeechRecognizer()!
+        self.recognizer = SFSpeechRecognizer(locale: locale) ?? SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
     }
 
     static func requestAuthorization(_ handler: @escaping (SpeechAuthorizationStatus) -> Void) {
@@ -45,6 +45,10 @@ final class RealSpeechRecognizer: SpeechRecognizing {
             sfRequest = SFSpeechAudioBufferRecognitionRequest()
         }
 
+        guard let recognizer = recognizer else {
+            resultHandler(nil, NSError(domain: "SpeechRecognition", code: -1, userInfo: [NSLocalizedDescriptionKey: "Speech recognizer unavailable"]))
+            return NoOpRecognitionTask()
+        }
         let task = recognizer.recognitionTask(with: sfRequest) { result, error in
             if let result = result {
                 resultHandler(RealRecognitionResult(result: result), error)
@@ -57,6 +61,11 @@ final class RealSpeechRecognizer: SpeechRecognizing {
 }
 
 // MARK: - Real Recognition Task
+
+final class NoOpRecognitionTask: SpeechRecognitionTaskProtocol {
+    func cancel() {}
+    func finish() {}
+}
 
 final class RealRecognitionTask: SpeechRecognitionTaskProtocol {
     private let task: SFSpeechRecognitionTask

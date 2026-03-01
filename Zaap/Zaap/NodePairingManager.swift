@@ -97,7 +97,9 @@ class NodePairingManager {
         let payload = ["v3", deviceId, clientId, clientMode, role, scopesStr,
                        String(signedAtMs), token, nonce, platform, deviceFamily]
             .joined(separator: "|")
-        let message = payload.data(using: .utf8)!
+        guard let message = payload.data(using: .utf8) else {
+            throw NodePairingError.keychainError("UTF-8 encoding failed")
+        }
         let signature = try privateKey.signature(for: message)
 
         return ChallengeSignature(
@@ -108,7 +110,10 @@ class NodePairingManager {
 
     /// Store the pairing token in Keychain.
     func storeToken(_ token: String) throws {
-        try keychain.save(key: Self.tokenTag, data: token.data(using: .utf8)!)
+        guard let tokenData = token.data(using: .utf8) else {
+            throw NodePairingError.keychainError("UTF-8 encoding failed")
+        }
+        try keychain.save(key: Self.tokenTag, data: tokenData)
     }
 
     /// Load the pairing token from Keychain.
@@ -119,7 +124,10 @@ class NodePairingManager {
 
     /// Store the gateway URL in Keychain.
     func storeGatewayURL(_ url: URL) throws {
-        try keychain.save(key: Self.gatewayURLTag, data: url.absoluteString.data(using: .utf8)!)
+        guard let urlData = url.absoluteString.data(using: .utf8) else {
+            throw NodePairingError.keychainError("UTF-8 encoding failed")
+        }
+        try keychain.save(key: Self.gatewayURLTag, data: urlData)
     }
 
     /// Load the gateway URL from Keychain.

@@ -64,7 +64,7 @@ final class HealthDataSeeder: ObservableObject {
 
     private func seedSleep(calendar: Calendar, today: Date) async throws {
         // Last night: 10:30 PM → 6:30 AM
-        let bedtime = calendar.date(byAdding: .day, value: -1, to: today)!
+        let bedtime = (calendar.date(byAdding: .day, value: -1, to: today) ?? today)
             .addingTimeInterval(22.5 * 3600)   // 10:30 PM yesterday
         let wakeTime = today.addingTimeInterval(6.5 * 3600)             // 6:30 AM today
 

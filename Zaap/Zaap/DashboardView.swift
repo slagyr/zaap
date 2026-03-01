@@ -11,11 +11,11 @@ struct DashboardView: View {
     }
 
     private var sevenDaysAgo: Date {
-        Calendar.current.date(byAdding: .day, value: -6, to: startOfToday)!
+        Calendar.current.date(byAdding: .day, value: -6, to: startOfToday) ?? startOfToday
     }
 
     private var endOfToday: Date {
-        Calendar.current.date(byAdding: .day, value: 1, to: startOfToday)!
+        Calendar.current.date(byAdding: .day, value: 1, to: startOfToday) ?? startOfToday
     }
 
     private var chartData: [DashboardViewModel.ChartDataPoint] {

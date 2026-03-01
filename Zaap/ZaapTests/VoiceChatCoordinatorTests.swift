@@ -411,7 +411,7 @@ final class VoiceChatCoordinatorTests: XCTestCase {
 
 extension VoiceChatCoordinatorTests {
 
-    func testMicContinuesWhenSpeakerStartsSpeaking() async throws {
+    func testMicStopsWhenSpeakerStartsSpeaking() async throws {
         let url = URL(string: "wss://gateway.local:18789")!
         coordinator.startSession(gatewayURL: url)
         gateway.simulateConnect()
@@ -419,11 +419,11 @@ extension VoiceChatCoordinatorTests {
 
         voiceEngine.stopListeningCalled = false
 
-        // Speaker starts — mic should NOT stop (trust AEC)
+        // Speaker starts — mic should stop to prevent echo pickup
         speaker.onStateChange?(.speaking)
 
-        XCTAssertFalse(voiceEngine.stopListeningCalled,
-                       "Voice engine should NOT stop listening when speaker starts (trust AEC)")
+        XCTAssertTrue(voiceEngine.stopListeningCalled,
+                      "Voice engine should stop listening when speaker starts (software AEC)")
     }
 
     func testMicRestartsWhenSpeakerFinishes() async throws {
@@ -855,5 +855,113 @@ extension VoiceChatCoordinatorTests {
 
         let hasDropLog = loggedMessages.contains { $0.contains("dropping") && $0.contains("session key") }
         XCTAssertTrue(hasDropLog, "Should log when chat event dropped due to session key mismatch. Got: \(loggedMessages)")
+    }
+
+    // MARK: - Echo Suppression
+
+    func testUtteranceMatchingRecentSpokenTextIsFiltered() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:echo")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Simulate TTS speaking "Hello there"
+        coordinator.trackSpokenText("Hello there.")
+
+        // STT picks up the echo — should be filtered
+        voiceEngine.onUtteranceComplete?("Hello there")
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(gateway.sentTranscripts.isEmpty,
+                      "Echo of recently spoken text should be filtered out")
+    }
+
+    func testUtteranceNotMatchingSpokenTextIsNotFiltered() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:echo")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        coordinator.trackSpokenText("Hello there.")
+
+        // User says something different — should NOT be filtered
+        voiceEngine.onUtteranceComplete?("What is the weather")
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertEqual(gateway.sentTranscripts.count, 1)
+        XCTAssertEqual(gateway.sentTranscripts[0].text, "What is the weather")
+    }
+
+    func testSpokenTextTrackedFromSpeakerBufferToken() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:echo2")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Simulate receiving a chat final that triggers speaker
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:echo2",
+            "state": "final",
+            "message": ["content": [["text": "The weather is sunny today."]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // STT picks up echo of spoken text
+        voiceEngine.onUtteranceComplete?("The weather is sunny today")
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(gateway.sentTranscripts.isEmpty,
+                      "Echo of gateway response text should be filtered")
+    }
+
+}
+
+// MARK: - Chat Final Sets Authoritative Text (zaap-9nl)
+
+extension VoiceChatCoordinatorTests {
+
+    func testChatFinalSetsResponseTextBeforeCompletingSoFullTextIsLogged() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:9nl")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("What is the weather?")
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:9nl",
+            "state": "delta",
+            "message": ["content": [["text": "The weather"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:9nl",
+            "state": "final",
+            "message": ["content": [["text": "The weather is sunny and warm today with a high of 75F."]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertEqual(viewModel.conversationLog.last?.text, "The weather is sunny and warm today with a high of 75F.")
+        XCTAssertEqual(viewModel.conversationLog.last?.role, .agent)
+    }
+
+    func testChatFinalWithNoDeltas_logsFullText() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:9nl2")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("Hello")
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:9nl2",
+            "state": "final",
+            "message": ["content": [["text": "Hello! How can I help you today?"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertEqual(viewModel.conversationLog.last?.text, "Hello! How can I help you today?")
+        XCTAssertEqual(viewModel.conversationLog.last?.role, .agent)
     }
 }

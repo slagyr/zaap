@@ -96,6 +96,7 @@ final class GatewayConnection {
 
     // MARK: - Internal State
 
+    private let lock = NSLock()
     private var webSocket: WebSocketTaskProtocol?
     private var receiveTask: Task<Void, Never>?
     private var reconnectTask: Task<Void, Never>?
@@ -145,17 +146,22 @@ final class GatewayConnection {
         receiveTask?.cancel()
         receiveTask = nil
         cancelPendingSessionListContinuation()
-        webSocket?.cancel(with: .normalClosure, reason: nil)
-        webSocket = nil
-        state = .disconnected
+        lock.withLock {
+            webSocket?.cancel(with: .normalClosure, reason: nil)
+            webSocket = nil
+            state = .disconnected
+        }
         delegate?.gatewayDidDisconnect()
     }
 
     // MARK: - Send
 
     func sendEvent(_ event: String, payload: [String: Any]) async throws {
-        guard state == .connected, let ws = webSocket else {
-            throw GatewayConnectionError.connectionFailed("Not connected")
+        let ws: WebSocketTaskProtocol = try lock.withLock {
+            guard state == .connected, let ws = webSocket else {
+                throw GatewayConnectionError.connectionFailed("Not connected")
+            }
+            return ws
         }
 
         let message: [String: Any] = [
@@ -182,8 +188,11 @@ final class GatewayConnection {
 
     /// Send a node.pair.request directly as a gateway method call (not wrapped in node.event).
     func sendPairRequest() async throws {
-        guard let ws = webSocket else {
-            throw GatewayConnectionError.connectionFailed("Not connected")
+        let ws: WebSocketTaskProtocol = try lock.withLock {
+            guard let ws = webSocket else {
+                throw GatewayConnectionError.connectionFailed("Not connected")
+            }
+            return ws
         }
         let identity = try pairingManager.generateIdentity()
         let message: [String: Any] = [
@@ -405,7 +414,7 @@ final class GatewayConnection {
     // MARK: - Private: Reconnection
 
     private func handleDisconnect() {
-        webSocket = nil
+        lock.withLock { webSocket = nil }
         receiveTask = nil
         cancelPendingSessionListContinuation()
         if !intentionalDisconnect {
@@ -451,8 +460,11 @@ final class GatewayConnection {
 
 extension GatewayConnection: SessionListing {
     func listSessions(limit: Int, activeMinutes: Int?, includeDerivedTitles: Bool, includeLastMessage: Bool) async throws -> [GatewaySession] {
-        guard state == .connected, let ws = webSocket else {
-            throw GatewayConnectionError.connectionFailed("Not connected")
+        let ws: WebSocketTaskProtocol = try lock.withLock {
+            guard state == .connected, let ws = webSocket else {
+                throw GatewayConnectionError.connectionFailed("Not connected")
+            }
+            return ws
         }
 
         let requestId = UUID().uuidString

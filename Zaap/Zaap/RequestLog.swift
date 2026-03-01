@@ -78,7 +78,9 @@ final class RequestLog: ObservableObject {
     let capacity: Int
 
     private static var storageURL: URL {
-        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        guard let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("request_log.json")
+        }
         return dir.appendingPathComponent("request_log.json")
     }
 
