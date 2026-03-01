@@ -136,8 +136,7 @@ struct VoiceChatView: View {
             if ttsDiagnosticsVM.isActive {
                 TTSDiagnosticsView(
                     viewModel: ttsDiagnosticsVM,
-                    onToggle: { ttsDiagnosticsCoordinator.toggle() },
-                    onStop: { ttsDiagnosticsCoordinator.stop() }
+                    onToggle: { ttsDiagnosticsCoordinator.toggle() }
                 )
                 .frame(maxHeight: 200)
                 .padding(.horizontal, 8)

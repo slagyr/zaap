@@ -3,7 +3,6 @@ import SwiftUI
 struct TTSDiagnosticsView: View {
     @ObservedObject var viewModel: TTSDiagnosticsViewModel
     var onToggle: () -> Void
-    var onStop: () -> Void
 
     var body: some View {
         HStack(spacing: 8) {
@@ -29,14 +28,6 @@ struct TTSDiagnosticsView: View {
                         .foregroundColor(.white)
 
                     Spacer()
-
-                    Button(action: onStop) {
-                        Image(systemName: "stop.fill")
-                            .font(.system(size: 12))
-                            .foregroundColor(.gray)
-                            .frame(width: 24, height: 24)
-                    }
-                    .accessibilityLabel("Stop")
                 }
 
                 // Raven text with word highlighting
