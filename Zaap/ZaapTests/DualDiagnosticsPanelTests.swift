@@ -34,6 +34,7 @@ final class DualDiagnosticsPanelTests: XCTestCase {
 
     func testBothPanelsCanBeActiveSimultaneously() {
         sttCoordinator.start()
+        ttsCoordinator.open()
         ttsCoordinator.play()
 
         XCTAssertTrue(sttViewModel.isActive)
@@ -41,6 +42,7 @@ final class DualDiagnosticsPanelTests: XCTestCase {
     }
 
     func testSTTReceivesTranscriptsWhileTTSIsPlaying() {
+        ttsCoordinator.open()
         ttsCoordinator.play()
         sttCoordinator.start()
 
@@ -51,6 +53,7 @@ final class DualDiagnosticsPanelTests: XCTestCase {
 
     func testTTSHighlightsWordsWhileSTTIsListening() {
         sttCoordinator.start()
+        ttsCoordinator.open()
         ttsCoordinator.play()
 
         ttsCoordinator.simulateWillSpeakRange(NSRange(location: 0, length: 4))
@@ -62,6 +65,7 @@ final class DualDiagnosticsPanelTests: XCTestCase {
 
     func testStoppingSTTDoesNotAffectTTS() {
         sttCoordinator.start()
+        ttsCoordinator.open()
         ttsCoordinator.play()
 
         sttCoordinator.stop()
@@ -71,21 +75,23 @@ final class DualDiagnosticsPanelTests: XCTestCase {
         XCTAssertTrue(ttsViewModel.isPlaying)
     }
 
-    func testStoppingTTSDoesNotAffectSTT() {
+    func testClosingTTSDoesNotAffectSTT() {
         sttCoordinator.start()
+        ttsCoordinator.open()
         ttsCoordinator.play()
 
-        ttsCoordinator.stop()
+        ttsCoordinator.close()
 
         XCTAssertTrue(sttViewModel.isActive)
         XCTAssertTrue(sttCoordinator.isRunning)
         XCTAssertFalse(ttsViewModel.isActive)
     }
 
-    func testSTTContinuesReceivingAfterTTSStops() {
+    func testSTTContinuesReceivingAfterTTSCloses() {
         sttCoordinator.start()
+        ttsCoordinator.open()
         ttsCoordinator.play()
-        ttsCoordinator.stop()
+        ttsCoordinator.close()
 
         sttVoiceEngine.onPartialTranscript?("still listening")
         XCTAssertEqual(sttViewModel.partialTranscript, "still listening")
@@ -93,6 +99,7 @@ final class DualDiagnosticsPanelTests: XCTestCase {
 
     func testTTSContinuesPlayingAfterSTTStops() {
         sttCoordinator.start()
+        ttsCoordinator.open()
         ttsCoordinator.play()
         sttCoordinator.stop()
 
@@ -105,24 +112,27 @@ final class DualDiagnosticsPanelTests: XCTestCase {
 
     func testTTSAudioLevelUpdatesWhileSTTActive() {
         sttCoordinator.start()
+        ttsCoordinator.open()
         ttsCoordinator.play()
 
         ttsCoordinator.updateAudioLevel(0.6)
         XCTAssertEqual(ttsViewModel.audioLevel, 0.6)
     }
 
-    // MARK: - Restart After Both Stopped
+    // MARK: - Restart After Both Closed
 
-    func testBothCanRestartAfterBeingStopped() {
+    func testBothCanRestartAfterBeingClosed() {
         sttCoordinator.start()
+        ttsCoordinator.open()
         ttsCoordinator.play()
         sttCoordinator.stop()
-        ttsCoordinator.stop()
+        ttsCoordinator.close()
 
         XCTAssertFalse(sttViewModel.isActive)
         XCTAssertFalse(ttsViewModel.isActive)
 
         sttCoordinator.start()
+        ttsCoordinator.open()
         ttsCoordinator.play()
 
         XCTAssertTrue(sttViewModel.isActive)

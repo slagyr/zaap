@@ -382,9 +382,9 @@ struct VoiceChatView: View {
 
     private func toggleTTSDebug() {
         if ttsDiagnosticsVM.isActive {
-            ttsDiagnosticsCoordinator.stop()
+            ttsDiagnosticsCoordinator.close()
         } else {
-            ttsDiagnosticsCoordinator.play()
+            ttsDiagnosticsCoordinator.open()
         }
     }
 }

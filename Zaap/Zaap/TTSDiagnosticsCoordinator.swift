@@ -14,9 +14,19 @@ final class TTSDiagnosticsCoordinator: NSObject, ObservableObject, AVSpeechSynth
         super.init()
     }
 
+    /// Show the panel without starting playback.
+    func open() {
+        viewModel.activate()
+    }
+
+    /// Stop playback and dismiss the panel.
+    func close() {
+        _ = synthesizer.stopSpeaking(at: .immediate)
+        viewModel.deactivate()
+    }
+
     func play() {
         guard !viewModel.isPlaying else { return }
-        viewModel.activate()
         viewModel.setPlaying(true)
         synthesizer.delegate = self
 
@@ -32,9 +42,11 @@ final class TTSDiagnosticsCoordinator: NSObject, ObservableObject, AVSpeechSynth
         _ = synthesizer.stopSpeaking(at: .immediate)
     }
 
+    /// Stop playback but keep the panel open.
     func stop() {
         _ = synthesizer.stopSpeaking(at: .immediate)
-        viewModel.deactivate()
+        viewModel.setPlaying(false)
+        viewModel.updateAudioLevel(0.0)
     }
 
     func toggle() {

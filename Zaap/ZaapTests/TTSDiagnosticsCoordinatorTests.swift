@@ -19,29 +19,69 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
         )
     }
 
-    // MARK: - Play
+    // MARK: - Open
 
-    func testPlayActivatesViewModel() {
-        coordinator.play()
+    func testOpenActivatesViewModel() {
+        coordinator.open()
         XCTAssertTrue(viewModel.isActive)
     }
 
+    func testOpenDoesNotStartPlaying() {
+        coordinator.open()
+        XCTAssertFalse(viewModel.isPlaying)
+    }
+
+    func testOpenDoesNotCallSynthesizer() {
+        coordinator.open()
+        XCTAssertFalse(synthesizer.speakCalled)
+    }
+
+    // MARK: - Close
+
+    func testCloseDeactivatesViewModel() {
+        coordinator.open()
+        coordinator.close()
+        XCTAssertFalse(viewModel.isActive)
+    }
+
+    func testCloseStopsPlaybackIfPlaying() {
+        coordinator.open()
+        coordinator.play()
+        coordinator.close()
+        XCTAssertFalse(viewModel.isPlaying)
+        XCTAssertTrue(synthesizer.stopCalled)
+    }
+
+    func testCloseResetsAudioLevel() {
+        coordinator.open()
+        coordinator.play()
+        viewModel.updateAudioLevel(0.5)
+        coordinator.close()
+        XCTAssertEqual(viewModel.audioLevel, 0.0)
+    }
+
+    // MARK: - Play
+
     func testPlaySetsViewModelPlaying() {
+        coordinator.open()
         coordinator.play()
         XCTAssertTrue(viewModel.isPlaying)
     }
 
     func testPlayCallsSynthesizerSpeak() {
+        coordinator.open()
         coordinator.play()
         XCTAssertTrue(synthesizer.speakCalled)
     }
 
     func testPlaySpeaksTheRavenText() {
+        coordinator.open()
         coordinator.play()
         XCTAssertTrue(synthesizer.lastUtteranceText?.contains("Once upon a midnight dreary") ?? false)
     }
 
     func testPlayWhileAlreadyPlayingDoesNothing() {
+        coordinator.open()
         coordinator.play()
         synthesizer.speakCalled = false
         coordinator.play()
@@ -49,6 +89,7 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
     }
 
     func testPlaySetsSynthesizerDelegate() {
+        coordinator.open()
         coordinator.play()
         XCTAssertNotNil(synthesizer.delegate)
     }
@@ -56,12 +97,14 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
     // MARK: - Pause
 
     func testPauseSetsViewModelNotPlaying() {
+        coordinator.open()
         coordinator.play()
         coordinator.pause()
         XCTAssertFalse(viewModel.isPlaying)
     }
 
     func testPauseStopsSynthesizer() {
+        coordinator.open()
         coordinator.play()
         coordinator.pause()
         XCTAssertTrue(synthesizer.stopCalled)
@@ -72,27 +115,31 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
         XCTAssertFalse(synthesizer.stopCalled)
     }
 
-    // MARK: - Stop
-
-    func testStopDeactivatesViewModel() {
-        coordinator.play()
-        coordinator.stop()
-        XCTAssertFalse(viewModel.isActive)
-    }
+    // MARK: - Stop (keeps panel open)
 
     func testStopSetsNotPlaying() {
+        coordinator.open()
         coordinator.play()
         coordinator.stop()
         XCTAssertFalse(viewModel.isPlaying)
     }
 
     func testStopStopsSynthesizer() {
+        coordinator.open()
         coordinator.play()
         coordinator.stop()
         XCTAssertTrue(synthesizer.stopCalled)
     }
 
+    func testStopKeepsPanelActive() {
+        coordinator.open()
+        coordinator.play()
+        coordinator.stop()
+        XCTAssertTrue(viewModel.isActive)
+    }
+
     func testStopResetsAudioLevel() {
+        coordinator.open()
         coordinator.play()
         viewModel.updateAudioLevel(0.5)
         coordinator.stop()
@@ -102,11 +149,13 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
     // MARK: - Toggle
 
     func testTogglePlaysWhenNotPlaying() {
+        coordinator.open()
         coordinator.toggle()
         XCTAssertTrue(viewModel.isPlaying)
     }
 
     func testTogglePausesWhenPlaying() {
+        coordinator.open()
         coordinator.play()
         coordinator.toggle()
         XCTAssertFalse(viewModel.isPlaying)
@@ -115,6 +164,7 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
     // MARK: - Word Highlighting Delegate
 
     func testWillSpeakRangeUpdatesHighlight() {
+        coordinator.open()
         coordinator.play()
         coordinator.simulateWillSpeakRange(NSRange(location: 5, length: 4))
         XCTAssertEqual(viewModel.highlightRange, NSRange(location: 5, length: 4))
@@ -123,12 +173,14 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
     // MARK: - Finished Speaking
 
     func testDidFinishSetsNotPlaying() {
+        coordinator.open()
         coordinator.play()
         coordinator.simulateDidFinish()
         XCTAssertFalse(viewModel.isPlaying)
     }
 
     func testDidFinishClearsHighlight() {
+        coordinator.open()
         coordinator.play()
         coordinator.simulateWillSpeakRange(NSRange(location: 0, length: 3))
         coordinator.simulateDidFinish()
@@ -138,6 +190,7 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
     // MARK: - Audio Level
 
     func testUpdateAudioLevelForwardsToViewModel() {
+        coordinator.open()
         coordinator.play()
         coordinator.updateAudioLevel(0.75)
         XCTAssertEqual(viewModel.audioLevel, 0.75)
