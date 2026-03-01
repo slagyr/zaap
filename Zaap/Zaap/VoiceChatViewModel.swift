@@ -78,4 +78,11 @@ final class VoiceChatViewModel: ObservableObject {
         responseText = ""
         state = continueListening ? .listening : .idle
     }
+
+    /// Replace the conversation log with preview messages from a session.
+    /// Only works while idle — ignored during active voice sessions.
+    func loadPreviewMessages(_ messages: [ConversationEntry]) {
+        guard state == .idle else { return }
+        conversationLog = messages
+    }
 }

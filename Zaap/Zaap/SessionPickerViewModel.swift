@@ -17,6 +17,17 @@ protocol SessionListing: AnyObject {
     func listSessions(limit: Int?, activeMinutes: Int?, includeDerivedTitles: Bool, includeLastMessage: Bool) async throws -> [GatewaySession]
 }
 
+// MARK: - Session Preview
+
+struct PreviewMessage: Equatable {
+    let role: String
+    let text: String
+}
+
+protocol SessionPreviewing: AnyObject {
+    func previewSession(key: String, limit: Int) async throws -> [PreviewMessage]
+}
+
 // MARK: - ViewModel
 
 @MainActor
@@ -24,11 +35,14 @@ final class SessionPickerViewModel: ObservableObject {
     @Published private(set) var sessions: [GatewaySession] = [GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main")]
     @Published private(set) var isLoading = false
     @Published var selectedSessionKey: String = "agent:main:main"
+    @Published private(set) var previewMessages: [ConversationEntry] = []
 
     private let sessionLister: SessionListing
+    private let sessionPreviewer: SessionPreviewing?
 
-    init(sessionLister: SessionListing) {
+    init(sessionLister: SessionListing, sessionPreviewer: SessionPreviewing? = nil) {
         self.sessionLister = sessionLister
+        self.sessionPreviewer = sessionPreviewer
     }
 
     func loadSessions() async {
@@ -93,6 +107,26 @@ final class SessionPickerViewModel: ObservableObject {
     /// Whether a session is selected and voice can start.
     var isSessionSelected: Bool {
         true
+    }
+
+    /// Fetch recent messages for a session and publish them as preview.
+    func loadPreview(forSession key: String) async {
+        guard let previewer = sessionPreviewer else { return }
+        do {
+            let messages = try await previewer.previewSession(key: key, limit: 10)
+            previewMessages = messages.compactMap { msg in
+                switch msg.role {
+                case "user":
+                    return ConversationEntry(role: .user, text: msg.text)
+                case "assistant":
+                    return ConversationEntry(role: .agent, text: msg.text)
+                default:
+                    return nil
+                }
+            }
+        } catch {
+            previewMessages = []
+        }
     }
 
     /// Clean up a session's title for display.

@@ -201,4 +201,52 @@ final class VoiceChatViewModelTests: XCTestCase {
         vm.handleResponseComplete()
         XCTAssertEqual(vm.state, .idle)
     }
+
+    // MARK: - Preview Messages
+
+    func testLoadPreviewMessagesPopulatesConversationLog() {
+        let vm = VoiceChatViewModel()
+        let messages = [
+            ConversationEntry(role: .user, text: "What's the weather?"),
+            ConversationEntry(role: .agent, text: "It's sunny and 72 degrees.")
+        ]
+        vm.loadPreviewMessages(messages)
+        XCTAssertEqual(vm.conversationLog.count, 2)
+        XCTAssertEqual(vm.conversationLog[0].role, .user)
+        XCTAssertEqual(vm.conversationLog[0].text, "What's the weather?")
+        XCTAssertEqual(vm.conversationLog[1].role, .agent)
+        XCTAssertEqual(vm.conversationLog[1].text, "It's sunny and 72 degrees.")
+    }
+
+    func testLoadPreviewMessagesReplacesExistingLog() {
+        let vm = VoiceChatViewModel()
+        vm.loadPreviewMessages([ConversationEntry(role: .user, text: "Old message")])
+        vm.loadPreviewMessages([ConversationEntry(role: .agent, text: "New message")])
+        XCTAssertEqual(vm.conversationLog.count, 1)
+        XCTAssertEqual(vm.conversationLog[0].text, "New message")
+    }
+
+    func testLoadPreviewMessagesDoesNothingWhileListening() {
+        let vm = VoiceChatViewModel()
+        vm.tapMic() // state = .listening
+        vm.loadPreviewMessages([ConversationEntry(role: .agent, text: "Should not appear")])
+        XCTAssertTrue(vm.conversationLog.isEmpty)
+    }
+
+    func testLoadPreviewMessagesDoesNothingWhileProcessing() {
+        let vm = VoiceChatViewModel()
+        vm.tapMic()
+        vm.handleUtteranceComplete("Hello")
+        vm.loadPreviewMessages([ConversationEntry(role: .agent, text: "Should not appear")])
+        // Should only have the user message from handleUtteranceComplete
+        XCTAssertEqual(vm.conversationLog.count, 1)
+        XCTAssertEqual(vm.conversationLog[0].role, .user)
+    }
+
+    func testLoadPreviewEmptyArrayClearsLog() {
+        let vm = VoiceChatViewModel()
+        vm.loadPreviewMessages([ConversationEntry(role: .user, text: "Hi")])
+        vm.loadPreviewMessages([])
+        XCTAssertTrue(vm.conversationLog.isEmpty)
+    }
 }

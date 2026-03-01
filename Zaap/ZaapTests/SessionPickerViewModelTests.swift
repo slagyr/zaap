@@ -17,18 +17,40 @@ final class MockSessionListing: SessionListing {
     }
 }
 
+// MARK: - Mock Session Previewing
+
+final class MockSessionPreviewing: SessionPreviewing {
+    var previewToReturn: [PreviewMessage] = []
+    var shouldThrow: Error?
+    var lastRequestedSessionKey: String?
+    var lastRequestedLimit: Int?
+    var previewCallCount = 0
+
+    func previewSession(key: String, limit: Int) async throws -> [PreviewMessage] {
+        previewCallCount += 1
+        lastRequestedSessionKey = key
+        lastRequestedLimit = limit
+        if let error = shouldThrow {
+            throw error
+        }
+        return previewToReturn
+    }
+}
+
 // MARK: - Tests
 
 @MainActor
 final class SessionPickerViewModelTests: XCTestCase {
 
     var lister: MockSessionListing!
+    var previewer: MockSessionPreviewing!
     var viewModel: SessionPickerViewModel!
 
     override func setUp() {
         super.setUp()
         lister = MockSessionListing()
-        viewModel = SessionPickerViewModel(sessionLister: lister)
+        previewer = MockSessionPreviewing()
+        viewModel = SessionPickerViewModel(sessionLister: lister, sessionPreviewer: previewer)
     }
 
     // MARK: - Initial State
@@ -328,5 +350,88 @@ extension SessionPickerViewModelTests {
         XCTAssertEqual(viewModel.sessions.count, 2) // general + Main fallback
         XCTAssertTrue(viewModel.sessions.contains(where: { $0.title == "general" }))
         XCTAssertFalse(viewModel.sessions.contains(where: { $0.title.hasPrefix("discord:g-") }))
+    }
+}
+
+// MARK: - Session Preview Tests
+
+@MainActor
+final class SessionPreviewTests: XCTestCase {
+
+    var lister: MockSessionListing!
+    var previewer: MockSessionPreviewing!
+    var viewModel: SessionPickerViewModel!
+
+    override func setUp() {
+        super.setUp()
+        lister = MockSessionListing()
+        previewer = MockSessionPreviewing()
+        viewModel = SessionPickerViewModel(sessionLister: lister, sessionPreviewer: previewer)
+    }
+
+    func testLoadPreviewCallsPreviewerWithSessionKey() async {
+        previewer.previewToReturn = []
+        await viewModel.loadPreview(forSession: "agent:main:main")
+        XCTAssertEqual(previewer.previewCallCount, 1)
+        XCTAssertEqual(previewer.lastRequestedSessionKey, "agent:main:main")
+    }
+
+    func testLoadPreviewRequestsDefaultLimit() async {
+        previewer.previewToReturn = []
+        await viewModel.loadPreview(forSession: "agent:main:main")
+        XCTAssertEqual(previewer.lastRequestedLimit, 10)
+    }
+
+    func testLoadPreviewPublishesMessages() async {
+        previewer.previewToReturn = [
+            PreviewMessage(role: "user", text: "Hello"),
+            PreviewMessage(role: "assistant", text: "Hi there!")
+        ]
+        await viewModel.loadPreview(forSession: "agent:main:main")
+        XCTAssertEqual(viewModel.previewMessages.count, 2)
+        XCTAssertEqual(viewModel.previewMessages[0].role, .user)
+        XCTAssertEqual(viewModel.previewMessages[0].text, "Hello")
+        XCTAssertEqual(viewModel.previewMessages[1].role, .agent)
+        XCTAssertEqual(viewModel.previewMessages[1].text, "Hi there!")
+    }
+
+    func testLoadPreviewClearsMessagesOnError() async {
+        previewer.previewToReturn = [PreviewMessage(role: "user", text: "Old")]
+        await viewModel.loadPreview(forSession: "agent:main:main")
+        XCTAssertEqual(viewModel.previewMessages.count, 1)
+
+        previewer.shouldThrow = NSError(domain: "test", code: 1)
+        await viewModel.loadPreview(forSession: "agent:main:main")
+        XCTAssertTrue(viewModel.previewMessages.isEmpty)
+    }
+
+    func testLoadPreviewMapsAssistantRoleToAgent() async {
+        previewer.previewToReturn = [
+            PreviewMessage(role: "assistant", text: "I can help with that.")
+        ]
+        await viewModel.loadPreview(forSession: "agent:main:main")
+        XCTAssertEqual(viewModel.previewMessages[0].role, .agent)
+    }
+
+    func testLoadPreviewMapsUserRole() async {
+        previewer.previewToReturn = [
+            PreviewMessage(role: "user", text: "What time is it?")
+        ]
+        await viewModel.loadPreview(forSession: "agent:main:main")
+        XCTAssertEqual(viewModel.previewMessages[0].role, .user)
+    }
+
+    func testLoadPreviewIgnoresUnknownRoles() async {
+        previewer.previewToReturn = [
+            PreviewMessage(role: "system", text: "System prompt"),
+            PreviewMessage(role: "user", text: "Hello")
+        ]
+        await viewModel.loadPreview(forSession: "agent:main:main")
+        XCTAssertEqual(viewModel.previewMessages.count, 1)
+        XCTAssertEqual(viewModel.previewMessages[0].text, "Hello")
+    }
+
+    func testPreviewMessagesStartEmpty() {
+        XCTAssertTrue(viewModel.previewMessages.isEmpty)
     }
 }

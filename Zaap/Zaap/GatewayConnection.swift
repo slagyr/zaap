@@ -141,6 +141,7 @@ final class GatewayConnection {
     private var gatewayURL: URL?
     private var intentionalDisconnect = false
     var pendingSessionListContinuation: (String, CheckedContinuation<[GatewaySession], Error>)?
+    var pendingSessionPreviewContinuation: (String, CheckedContinuation<[PreviewMessage], Error>)?
 
     init(pairingManager: NodePairingManager,
          webSocketFactory: WebSocketFactory,
@@ -352,6 +353,8 @@ final class GatewayConnection {
             delegate?.gatewayDidReceiveEvent(eventName, payload: params)
         } else if type == "res", let id = json["id"] as? String, pendingSessionListContinuation?.0 == id {
             handleSessionListResponse(json, requestId: id)
+        } else if type == "res", let id = json["id"] as? String, pendingSessionPreviewContinuation?.0 == id {
+            handleSessionPreviewResponse(json, requestId: id)
         } else if type == "res" {
             // Response to a req — route as event for callers to handle
             let method = json["method"] as? String ?? "response"
@@ -488,6 +491,10 @@ final class GatewayConnection {
             pendingSessionListContinuation = nil
             continuation.resume(throwing: GatewayConnectionError.connectionFailed("Disconnected"))
         }
+        if let (_, continuation) = pendingSessionPreviewContinuation {
+            pendingSessionPreviewContinuation = nil
+            continuation.resume(throwing: GatewayConnectionError.connectionFailed("Disconnected"))
+        }
     }
 
     private func jsonString(_ dict: [String: Any]) -> String? {
@@ -568,5 +575,68 @@ extension GatewayConnection: SessionListing {
             return String(parts[2])
         }
         return nil
+    }
+}
+
+// MARK: - Session Preview
+
+extension GatewayConnection: SessionPreviewing {
+    func previewSession(key: String, limit: Int) async throws -> [PreviewMessage] {
+        let ws: WebSocketTaskProtocol = try lock.withLock {
+            guard state == .connected, let ws = webSocket else {
+                throw GatewayConnectionError.connectionFailed("Not connected")
+            }
+            return ws
+        }
+
+        let requestId = UUID().uuidString
+        let params: [String: Any] = [
+            "sessionKey": key,
+            "limit": limit
+        ]
+
+        let message: [String: Any] = [
+            "type": "req",
+            "method": "sessions.preview",
+            "id": requestId,
+            "params": params
+        ]
+
+        let data = try JSONSerialization.data(withJSONObject: message)
+        try await ws.send(.data(data))
+
+        return try await withCheckedThrowingContinuation { continuation in
+            self.pendingSessionPreviewContinuation = (requestId, continuation)
+        }
+    }
+
+    internal func handleSessionPreviewResponse(_ json: [String: Any], requestId: String) {
+        guard let (pendingId, continuation) = pendingSessionPreviewContinuation,
+              pendingId == requestId else { return }
+        pendingSessionPreviewContinuation = nil
+
+        guard let ok = json["ok"] as? Bool, ok,
+              let payload = json["payload"] as? [String: Any],
+              let messagesArray = payload["messages"] as? [[String: Any]] else {
+            continuation.resume(throwing: GatewayConnectionError.connectionFailed("Invalid preview response"))
+            return
+        }
+
+        let messages = messagesArray.compactMap { dict -> PreviewMessage? in
+            guard let role = dict["role"] as? String else { return nil }
+            // Extract text from content array or direct text field
+            let text: String
+            if let contentArray = dict["content"] as? [[String: Any]],
+               let firstText = contentArray.first(where: { $0["type"] as? String == "text" }),
+               let t = firstText["text"] as? String {
+                text = t
+            } else if let t = dict["text"] as? String {
+                text = t
+            } else {
+                return nil
+            }
+            return PreviewMessage(role: role, text: text)
+        }
+        continuation.resume(returning: messages)
     }
 }

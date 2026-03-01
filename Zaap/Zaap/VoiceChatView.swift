@@ -39,7 +39,7 @@ struct VoiceChatView: View {
         )
         _viewModel = StateObject(wrappedValue: vm)
         _coordinator = StateObject(wrappedValue: coord)
-        let picker = SessionPickerViewModel(sessionLister: operatorGateway)
+        let picker = SessionPickerViewModel(sessionLister: operatorGateway, sessionPreviewer: operatorGateway)
         coord.sessionPicker = picker
         _sessionPicker = StateObject(wrappedValue: picker)
     }
@@ -77,6 +77,14 @@ struct VoiceChatView: View {
             // Auth failed — token is stale or invalid, force re-pairing
             NodePairingManager().clearPairing()
             isPaired = false
+        }
+        .onChange(of: sessionPicker.selectedSessionKey) { _, newKey in
+            Task {
+                await sessionPicker.loadPreview(forSession: newKey)
+            }
+        }
+        .onChange(of: sessionPicker.previewMessages) { _, messages in
+            viewModel.loadPreviewMessages(messages)
         }
     }
 
