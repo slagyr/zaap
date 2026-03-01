@@ -282,6 +282,28 @@ final class NodePairingManagerTests: XCTestCase {
         XCTAssertEqual(manager.loadToken(), "my-token")
     }
 
+    // MARK: - Fully Paired (both roles)
+
+    func testIsFullyPairedReturnsFalseWhenNoTokens() {
+        XCTAssertFalse(manager.isFullyPaired)
+    }
+
+    func testIsFullyPairedReturnsFalseWhenOnlyNodeToken() throws {
+        try manager.storeToken("node-token", forRole: "node")
+        XCTAssertFalse(manager.isFullyPaired)
+    }
+
+    func testIsFullyPairedReturnsFalseWhenOnlyOperatorToken() throws {
+        try manager.storeToken("operator-token", forRole: "operator")
+        XCTAssertFalse(manager.isFullyPaired)
+    }
+
+    func testIsFullyPairedReturnsTrueWhenBothTokensExist() throws {
+        try manager.storeToken("node-token", forRole: "node")
+        try manager.storeToken("operator-token", forRole: "operator")
+        XCTAssertTrue(manager.isFullyPaired)
+    }
+
     func testClearPairingRemovesBothRoleTokens() throws {
         _ = try manager.generateIdentity()
         try manager.storeToken("node-token", forRole: "node")

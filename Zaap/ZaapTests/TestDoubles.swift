@@ -206,6 +206,7 @@ final class MockGatewayConnecting: GatewayConnecting, SessionListing {
     var disconnectCalled = false
     var sentTranscripts: [(text: String, sessionKey: String)] = []
     var shouldThrowOnSend: Error?
+    var createdForRole: ConnectionRole?
 
     func connect(to url: URL) {
         connectURL = url
@@ -244,6 +245,19 @@ final class MockGatewayConnecting: GatewayConnecting, SessionListing {
 
     func simulateError(_ error: GatewayConnectionError) {
         delegate?.gatewayDidFailWithError(error)
+    }
+}
+
+// MARK: - Mock Gateway Factory
+
+final class MockGatewayFactory: GatewayFactory {
+    var createdGateways: [MockGatewayConnecting] = []
+
+    func createGateway(role: ConnectionRole) -> GatewayConnecting {
+        let mock = MockGatewayConnecting()
+        mock.createdForRole = role
+        createdGateways.append(mock)
+        return mock
     }
 }
 

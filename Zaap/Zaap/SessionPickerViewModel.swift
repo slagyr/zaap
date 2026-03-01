@@ -44,12 +44,14 @@ final class SessionPickerViewModel: ObservableObject {
             for session in result {
                 print("📋 [SESSION_PICKER]   key=\(session.key) title=\(session.title) channelType=\(session.channelType ?? "nil")")
             }
-            // Filter: only keep agent:main:main and Discord sessions
-            let filtered = result.filter { $0.key == "agent:main:main" || $0.key.contains(":discord:") }
+            // Filter: only keep agent:main: sessions that are main or Discord
+            let filtered = result.filter { $0.key.hasPrefix("agent:main:") && ($0.key == "agent:main:main" || $0.key.contains(":discord:")) }
             print("📋 [SESSION_PICKER] after filter: \(filtered.count) sessions")
+            // Clean up titles
+            let cleaned = filtered.map { Self.cleanSessionTitle($0) }
             // Ensure agent:main:main is always present as fallback
             let mainFallback = GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main")
-            var merged = filtered
+            var merged = cleaned
             if !merged.contains(where: { $0.key == "agent:main:main" }) {
                 merged.insert(mainFallback, at: 0)
             }
@@ -85,5 +87,21 @@ final class SessionPickerViewModel: ObservableObject {
     /// Whether a session is selected and voice can start.
     var isSessionSelected: Bool {
         true
+    }
+
+    /// Clean up a session's title for display.
+    /// - Main session always shows "Main" regardless of derived title.
+    /// - Discord sessions extract the channel name after '#' (e.g. "discord:123#general" → "general").
+    static func cleanSessionTitle(_ session: GatewaySession) -> GatewaySession {
+        if session.key == "agent:main:main" {
+            return GatewaySession(key: session.key, title: "Main", lastMessage: session.lastMessage, channelType: session.channelType)
+        }
+        if session.key.contains(":discord:"), let hashIndex = session.title.lastIndex(of: "#") {
+            let channelName = String(session.title[session.title.index(after: hashIndex)...])
+            if !channelName.isEmpty {
+                return GatewaySession(key: session.key, title: channelName, lastMessage: session.lastMessage, channelType: session.channelType)
+            }
+        }
+        return session
     }
 }

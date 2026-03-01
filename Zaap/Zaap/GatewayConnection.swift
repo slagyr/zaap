@@ -84,6 +84,27 @@ struct ConnectionRole: Equatable {
     static let `operator` = ConnectionRole(name: "operator", clientMode: "ui", scopes: ["operator.read"])
 }
 
+// MARK: - Gateway Factory
+
+/// Factory for creating gateway connections with a specific role.
+protocol GatewayFactory {
+    func createGateway(role: ConnectionRole) -> GatewayConnecting
+}
+
+/// Production factory that creates real GatewayConnection instances.
+struct RealGatewayFactory: GatewayFactory {
+    let pairingManager: NodePairingManager
+
+    func createGateway(role: ConnectionRole) -> GatewayConnecting {
+        GatewayConnection(
+            pairingManager: pairingManager,
+            webSocketFactory: URLSessionWebSocketFactory(),
+            networkMonitor: NWNetworkMonitor(),
+            role: role
+        )
+    }
+}
+
 // MARK: - GatewayConnection
 
 /// WebSocket client for connecting to the OpenClaw gateway as a paired node.

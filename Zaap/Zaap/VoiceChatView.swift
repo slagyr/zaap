@@ -56,9 +56,9 @@ struct VoiceChatView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
-            // Check if device is already paired with gateway
+            // Check if device is fully paired (both node and operator tokens)
             let mgr = NodePairingManager()
-            isPaired = mgr.isPaired
+            isPaired = mgr.isFullyPaired
             // Connect gateway eagerly so session picker populates before mic tap
             if isPaired, let url = SettingsManager.shared.voiceWebSocketURL {
                 coordinator.connectGateway(url: url)
@@ -66,6 +66,12 @@ struct VoiceChatView: View {
             // Request microphone + speech recognition authorization
             AVAudioSession.sharedInstance().requestRecordPermission { _ in }
             SFSpeechRecognizer.requestAuthorization { _ in }
+        }
+        .onChange(of: isPaired) { _, newValue in
+            // After pairing completes, connect gateways so sessions load immediately
+            if newValue, let url = SettingsManager.shared.voiceWebSocketURL {
+                coordinator.connectGateway(url: url)
+            }
         }
         .onReceive(coordinator.needsRepairingPublisher) {
             // Auth failed — token is stale or invalid, force re-pairing

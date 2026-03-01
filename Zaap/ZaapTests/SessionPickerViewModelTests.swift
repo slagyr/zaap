@@ -146,6 +146,22 @@ extension SessionPickerViewModelTests {
         XCTAssertEqual(viewModel.sessions[0].key, "agent:main:main")
     }
 
+    func testLoadSessionsFiltersOutNonMainAgentDiscordSessions() async {
+        lister.sessionsToReturn = [
+            GatewaySession(key: "agent:main:discord:channel:123", title: "discord:111#general", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:scrapper:discord:channel:123", title: "discord:g-123", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:scrapper:discord:channel:456", title: "discord:g-456", lastMessage: nil, channelType: "discord"),
+        ]
+
+        await viewModel.loadSessions()
+
+        // Only agent:main discord + Main fallback
+        XCTAssertEqual(viewModel.sessions.count, 2)
+        XCTAssertTrue(viewModel.sessions.contains(where: { $0.key == "agent:main:main" }))
+        XCTAssertTrue(viewModel.sessions.contains(where: { $0.key == "agent:main:discord:channel:123" }))
+        XCTAssertFalse(viewModel.sessions.contains(where: { $0.key.hasPrefix("agent:scrapper") }))
+    }
+
     func testLoadSessionsAutoSelectsMainSession() async {
         lister.sessionsToReturn = [
             GatewaySession(key: "agent:main:discord:123", title: "Discord", lastMessage: nil, channelType: "discord"),
@@ -223,5 +239,63 @@ extension SessionPickerViewModelTests {
         await viewModel.loadSessions()
 
         XCTAssertNotEqual(viewModel.selectedSessionTitle, "New conversation")
+    }
+
+    // MARK: - Title Cleanup
+
+    func testMainSessionTitleIsAlwaysMain() async {
+        lister.sessionsToReturn = [
+            GatewaySession(key: "agent:main:main", title: "Read HEARTBEAT.md if it exists (workspace context). Follow...", lastMessage: nil, channelType: "main"),
+        ]
+
+        await viewModel.loadSessions()
+
+        let main = viewModel.sessions.first(where: { $0.key == "agent:main:main" })
+        XCTAssertEqual(main?.title, "Main")
+    }
+
+    func testDiscordTitleExtractsChannelName() async {
+        lister.sessionsToReturn = [
+            GatewaySession(key: "agent:main:discord:channel:123", title: "discord:1471611817712418918#general", lastMessage: nil, channelType: "discord"),
+        ]
+
+        await viewModel.loadSessions()
+
+        let session = viewModel.sessions.first(where: { $0.key.contains("discord") })
+        XCTAssertEqual(session?.title, "general")
+    }
+
+    func testDiscordTitleWithMultipleHashesExtractsAfterLastHash() async {
+        lister.sessionsToReturn = [
+            GatewaySession(key: "agent:main:discord:channel:456", title: "discord:123456#my-cool-channel", lastMessage: nil, channelType: "discord"),
+        ]
+
+        await viewModel.loadSessions()
+
+        let session = viewModel.sessions.first(where: { $0.key.contains("discord") })
+        XCTAssertEqual(session?.title, "my-cool-channel")
+    }
+
+    func testDiscordTitleWithoutHashKeepsOriginal() async {
+        lister.sessionsToReturn = [
+            GatewaySession(key: "agent:main:discord:channel:789", title: "discord:g-1471680593497554998", lastMessage: nil, channelType: "discord"),
+        ]
+
+        await viewModel.loadSessions()
+
+        let session = viewModel.sessions.first(where: { $0.key.contains("discord") })
+        XCTAssertEqual(session?.title, "discord:g-1471680593497554998")
+    }
+
+    func testMainFallbackAlwaysHasMainTitle() async {
+        // When main session is not in results, the fallback should still say "Main"
+        lister.sessionsToReturn = [
+            GatewaySession(key: "agent:main:discord:channel:123", title: "discord:123#general", lastMessage: nil, channelType: "discord"),
+        ]
+
+        await viewModel.loadSessions()
+
+        let main = viewModel.sessions.first(where: { $0.key == "agent:main:main" })
+        XCTAssertEqual(main?.title, "Main")
     }
 }

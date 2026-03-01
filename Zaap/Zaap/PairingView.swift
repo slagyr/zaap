@@ -20,10 +20,14 @@ final class VoicePairingViewModel: ObservableObject, GatewayConnectionDelegate {
     @Published private(set) var nodeId: String = ""
     @Published private(set) var publicKeyFingerprint: String = ""
     @Published private(set) var approvalRequestId: String = ""
+    @Published private(set) var currentRole: String = "node"
 
     private let pairingManager: NodePairingManager
-    private let gateway: GatewayConnecting
+    private let gatewayFactory: GatewayFactory?
+    private var gateway: GatewayConnecting
+    private static let rolesToPair: [ConnectionRole] = [.node, .operator]
 
+    /// Legacy init: single gateway, pairs one role only (backward compat for existing tests).
     init(pairingManager: NodePairingManager? = nil, gateway: GatewayConnecting? = nil) {
         let mgr = pairingManager ?? NodePairingManager()
         let conn: GatewayConnecting
@@ -38,13 +42,48 @@ final class VoicePairingViewModel: ObservableObject, GatewayConnectionDelegate {
         }
         self.pairingManager = mgr
         self.gateway = conn
+        self.gatewayFactory = nil
         conn.delegate = self
 
-        // Pre-load identity so we can show the node ID before connecting
+        loadIdentity(mgr)
+    }
+
+    /// Dual-role init: uses a factory to create gateways per role.
+    init(pairingManager: NodePairingManager, gatewayFactory: GatewayFactory) {
+        self.pairingManager = pairingManager
+        self.gatewayFactory = gatewayFactory
+
+        // Determine which role needs pairing first
+        let nextRole = Self.nextUnpairedRole(pairingManager: pairingManager)
+        if let role = nextRole {
+            self.currentRole = role.name
+            self.gateway = gatewayFactory.createGateway(role: role)
+        } else {
+            // Both roles already paired
+            self.currentRole = "operator"
+            self.gateway = gatewayFactory.createGateway(role: .operator)
+            self.status = .paired
+        }
+        self.gateway.delegate = self
+
+        loadIdentity(pairingManager)
+    }
+
+    private func loadIdentity(_ mgr: NodePairingManager) {
         if let identity = try? mgr.generateIdentity() {
             self.nodeId = identity.nodeId
             self.publicKeyFingerprint = String(identity.publicKeyBase64.prefix(16))
         }
+    }
+
+    /// Find the next role that doesn't have a token yet.
+    private static func nextUnpairedRole(pairingManager: NodePairingManager) -> ConnectionRole? {
+        for role in rolesToPair {
+            if pairingManager.loadToken(forRole: role.name) == nil {
+                return role
+            }
+        }
+        return nil
     }
 
     // MARK: - Actions
@@ -64,12 +103,41 @@ final class VoicePairingViewModel: ObservableObject, GatewayConnectionDelegate {
         gateway.connect(to: url)
     }
 
+    /// Advance to the next unpaired role, or finish if all roles are paired.
+    private func advanceToNextRole() {
+        guard let factory = gatewayFactory else {
+            // Legacy single-gateway mode — just mark paired
+            status = .paired
+            return
+        }
+
+        if let nextRole = Self.nextUnpairedRole(pairingManager: pairingManager) {
+            // Disconnect the current gateway before creating the next one
+            gateway.disconnect()
+            currentRole = nextRole.name
+            approvalRequestId = ""
+            let newGateway = factory.createGateway(role: nextRole)
+            self.gateway = newGateway
+            newGateway.delegate = self
+            status = .connecting
+            guard let url = SettingsManager.shared.voiceWebSocketURL else {
+                status = .failed("Gateway URL not configured. Add it in Settings.")
+                return
+            }
+            connect(to: url)
+        } else {
+            // All roles paired
+            gateway.disconnect()
+            status = .paired
+        }
+    }
+
     // MARK: - GatewayConnectionDelegate
 
     nonisolated func gatewayDidConnect() {
         // hello-ok received — token already stored by GatewayConnection.handleHelloOk
         Task { @MainActor in
-            self.status = .paired
+            self.advanceToNextRole()
         }
     }
 
@@ -117,8 +185,15 @@ final class VoicePairingViewModel: ObservableObject, GatewayConnectionDelegate {
 
 struct VoicePairingView: View {
 
-    @StateObject private var viewModel = VoicePairingViewModel()
+    @StateObject private var viewModel: VoicePairingViewModel
     var onPaired: (() -> Void)?
+
+    init(onPaired: (() -> Void)? = nil) {
+        let mgr = NodePairingManager()
+        let factory = RealGatewayFactory(pairingManager: mgr)
+        _viewModel = StateObject(wrappedValue: VoicePairingViewModel(pairingManager: mgr, gatewayFactory: factory))
+        self.onPaired = onPaired
+    }
 
     private func generateDebugInfo() -> String {
         let url = SettingsManager.shared.voiceWebSocketURL?.absoluteString ?? "NULL"
@@ -223,17 +298,21 @@ struct VoicePairingView: View {
         }
     }
 
+    private var roleLabel: String {
+        viewModel.currentRole == "node" ? "voice" : "operator"
+    }
+
     @ViewBuilder
     private var statusView: some View {
         switch viewModel.status {
         case .idle:
             EmptyView()
         case .connecting:
-            Label("Connecting to gateway...", systemImage: "network")
+            Label("Connecting \(roleLabel) to gateway...", systemImage: "network")
                 .foregroundColor(.blue)
         case .awaitingApproval:
             VStack(spacing: 6) {
-                Label("Awaiting approval on gateway...", systemImage: "clock")
+                Label("Awaiting \(roleLabel) approval on gateway...", systemImage: "clock")
                     .foregroundColor(.orange)
                 if !viewModel.approvalRequestId.isEmpty {
                     Text("openclaw devices approve \(viewModel.approvalRequestId)")

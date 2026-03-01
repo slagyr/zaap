@@ -141,9 +141,14 @@ class NodePairingManager {
         return URL(string: string)
     }
 
-    /// Whether the device is paired (has a token).
+    /// Whether the device is paired (has a node token).
     var isPaired: Bool {
         return loadToken() != nil
+    }
+
+    /// Whether the device is fully paired (has both node and operator tokens).
+    var isFullyPaired: Bool {
+        return loadToken(forRole: "node") != nil && loadToken(forRole: "operator") != nil
     }
 
     /// Clear all pairing data from Keychain.
