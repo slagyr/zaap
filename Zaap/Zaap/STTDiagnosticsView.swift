@@ -2,6 +2,7 @@ import SwiftUI
 
 struct STTDiagnosticsView: View {
     @ObservedObject var viewModel: STTDiagnosticsViewModel
+    @State private var showCopied = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -17,6 +18,7 @@ struct STTDiagnosticsView: View {
                         .font(.caption2)
                         .foregroundColor(.orange)
                 }
+                copyLogButton
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
@@ -83,6 +85,29 @@ struct STTDiagnosticsView: View {
         case .idle: return "Idle"
         case .listening: return "Listening"
         case .recognizing: return "Recognizing"
+        }
+    }
+
+    // MARK: - Copy Button
+
+    private var copyLogButton: some View {
+        Button(action: copyLog) {
+            Image(systemName: showCopied ? "checkmark" : "doc.on.doc")
+                .font(.system(size: 10))
+                .foregroundColor(showCopied ? .green : .gray)
+                .frame(width: 24, height: 24)
+        }
+        .accessibilityLabel("Copy log")
+    }
+
+    private func copyLog() {
+        let text = viewModel.logEntries.map { entry in
+            "\(timeString(entry.timestamp)) \(eventIcon(entry.event)) \(eventDescription(entry.event))"
+        }.joined(separator: "\n")
+        UIPasteboard.general.string = text
+        withAnimation { showCopied = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation { showCopied = false }
         }
     }
 
