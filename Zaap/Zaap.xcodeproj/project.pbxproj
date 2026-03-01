@@ -99,6 +99,7 @@
 		Y10003 /* TTSDiagnosticsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = Y20003 /* TTSDiagnosticsCoordinator.swift */; };
 		Y10004 /* TTSDiagnosticsCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = Y20004 /* TTSDiagnosticsCoordinatorTests.swift */; };
 		Y10005 /* TTSDiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = Y20005 /* TTSDiagnosticsView.swift */; };
+		Z10001 /* DualDiagnosticsPanelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = Z20001 /* DualDiagnosticsPanelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -208,6 +209,7 @@
 		Y20003 /* TTSDiagnosticsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSDiagnosticsCoordinator.swift; sourceTree = "<group>"; };
 		Y20004 /* TTSDiagnosticsCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSDiagnosticsCoordinatorTests.swift; sourceTree = "<group>"; };
 		Y20005 /* TTSDiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSDiagnosticsView.swift; sourceTree = "<group>"; };
+		Z20001 /* DualDiagnosticsPanelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualDiagnosticsPanelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -359,6 +361,7 @@
 				X20004 /* STTDiagnosticsCoordinatorTests.swift */,
 				Y20002 /* TTSDiagnosticsViewModelTests.swift */,
 				Y20004 /* TTSDiagnosticsCoordinatorTests.swift */,
+				Z20001 /* DualDiagnosticsPanelTests.swift */,
 			);
 			path = ZaapTests;
 			sourceTree = "<group>";
@@ -553,6 +556,7 @@
 				X10004 /* STTDiagnosticsCoordinatorTests.swift in Sources */,
 				Y10002 /* TTSDiagnosticsViewModelTests.swift in Sources */,
 				Y10004 /* TTSDiagnosticsCoordinatorTests.swift in Sources */,
+				Z10001 /* DualDiagnosticsPanelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
