@@ -67,7 +67,7 @@ struct RequestLogEntryRow: View {
 
     private static let timeFormatter: DateFormatter = {
         let f = DateFormatter()
-        f.dateFormat = "HH:mm:ss"
+        f.dateFormat = "MMM dd, HH:mm"
         return f
     }()
 
