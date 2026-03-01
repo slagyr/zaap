@@ -103,16 +103,37 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
         XCTAssertFalse(viewModel.isPlaying)
     }
 
-    func testPauseStopsSynthesizer() {
+    func testPausePausesSynthesizerNotStops() {
         coordinator.open()
         coordinator.play()
         coordinator.pause()
-        XCTAssertTrue(synthesizer.stopCalled)
+        XCTAssertTrue(synthesizer.pauseCalled)
+        XCTAssertFalse(synthesizer.stopCalled)
     }
 
     func testPauseWhileNotPlayingDoesNothing() {
         coordinator.pause()
-        XCTAssertFalse(synthesizer.stopCalled)
+        XCTAssertFalse(synthesizer.pauseCalled)
+    }
+
+    // MARK: - Resume after Pause
+
+    func testPlayAfterPauseResumesSynthesizer() {
+        coordinator.open()
+        coordinator.play()
+        coordinator.pause()
+        synthesizer.speakCalled = false
+        coordinator.play()
+        XCTAssertTrue(synthesizer.continueCalled)
+        XCTAssertFalse(synthesizer.speakCalled, "Should resume, not start a new utterance")
+    }
+
+    func testPlayAfterPauseSetsPlaying() {
+        coordinator.open()
+        coordinator.play()
+        coordinator.pause()
+        coordinator.play()
+        XCTAssertTrue(viewModel.isPlaying)
     }
 
     // MARK: - Stop (keeps panel open)
@@ -187,13 +208,47 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
         XCTAssertNil(viewModel.highlightRange)
     }
 
-    // MARK: - Audio Level
+    // MARK: - Audio Level Pulsing
 
-    func testUpdateAudioLevelForwardsToViewModel() {
+    func testWillSpeakRangePulsesAudioLevel() {
         coordinator.open()
         coordinator.play()
-        coordinator.updateAudioLevel(0.75)
-        XCTAssertEqual(viewModel.audioLevel, 0.75)
+        coordinator.simulateWillSpeakRange(NSRange(location: 0, length: 4))
+        XCTAssertGreaterThan(viewModel.audioLevel, 0.0)
+    }
+
+    func testAudioLevelPeakIsAtMostOne() {
+        coordinator.open()
+        coordinator.play()
+        coordinator.simulateWillSpeakRange(NSRange(location: 0, length: 4))
+        XCTAssertLessThanOrEqual(viewModel.audioLevel, 1.0)
+    }
+
+    func testDidFinishResetsAudioLevel() {
+        coordinator.open()
+        coordinator.play()
+        coordinator.simulateWillSpeakRange(NSRange(location: 0, length: 4))
+        coordinator.simulateDidFinish()
+        XCTAssertEqual(viewModel.audioLevel, 0.0)
+    }
+
+    func testStopResetsAudioLevelAfterPulse() {
+        coordinator.open()
+        coordinator.play()
+        coordinator.simulateWillSpeakRange(NSRange(location: 0, length: 4))
+        coordinator.stop()
+        XCTAssertEqual(viewModel.audioLevel, 0.0)
+    }
+
+    func testMultipleWordsPulseAudioLevel() {
+        coordinator.open()
+        coordinator.play()
+        coordinator.simulateWillSpeakRange(NSRange(location: 0, length: 4))
+        let firstLevel = viewModel.audioLevel
+        coordinator.simulateWillSpeakRange(NSRange(location: 5, length: 4))
+        let secondLevel = viewModel.audioLevel
+        XCTAssertGreaterThan(firstLevel, 0.0)
+        XCTAssertGreaterThan(secondLevel, 0.0)
     }
 }
 
@@ -202,19 +257,36 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
 final class MockTTSDiagSynthesizer: SpeechSynthesizing {
     var delegate: (any AVSpeechSynthesizerDelegate)?
     var isSpeaking = false
+    var isPaused = false
     var speakCalled = false
     var stopCalled = false
+    var pauseCalled = false
+    var continueCalled = false
     var lastUtteranceText: String?
 
     func speak(_ utterance: AVSpeechUtterance) {
         speakCalled = true
         isSpeaking = true
+        isPaused = false
         lastUtteranceText = utterance.speechString
     }
 
     func stopSpeaking(at boundary: AVSpeechBoundary) -> Bool {
         stopCalled = true
         isSpeaking = false
+        isPaused = false
+        return true
+    }
+
+    func pauseSpeaking(at boundary: AVSpeechBoundary) -> Bool {
+        pauseCalled = true
+        isPaused = true
+        return true
+    }
+
+    func continueSpeaking() -> Bool {
+        continueCalled = true
+        isPaused = false
         return true
     }
 }

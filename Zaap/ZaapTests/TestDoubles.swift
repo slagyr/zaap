@@ -297,6 +297,7 @@ final class MockSpeechSynthesizer: SpeechSynthesizing {
     weak var delegate: (any AVSpeechSynthesizerDelegate)?
     var isSpeakingValue = false
     var isSpeaking: Bool { isSpeakingValue }
+    var isPaused = false
     var spokenTexts: [String] = []
     var spokenUtterances: [AVSpeechUtterance] = []
     var stopCalled = false
@@ -309,6 +310,16 @@ final class MockSpeechSynthesizer: SpeechSynthesizing {
     @discardableResult
     func stopSpeaking(at boundary: AVSpeechBoundary) -> Bool {
         stopCalled = true
+        return true
+    }
+
+    func pauseSpeaking(at boundary: AVSpeechBoundary) -> Bool {
+        isPaused = true
+        return true
+    }
+
+    func continueSpeaking() -> Bool {
+        isPaused = false
         return true
     }
 

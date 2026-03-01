@@ -4,8 +4,11 @@ import AVFoundation
 protocol SpeechSynthesizing: AnyObject {
     var delegate: (any AVSpeechSynthesizerDelegate)? { get set }
     var isSpeaking: Bool { get }
+    var isPaused: Bool { get }
     func speak(_ utterance: AVSpeechUtterance)
     func stopSpeaking(at boundary: AVSpeechBoundary) -> Bool
+    func pauseSpeaking(at boundary: AVSpeechBoundary) -> Bool
+    func continueSpeaking() -> Bool
 }
 
 extension AVSpeechSynthesizer: SpeechSynthesizing {}

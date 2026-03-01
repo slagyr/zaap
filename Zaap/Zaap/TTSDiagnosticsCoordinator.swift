@@ -28,18 +28,22 @@ final class TTSDiagnosticsCoordinator: NSObject, ObservableObject, AVSpeechSynth
     func play() {
         guard !viewModel.isPlaying else { return }
         viewModel.setPlaying(true)
-        synthesizer.delegate = self
 
-        let utterance = AVSpeechUtterance(string: viewModel.text)
-        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
-        synthesizer.speak(utterance)
+        if synthesizer.isPaused {
+            _ = synthesizer.continueSpeaking()
+        } else {
+            synthesizer.delegate = self
+            let utterance = AVSpeechUtterance(string: viewModel.text)
+            utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+            utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+            synthesizer.speak(utterance)
+        }
     }
 
     func pause() {
         guard viewModel.isPlaying else { return }
         viewModel.setPlaying(false)
-        _ = synthesizer.stopSpeaking(at: .immediate)
+        _ = synthesizer.pauseSpeaking(at: .immediate)
     }
 
     /// Stop playback but keep the panel open.
@@ -61,14 +65,24 @@ final class TTSDiagnosticsCoordinator: NSObject, ObservableObject, AVSpeechSynth
 
     func simulateWillSpeakRange(_ range: NSRange) {
         viewModel.updateHighlightRange(range)
+        pulseAudioLevel(wordLength: range.length)
     }
 
     func simulateDidFinish() {
         viewModel.setPlaying(false)
+        viewModel.updateAudioLevel(0.0)
     }
 
     func updateAudioLevel(_ level: Float) {
         viewModel.updateAudioLevel(level)
+    }
+
+    // MARK: - Audio Level Pulse
+
+    private func pulseAudioLevel(wordLength: Int) {
+        let base: Float = 0.4
+        let scaled = Float(min(wordLength, 10)) / 10.0 * 0.6
+        viewModel.updateAudioLevel(base + scaled)
     }
 
     // MARK: - AVSpeechSynthesizerDelegate
@@ -78,6 +92,7 @@ final class TTSDiagnosticsCoordinator: NSObject, ObservableObject, AVSpeechSynth
                                        utterance: AVSpeechUtterance) {
         Task { @MainActor in
             self.viewModel.updateHighlightRange(characterRange)
+            self.pulseAudioLevel(wordLength: characterRange.length)
         }
     }
 
@@ -85,6 +100,7 @@ final class TTSDiagnosticsCoordinator: NSObject, ObservableObject, AVSpeechSynth
                                        didFinish utterance: AVSpeechUtterance) {
         Task { @MainActor in
             self.viewModel.setPlaying(false)
+            self.viewModel.updateAudioLevel(0.0)
         }
     }
 }
