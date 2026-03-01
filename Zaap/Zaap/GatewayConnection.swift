@@ -591,7 +591,7 @@ extension GatewayConnection: SessionPreviewing {
 
         let requestId = UUID().uuidString
         let params: [String: Any] = [
-            "sessionKey": key,
+            "keys": [key],
             "limit": limit
         ]
 
@@ -617,24 +617,16 @@ extension GatewayConnection: SessionPreviewing {
 
         guard let ok = json["ok"] as? Bool, ok,
               let payload = json["payload"] as? [String: Any],
-              let messagesArray = payload["messages"] as? [[String: Any]] else {
+              let previews = payload["previews"] as? [[String: Any]],
+              let firstPreview = previews.first,
+              let items = firstPreview["items"] as? [[String: Any]] else {
             continuation.resume(throwing: GatewayConnectionError.connectionFailed("Invalid preview response"))
             return
         }
 
-        let messages = messagesArray.compactMap { dict -> PreviewMessage? in
-            guard let role = dict["role"] as? String else { return nil }
-            // Extract text from content array or direct text field
-            let text: String
-            if let contentArray = dict["content"] as? [[String: Any]],
-               let firstText = contentArray.first(where: { $0["type"] as? String == "text" }),
-               let t = firstText["text"] as? String {
-                text = t
-            } else if let t = dict["text"] as? String {
-                text = t
-            } else {
-                return nil
-            }
+        let messages = items.compactMap { dict -> PreviewMessage? in
+            guard let role = dict["role"] as? String,
+                  let text = dict["text"] as? String else { return nil }
             return PreviewMessage(role: role, text: text)
         }
         continuation.resume(returning: messages)

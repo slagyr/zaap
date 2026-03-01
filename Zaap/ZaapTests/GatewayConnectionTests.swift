@@ -884,4 +884,81 @@ extension GatewayConnectionTests {
         XCTAssertNil(connection.pendingSessionListContinuation,
                      "pendingSessionListContinuation should be nil after network disconnect")
     }
+
+    // MARK: - sessions.preview
+
+    func testPreviewSessionSendsKeysArray() async throws {
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage(["type": "res", "id": "1", "ok": true, "payload": ["type": "hello-ok"]])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+        connection.connect(to: url)
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        Task {
+            _ = try? await connection.previewSession(key: "agent:main:discord:channel:123", limit: 5)
+        }
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        guard let lastMessage = mockTask.sentMessages.last,
+              case .data(let data) = lastMessage,
+              let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let params = json["params"] as? [String: Any] else {
+            XCTFail("Expected data message with params")
+            return
+        }
+        XCTAssertEqual(json["method"] as? String, "sessions.preview")
+        XCTAssertEqual(params["keys"] as? [String], ["agent:main:discord:channel:123"])
+        XCTAssertEqual(params["limit"] as? Int, 5)
+        XCTAssertNil(params["sessionKey"], "Should not send sessionKey — API expects keys array")
+    }
+
+    func testHandleSessionPreviewResponseParsesPreviewsFormat() async throws {
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage(["type": "res", "id": "1", "ok": true, "payload": ["type": "hello-ok"]])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+        connection.connect(to: url)
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        let expectation = XCTestExpectation(description: "preview completes")
+        var result: [PreviewMessage] = []
+
+        Task {
+            result = try await connection.previewSession(key: "agent:main:main", limit: 5)
+            expectation.fulfill()
+        }
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        let requestId = connection.pendingSessionPreviewContinuation!.0
+        let response: [String: Any] = [
+            "ok": true,
+            "payload": [
+                "ts": 1234567890,
+                "previews": [
+                    [
+                        "key": "agent:main:main",
+                        "status": "ok",
+                        "items": [
+                            ["role": "user", "text": "Hello there"],
+                            ["role": "assistant", "text": "Hi! How can I help?"],
+                            ["role": "tool", "text": "ran something"],
+                        ]
+                    ]
+                ]
+            ]
+        ]
+        connection.handleSessionPreviewResponse(response, requestId: requestId)
+
+        await fulfillment(of: [expectation], timeout: 2.0)
+
+        XCTAssertEqual(result.count, 3)
+        XCTAssertEqual(result[0], PreviewMessage(role: "user", text: "Hello there"))
+        XCTAssertEqual(result[1], PreviewMessage(role: "assistant", text: "Hi! How can I help?"))
+        XCTAssertEqual(result[2], PreviewMessage(role: "tool", text: "ran something"))
+    }
 }
