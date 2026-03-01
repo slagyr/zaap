@@ -1,0 +1,18 @@
+{:number "011"
+ :status :active
+ :stories [{:id "zaap-26w" :title "App crash on real device during voice chat"}
+           {:id "zaap-bgg" :title "Pairing prompt appears every launch despite being already paired"}
+           {:id "zaap-3bz" :title "Voice transcripts cut off — only last word or partial sentence sent"}
+           {:id "zaap-9nl" :title "Response text truncated — only first few words appear on screen"}
+           {:id "zaap-d8p" :title "AEC insufficient on real device — need software echo suppression"}]
+ :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
+              "No force unwraps (!) anywhere in codebase"
+              "Tests must pass before commit — run xcodebuild test first"
+              "No third-party dependencies — Apple frameworks only"
+              "Acceptance criteria in each bead MUST be verified before closing — no fake completions"]
+ :notes ["Theme: Real Device Stability — all bugs found on physical device testing"
+         "zaap-26w P0 — crash must be fixed first"
+         "zaap-bgg P1 — re-pairing every launch is blocking usability"
+         "zaap-3bz P1 — transcript cut-off makes voice unusable"
+         "zaap-9nl P1 — truncated responses make output unreadable"
+         "zaap-d8p P1 — AEC on real device still needs improvement"]}
