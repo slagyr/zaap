@@ -9,6 +9,8 @@ struct VoiceChatView: View {
     @State private var isPaired = false
     @StateObject private var sttDiagnosticsVM = STTDiagnosticsViewModel()
     @StateObject private var sttDiagnosticsCoordinator: STTDiagnosticsCoordinator
+    @StateObject private var ttsDiagnosticsVM = TTSDiagnosticsViewModel()
+    @StateObject private var ttsDiagnosticsCoordinator: TTSDiagnosticsCoordinator
 
     init() {
         let vm = VoiceChatViewModel()
@@ -58,6 +60,14 @@ struct VoiceChatView: View {
         )
         _sttDiagnosticsVM = StateObject(wrappedValue: diagVM)
         _sttDiagnosticsCoordinator = StateObject(wrappedValue: diagCoord)
+
+        let ttsVM = TTSDiagnosticsViewModel()
+        let ttsCoord = TTSDiagnosticsCoordinator(
+            viewModel: ttsVM,
+            synthesizer: AVSpeechSynthesizer()
+        )
+        _ttsDiagnosticsVM = StateObject(wrappedValue: ttsVM)
+        _ttsDiagnosticsCoordinator = StateObject(wrappedValue: ttsCoord)
     }
 
     var body: some View {
@@ -120,6 +130,18 @@ struct VoiceChatView: View {
                     .frame(maxHeight: 250)
                     .padding(.horizontal, 8)
                     .padding(.bottom, 4)
+            }
+
+            // TTS Diagnostics panel — shown when active
+            if ttsDiagnosticsVM.isActive {
+                TTSDiagnosticsView(
+                    viewModel: ttsDiagnosticsVM,
+                    onToggle: { ttsDiagnosticsCoordinator.toggle() },
+                    onStop: { ttsDiagnosticsCoordinator.stop() }
+                )
+                .frame(maxHeight: 200)
+                .padding(.horizontal, 8)
+                .padding(.bottom, 4)
             }
 
             // Conversation log — fills all remaining vertical space
@@ -202,7 +224,7 @@ struct VoiceChatView: View {
                 }
             }
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
                 if sessionPicker.isLoading {
                     ProgressView()
                         .controlSize(.small)
@@ -210,13 +232,24 @@ struct VoiceChatView: View {
                     Image(systemName: "bubble.left.fill")
                         .font(.system(size: 14))
                 }
+                Text("Session")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
                 Text(sessionPicker.selectedSessionTitle)
                     .lineLimit(1)
                     .font(.subheadline)
+                Spacer()
                 Image(systemName: "chevron.up.chevron.down")
                     .font(.system(size: 10))
             }
             .foregroundColor(.primary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .frame(minWidth: 200)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color(.separator), lineWidth: 1)
+            )
         }
     }
 
@@ -319,6 +352,13 @@ struct VoiceChatView: View {
                     Label("Clear STT Log", systemImage: "trash")
                 }
             }
+            Divider()
+            Button(action: toggleTTSDebug) {
+                Label(
+                    ttsDiagnosticsVM.isActive ? "Stop TTS Debug" : "TTS Debug",
+                    systemImage: ttsDiagnosticsVM.isActive ? "stop.circle" : "speaker.wave.2"
+                )
+            }
         } label: {
             Image(systemName: "gearshape")
                 .font(.system(size: 16))
@@ -337,6 +377,14 @@ struct VoiceChatView: View {
                 coordinator.stopSession()
             }
             sttDiagnosticsCoordinator.start()
+        }
+    }
+
+    private func toggleTTSDebug() {
+        if ttsDiagnosticsVM.isActive {
+            ttsDiagnosticsCoordinator.stop()
+        } else {
+            ttsDiagnosticsCoordinator.play()
         }
     }
 }
