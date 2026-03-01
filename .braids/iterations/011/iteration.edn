@@ -4,7 +4,8 @@
            {:id "zaap-bgg" :title "Pairing prompt appears every launch despite being already paired"}
            {:id "zaap-3bz" :title "Voice transcripts cut off — only last word or partial sentence sent"}
            {:id "zaap-9nl" :title "Response text truncated — only first few words appear on screen"}
-           {:id "zaap-d8p" :title "AEC insufficient on real device — need software echo suppression"}]
+           {:id "zaap-d8p" :title "AEC insufficient on real device — need software echo suppression"}
+           {:id "zaap-qpt" :title "Persistent webhook retry queue — retry failed pushes on reconnect"}]
  :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
               "No force unwraps (!) anywhere in codebase"
               "Tests must pass before commit — run xcodebuild test first"
