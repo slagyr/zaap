@@ -75,10 +75,13 @@ enum GatewayConnectionError: Error, Equatable {
 /// Configures the role and scopes for a gateway connection.
 struct ConnectionRole: Equatable {
     let name: String
+    /// The client.mode value sent in the connect handshake.
+    /// Valid values: "node", "ui", "cli", "webchat", "backend", "probe", "test"
+    let clientMode: String
     let scopes: [String]
 
-    static let node = ConnectionRole(name: "node", scopes: ["operator.read"])
-    static let `operator` = ConnectionRole(name: "operator", scopes: ["operator.read"])
+    static let node = ConnectionRole(name: "node", clientMode: "node", scopes: ["operator.read"])
+    static let `operator` = ConnectionRole(name: "operator", clientMode: "ui", scopes: ["operator.read"])
 }
 
 // MARK: - GatewayConnection
@@ -359,7 +362,7 @@ final class GatewayConnection {
                 nonce: nonce,
                 deviceId: identity.nodeId,
                 clientId: "openclaw-ios",
-                clientMode: role.name,
+                clientMode: role.clientMode,
                 role: role.name,
                 scopes: role.scopes,
                 token: authToken,
@@ -377,7 +380,7 @@ final class GatewayConnection {
                     "maxProtocol": 3,
                     "client": [
                         "id": "openclaw-ios",
-                        "mode": role.name,
+                        "mode": role.clientMode,
                         "platform": "ios",
                         "deviceFamily": "iphone",
                         "version": "1.0.0"

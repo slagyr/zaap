@@ -624,7 +624,7 @@ extension GatewayConnectionTests {
         XCTAssertEqual(params?["role"] as? String, "operator")
         XCTAssertEqual(params?["scopes"] as? [String], ["operator.read"])
         let client = params?["client"] as? [String: Any]
-        XCTAssertEqual(client?["mode"] as? String, "operator")
+        XCTAssertEqual(client?["mode"] as? String, "ui")
     }
 
     func testOperatorRoleLoadsOperatorToken() async throws {
