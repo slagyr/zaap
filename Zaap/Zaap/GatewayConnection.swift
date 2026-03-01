@@ -67,6 +67,7 @@ enum GatewayConnectionError: Error, Equatable {
     case invalidMessage
     case connectionFailed(String)
     case challengeFailed(String)
+    case requestFailed(String)
 }
 
 // MARK: - GatewayConnection
@@ -302,7 +303,7 @@ final class GatewayConnection {
                 let payload = requestId.isEmpty ? "pairing_required" : "pairing_required:\(requestId)"
                 delegate?.gatewayDidFailWithError(.challengeFailed(payload))
             } else {
-                delegate?.gatewayDidFailWithError(.challengeFailed(msg))
+                delegate?.gatewayDidFailWithError(.requestFailed(msg))
             }
         } else if type == "event" {
             // All other gateway events

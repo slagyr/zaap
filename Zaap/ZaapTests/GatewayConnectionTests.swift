@@ -589,6 +589,100 @@ extension GatewayConnectionTests {
     }
 }
 
+// MARK: - Error Classification
+
+extension GatewayConnectionTests {
+
+    func testNotPairedErrorReportsChallengeFailed() async throws {
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage([
+                "type": "res", "id": "1", "ok": false,
+                "error": ["code": "NOT_PAIRED", "message": "Device not paired"]
+            ])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+
+        connection.connect(to: url)
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(mockDelegate.errors.count, 1)
+        if case .challengeFailed = mockDelegate.errors.first! {
+            // expected
+        } else {
+            XCTFail("NOT_PAIRED should report .challengeFailed, got: \(mockDelegate.errors.first!)")
+        }
+    }
+
+    func testPairingRequiredErrorReportsChallengeFailed() async throws {
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage([
+                "type": "res", "id": "1", "ok": false,
+                "error": ["code": "PAIRING_REQUIRED", "message": "Pairing required",
+                          "details": ["requestId": "abc123"]]
+            ])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+
+        connection.connect(to: url)
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(mockDelegate.errors.count, 1)
+        if case .challengeFailed = mockDelegate.errors.first! {
+            // expected
+        } else {
+            XCTFail("PAIRING_REQUIRED should report .challengeFailed, got: \(mockDelegate.errors.first!)")
+        }
+    }
+
+    func testInvalidRequestErrorReportsRequestFailed() async throws {
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage([
+                "type": "res", "id": "1", "ok": false,
+                "error": ["code": "INVALID_REQUEST", "message": "Bad request format"]
+            ])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+
+        connection.connect(to: url)
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(mockDelegate.errors.count, 1)
+        if case .requestFailed(let msg) = mockDelegate.errors.first! {
+            XCTAssertEqual(msg, "Bad request format")
+        } else {
+            XCTFail("INVALID_REQUEST should report .requestFailed, got: \(mockDelegate.errors.first!)")
+        }
+    }
+
+    func testUnknownErrorCodeReportsRequestFailed() async throws {
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage([
+                "type": "res", "id": "1", "ok": false,
+                "error": ["code": "RATE_LIMITED", "message": "Too many requests"]
+            ])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+
+        connection.connect(to: url)
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(mockDelegate.errors.count, 1)
+        if case .requestFailed(let msg) = mockDelegate.errors.first! {
+            XCTAssertEqual(msg, "Too many requests")
+        } else {
+            XCTFail("Unknown error code should report .requestFailed, got: \(mockDelegate.errors.first!)")
+        }
+    }
+}
+
 // MARK: - Continuation Cleanup on Disconnect
 
 extension GatewayConnectionTests {

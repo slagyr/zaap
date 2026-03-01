@@ -406,7 +406,7 @@ final class VoiceChatCoordinatorTests: XCTestCase {
         _ = cancellable
     }
 
-    func testNonPairingChallengeFailedDoesNotTriggerRepairing() async throws {
+    func testRequestFailedDoesNotTriggerRepairing() async throws {
         let url = URL(string: "wss://gateway.local:18789")!
         coordinator.startSession(gatewayURL: url)
 
@@ -415,12 +415,12 @@ final class VoiceChatCoordinatorTests: XCTestCase {
             repairingReceived = true
         }
 
-        // Transient server error — should NOT wipe pairing
-        gateway.simulateError(.challengeFailed("Connection timeout"))
+        // Non-auth error — should NOT wipe pairing
+        gateway.simulateError(.requestFailed("Bad request format"))
 
         try await Task.sleep(nanoseconds: 50_000_000)
 
-        XCTAssertFalse(repairingReceived, "Non-pairing challengeFailed should not trigger re-pairing")
+        XCTAssertFalse(repairingReceived, "requestFailed should not trigger re-pairing")
         _ = cancellable
     }
 }

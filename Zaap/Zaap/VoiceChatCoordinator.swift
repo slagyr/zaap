@@ -271,10 +271,14 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
     nonisolated func gatewayDidFailWithError(_ error: GatewayConnectionError) {
         Task { @MainActor in
-            // Auth failure means stale/invalid token — signal the view to re-pair
-            if case .challengeFailed(let msg) = error,
-               msg.hasPrefix("pairing_required") || msg.hasPrefix("NOT_PAIRED") {
+            switch error {
+            case .challengeFailed:
+                // Auth failure means stale/invalid token — signal the view to re-pair
                 needsRepairingPublisher.send()
+            case .requestFailed(let msg):
+                logHandler("⚠️ [VOICE] request failed: \(msg)")
+            default:
+                break
             }
         }
     }
