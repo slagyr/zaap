@@ -70,11 +70,12 @@ final class SessionPickerViewModel: ObservableObject {
             if !merged.contains(where: { $0.key == "agent:main:main" }) {
                 merged.insert(mainFallback, at: 0)
             }
-            // Sort: Main first, then alphabetical by title
+            // Sort: Main first, then reverse-alphabetical by title
+            // (Menu/Picker renders bottom-to-top, so descending here = A-Z on screen)
             sessions = merged.sorted { a, b in
                 if a.key == "agent:main:main" { return true }
                 if b.key == "agent:main:main" { return false }
-                return a.title.localizedCaseInsensitiveCompare(b.title) == .orderedAscending
+                return a.title.localizedCaseInsensitiveCompare(b.title) == .orderedDescending
             }
         } catch {
             print("⚠️ [SESSION_PICKER] loadSessions failed: \(error)")

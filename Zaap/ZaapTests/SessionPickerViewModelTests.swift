@@ -334,7 +334,8 @@ extension SessionPickerViewModelTests {
         await viewModel.loadSessions()
 
         let titles = viewModel.sessions.map(\.title)
-        XCTAssertEqual(titles, ["Main", "braids", "general", "zaap"])
+        // Stored in reverse-alpha order because Menu/Picker renders bottom-to-top
+        XCTAssertEqual(titles, ["Main", "zaap", "general", "braids"])
     }
 
     // MARK: - Filter discord:g- sessions
