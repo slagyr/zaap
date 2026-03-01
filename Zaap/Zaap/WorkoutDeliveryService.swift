@@ -10,7 +10,7 @@ final class WorkoutDeliveryService {
     private let logger = Logger(subsystem: "com.zaap.app", category: "WorkoutDelivery")
 
     private let workoutReader: any WorkoutReading
-    private let webhookClient: any WebhookPosting
+    private var webhookClient: any WebhookPosting
     private let settings: SettingsManager
     private var deliveryLog: any DeliveryLogging
 
@@ -28,6 +28,10 @@ final class WorkoutDeliveryService {
 
     func configure(deliveryLog: any DeliveryLogging) {
         self.deliveryLog = deliveryLog
+    }
+
+    func configure(webhookClient: any WebhookPosting) {
+        self.webhookClient = webhookClient
     }
 
     // MARK: - Public

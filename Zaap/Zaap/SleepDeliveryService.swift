@@ -10,7 +10,7 @@ final class SleepDeliveryService {
     private let logger = Logger(subsystem: "com.zaap.app", category: "SleepDelivery")
 
     private let sleepReader: any SleepReading
-    private let webhookClient: any WebhookPosting
+    private var webhookClient: any WebhookPosting
     private let settings: SettingsManager
     private var deliveryLog: any DeliveryLogging
 
@@ -28,6 +28,10 @@ final class SleepDeliveryService {
 
     func configure(deliveryLog: any DeliveryLogging) {
         self.deliveryLog = deliveryLog
+    }
+
+    func configure(webhookClient: any WebhookPosting) {
+        self.webhookClient = webhookClient
     }
 
     // MARK: - Public

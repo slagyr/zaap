@@ -15,7 +15,7 @@ final class LocationDeliveryService {
     private var cancellables = Set<AnyCancellable>()
 
     private let locationManager: any LocationPublishing
-    private let webhookClient: any WebhookPosting
+    private var webhookClient: any WebhookPosting
     private let settings: SettingsManager
     private var deliveryLog: any DeliveryLogging
 
@@ -33,6 +33,10 @@ final class LocationDeliveryService {
 
     func configure(deliveryLog: any DeliveryLogging) {
         self.deliveryLog = deliveryLog
+    }
+
+    func configure(webhookClient: any WebhookPosting) {
+        self.webhookClient = webhookClient
     }
 
     // MARK: - Public

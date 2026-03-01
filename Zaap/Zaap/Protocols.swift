@@ -24,6 +24,7 @@ protocol WebhookPosting: Sendable {
 }
 
 extension WebhookClient: WebhookPosting {}
+extension WebhookClient: RawPayloadPosting {}
 
 /// Protocol for publishing location updates.
 @MainActor

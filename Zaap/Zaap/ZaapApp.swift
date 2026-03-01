@@ -50,12 +50,29 @@ struct ZaapApp: App {
             logger.error("Cannot start services — no model context")
             return
         }
+
+        // Set up retry queue — prune expired items on launch
+        let retryQueue = WebhookRetryQueue()
+        retryQueue.pruneExpired()
+        let drainService = RetryDrainService(queue: retryQueue, poster: WebhookClient.shared)
+        let retryingClient = RetryingWebhookClient(
+            inner: WebhookClient.shared,
+            retryQueue: retryQueue,
+            drainService: drainService
+        )
+        logger.info("Retry queue loaded: \(retryQueue.count) items pending")
+
         let deliveryLog = DeliveryLogService(context: context)
         LocationDeliveryService.shared.configure(deliveryLog: deliveryLog)
+        LocationDeliveryService.shared.configure(webhookClient: retryingClient)
         SleepDeliveryService.shared.configure(deliveryLog: deliveryLog)
+        SleepDeliveryService.shared.configure(webhookClient: retryingClient)
         HeartRateDeliveryService.shared.configure(deliveryLog: deliveryLog)
+        HeartRateDeliveryService.shared.configure(webhookClient: retryingClient)
         ActivityDeliveryService.shared.configure(deliveryLog: deliveryLog)
+        ActivityDeliveryService.shared.configure(webhookClient: retryingClient)
         WorkoutDeliveryService.shared.configure(deliveryLog: deliveryLog)
+        WorkoutDeliveryService.shared.configure(webhookClient: retryingClient)
         #if !targetEnvironment(simulator)
         // On real devices, auto-deliver on launch and start background observers.
         // In the simulator, all delivery is manual-only (Developer section) to avoid

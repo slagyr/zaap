@@ -83,6 +83,12 @@
 		V10002 /* SessionPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = V20002 /* SessionPickerView.swift */; };
 		V10003 /* SessionPickerViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = V20003 /* SessionPickerViewModelTests.swift */; };
 		V10001 /* SessionPickerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = V20001 /* SessionPickerViewModel.swift */; };
+		W10001 /* WebhookRetryQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20001 /* WebhookRetryQueue.swift */; };
+		W10002 /* WebhookRetryQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20002 /* WebhookRetryQueueTests.swift */; };
+		W10003 /* RetryDrainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20003 /* RetryDrainService.swift */; };
+		W10004 /* RetryDrainServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20004 /* RetryDrainServiceTests.swift */; };
+		W10005 /* RetryingWebhookClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20005 /* RetryingWebhookClient.swift */; };
+		W10006 /* RetryingWebhookClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20006 /* RetryingWebhookClientTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -176,6 +182,12 @@
 		V20002 /* SessionPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerView.swift; sourceTree = "<group>"; };
 		V20003 /* SessionPickerViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerViewModelTests.swift; sourceTree = "<group>"; };
 		V20001 /* SessionPickerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerViewModel.swift; sourceTree = "<group>"; };
+		W20001 /* WebhookRetryQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebhookRetryQueue.swift; sourceTree = "<group>"; };
+		W20002 /* WebhookRetryQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebhookRetryQueueTests.swift; sourceTree = "<group>"; };
+		W20003 /* RetryDrainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryDrainService.swift; sourceTree = "<group>"; };
+		W20004 /* RetryDrainServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryDrainServiceTests.swift; sourceTree = "<group>"; };
+		W20005 /* RetryingWebhookClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryingWebhookClient.swift; sourceTree = "<group>"; };
+		W20006 /* RetryingWebhookClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryingWebhookClientTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -215,6 +227,9 @@
 				A20010 /* SettingsManager.swift */,
 				A20011 /* SettingsView.swift */,
 				A20012 /* WebhookClient.swift */,
+				W20001 /* WebhookRetryQueue.swift */,
+				W20003 /* RetryDrainService.swift */,
+				W20005 /* RetryingWebhookClient.swift */,
 				A20013 /* LocationDeliveryService.swift */,
 				B20001 /* HeartRateReader.swift */,
 				B20002 /* HeartRateDeliveryService.swift */,
@@ -311,6 +326,9 @@
 				T20002 /* VoiceChatCoordinatorTests.swift */,
 				U20002 /* PairingViewModelTests.swift */,
 				V20003 /* SessionPickerViewModelTests.swift */,
+				W20002 /* WebhookRetryQueueTests.swift */,
+				W20004 /* RetryDrainServiceTests.swift */,
+				W20006 /* RetryingWebhookClientTests.swift */,
 			);
 			path = ZaapTests;
 			sourceTree = "<group>";
@@ -414,6 +432,9 @@
 				A10007 /* SettingsManager.swift in Sources */,
 				A10008 /* SettingsView.swift in Sources */,
 				A10009 /* WebhookClient.swift in Sources */,
+				W10001 /* WebhookRetryQueue.swift in Sources */,
+				W10003 /* RetryDrainService.swift in Sources */,
+				W10005 /* RetryingWebhookClient.swift in Sources */,
 				A10010 /* LocationDeliveryService.swift in Sources */,
 				A10011 /* SleepDeliveryService.swift in Sources */,
 				D10001 /* WorkoutReader.swift in Sources */,
@@ -489,6 +510,9 @@
 				T10002 /* VoiceChatCoordinatorTests.swift in Sources */,
 				U10002 /* PairingViewModelTests.swift in Sources */,
 				V10003 /* SessionPickerViewModelTests.swift in Sources */,
+				W10002 /* WebhookRetryQueueTests.swift in Sources */,
+				W10004 /* RetryDrainServiceTests.swift in Sources */,
+				W10006 /* RetryingWebhookClientTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

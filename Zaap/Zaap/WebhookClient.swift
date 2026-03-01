@@ -69,6 +69,11 @@ final class WebhookClient: Sendable {
         try await send(payload, to: path)
     }
 
+    /// POST pre-encoded JSON data. Used by RetryDrainService to replay queued items.
+    func postRawPayload(_ payload: Data, to path: String) async throws {
+        try await sendRaw(payload, to: path)
+    }
+
     // MARK: - Private
 
     private func send<T: Encodable>(_ payload: T, to path: String?) async throws {
@@ -134,6 +139,65 @@ final class WebhookClient: Sendable {
 
             await requestLog.append(RequestLogEntry(
                 path: path ?? targetURL.path,
+                statusCode: nil,
+                responseTimeMs: elapsedMs,
+                requestBody: requestBodyString,
+                errorMessage: error.localizedDescription
+            ))
+
+            throw WebhookError.networkError(error)
+        }
+    }
+
+    /// Send pre-encoded JSON data to a path, skipping the encoding step.
+    private func sendRaw(_ data: Data, to path: String) async throws {
+        guard let config = loadConfiguration() else {
+            throw WebhookError.noConfiguration
+        }
+
+        let targetURL = config.url.appending(path: path)
+
+        var request = URLRequest(url: targetURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(config.bearerToken)", forHTTPHeaderField: "Authorization")
+
+        logger.info("POST (retry) \(targetURL.absoluteString, privacy: .public)")
+
+        let requestBodyString = String(data: data, encoding: .utf8) ?? "{}"
+        let startTime = CFAbsoluteTimeGetCurrent()
+
+        do {
+            let (responseData, response) = try await session.upload(for: request, from: data)
+            let elapsedMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+
+            await requestLog.append(RequestLogEntry(
+                path: path,
+                statusCode: statusCode,
+                responseTimeMs: elapsedMs,
+                requestBody: requestBodyString
+            ))
+
+            try validateResponse(responseData, response)
+        } catch let error as WebhookError {
+            let elapsedMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
+            let statusCode: Int? = if case .invalidResponse(let code) = error { code } else { nil }
+
+            await requestLog.append(RequestLogEntry(
+                path: path,
+                statusCode: statusCode,
+                responseTimeMs: elapsedMs,
+                requestBody: requestBodyString,
+                errorMessage: error.localizedDescription
+            ))
+
+            throw error
+        } catch {
+            let elapsedMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
+
+            await requestLog.append(RequestLogEntry(
+                path: path,
                 statusCode: nil,
                 responseTimeMs: elapsedMs,
                 requestBody: requestBodyString,
