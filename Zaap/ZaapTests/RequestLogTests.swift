@@ -163,4 +163,24 @@ final class RequestLogTests: XCTestCase {
         XCTAssertEqual(log.entries[0].path, "/hooks/a")
         XCTAssertEqual(log.entries[1].path, "/hooks/b")
     }
+
+    // MARK: - Pending Retry Count
+
+    func testPendingRetryCountStartsAtZero() {
+        let log = RequestLog(capacity: 10, skipLoad: true)
+        XCTAssertEqual(log.pendingRetryCount, 0)
+    }
+
+    func testPendingRetryCountCanBeSet() {
+        let log = RequestLog(capacity: 10, skipLoad: true)
+        log.pendingRetryCount = 5
+        XCTAssertEqual(log.pendingRetryCount, 5)
+    }
+
+    func testPendingRetryCountCanBeResetToZero() {
+        let log = RequestLog(capacity: 10, skipLoad: true)
+        log.pendingRetryCount = 12
+        log.pendingRetryCount = 0
+        XCTAssertEqual(log.pendingRetryCount, 0)
+    }
 }

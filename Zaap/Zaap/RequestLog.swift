@@ -75,6 +75,7 @@ final class RequestLog: ObservableObject {
     static let shared = RequestLog()
 
     @Published private(set) var entries: [RequestLogEntry] = []
+    @Published var pendingRetryCount: Int = 0
     let capacity: Int
 
     private static var storageURL: URL {

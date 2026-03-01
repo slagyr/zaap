@@ -39,6 +39,9 @@ final class WebhookRetryQueue {
     var count: Int { items.count }
     var isEmpty: Bool { items.isEmpty }
 
+    /// Called after any mutation that changes the item count.
+    var onCountChange: ((Int) -> Void)?
+
     private let skipLoad: Bool
 
     // MARK: - Init
@@ -70,6 +73,7 @@ final class WebhookRetryQueue {
         }
 
         save()
+        onCountChange?(count)
     }
 
     /// Remove and return the oldest item from the queue.
@@ -77,6 +81,7 @@ final class WebhookRetryQueue {
         guard !items.isEmpty else { return nil }
         let item = items.removeFirst()
         save()
+        onCountChange?(count)
         return item
     }
 
@@ -84,6 +89,7 @@ final class WebhookRetryQueue {
     func requeueAtFront(_ item: RetryQueueItem) {
         items.insert(item, at: 0)
         save()
+        onCountChange?(count)
     }
 
     /// Remove items older than the TTL (7 days by default).
@@ -91,6 +97,7 @@ final class WebhookRetryQueue {
         let cutoff = Date().addingTimeInterval(-ttl)
         items.removeAll { $0.originalTimestamp < cutoff }
         save()
+        onCountChange?(count)
     }
 
     // MARK: - Persistence

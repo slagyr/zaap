@@ -216,4 +216,79 @@ final class WebhookRetryQueueTests: XCTestCase {
         queue.enqueue(path: "/a", payload: Data("1".utf8))
         XCTAssertFalse(queue.isEmpty)
     }
+
+    // MARK: - onCountChange Callback
+
+    func testOnCountChangeFiresAfterEnqueue() {
+        let queue = WebhookRetryQueue(skipLoad: true)
+        var reported: [Int] = []
+        queue.onCountChange = { reported.append($0) }
+
+        queue.enqueue(path: "/a", payload: Data("1".utf8))
+
+        XCTAssertEqual(reported, [1])
+    }
+
+    func testOnCountChangeFiresAfterDequeue() {
+        let queue = WebhookRetryQueue(skipLoad: true)
+        queue.enqueue(path: "/a", payload: Data("1".utf8))
+
+        var reported: [Int] = []
+        queue.onCountChange = { reported.append($0) }
+
+        _ = queue.dequeue()
+
+        XCTAssertEqual(reported, [0])
+    }
+
+    func testOnCountChangeFiresAfterPruneExpired() {
+        let queue = WebhookRetryQueue(skipLoad: true)
+        let tenDaysAgo = Date().addingTimeInterval(-10 * 24 * 60 * 60)
+        queue.enqueue(path: "/old", payload: Data("1".utf8), originalTimestamp: tenDaysAgo)
+
+        var reported: [Int] = []
+        queue.onCountChange = { reported.append($0) }
+
+        queue.pruneExpired()
+
+        XCTAssertEqual(reported, [0])
+    }
+
+    func testOnCountChangeFiresAfterRequeueAtFront() {
+        let queue = WebhookRetryQueue(skipLoad: true)
+        queue.enqueue(path: "/a", payload: Data("1".utf8))
+        let item = queue.dequeue()!
+
+        var reported: [Int] = []
+        queue.onCountChange = { reported.append($0) }
+
+        queue.requeueAtFront(item)
+
+        XCTAssertEqual(reported, [1])
+    }
+
+    func testOnCountChangeDoesNotFireForDuplicateEnqueue() {
+        let queue = WebhookRetryQueue(skipLoad: true)
+        let payload = Data("1".utf8)
+        queue.enqueue(path: "/a", payload: payload)
+
+        var reported: [Int] = []
+        queue.onCountChange = { reported.append($0) }
+
+        queue.enqueue(path: "/a", payload: payload) // duplicate
+
+        XCTAssertTrue(reported.isEmpty)
+    }
+
+    func testOnCountChangeReportsCorrectCountAfterMultipleEnqueues() {
+        let queue = WebhookRetryQueue(skipLoad: true)
+        var reported: [Int] = []
+        queue.onCountChange = { reported.append($0) }
+
+        queue.enqueue(path: "/a", payload: Data("1".utf8))
+        queue.enqueue(path: "/b", payload: Data("2".utf8))
+        queue.enqueue(path: "/c", payload: Data("3".utf8))
+
+        XCTAssertEqual(reported, [1, 2, 3])
+    }
 }

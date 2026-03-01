@@ -18,11 +18,22 @@ struct RequestLogView: View {
 
     var body: some View {
         Section {
-            if log.entries.isEmpty {
+            if log.pendingRetryCount > 0 {
+                HStack(spacing: 6) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .foregroundStyle(.orange)
+                    Text("\(log.pendingRetryCount) \(log.pendingRetryCount == 1 ? "delivery" : "deliveries") pending retry")
+                        .font(.subheadline)
+                        .foregroundStyle(.orange)
+                }
+                .padding(.vertical, 2)
+            }
+
+            if log.entries.isEmpty && log.pendingRetryCount == 0 {
                 Text("No requests yet")
                     .foregroundStyle(.secondary)
                     .font(.subheadline)
-            } else {
+            } else if !log.entries.isEmpty {
                 ForEach(visibleEntries) { entry in
                     RequestLogEntryRow(entry: entry)
                 }

@@ -94,6 +94,11 @@
 		X10003 /* STTDiagnosticsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = X20003 /* STTDiagnosticsCoordinator.swift */; };
 		X10004 /* STTDiagnosticsCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = X20004 /* STTDiagnosticsCoordinatorTests.swift */; };
 		X10005 /* STTDiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = X20005 /* STTDiagnosticsView.swift */; };
+		Y10001 /* TTSDiagnosticsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = Y20001 /* TTSDiagnosticsViewModel.swift */; };
+		Y10002 /* TTSDiagnosticsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = Y20002 /* TTSDiagnosticsViewModelTests.swift */; };
+		Y10003 /* TTSDiagnosticsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = Y20003 /* TTSDiagnosticsCoordinator.swift */; };
+		Y10004 /* TTSDiagnosticsCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = Y20004 /* TTSDiagnosticsCoordinatorTests.swift */; };
+		Y10005 /* TTSDiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = Y20005 /* TTSDiagnosticsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -198,6 +203,11 @@
 		X20003 /* STTDiagnosticsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTDiagnosticsCoordinator.swift; sourceTree = "<group>"; };
 		X20004 /* STTDiagnosticsCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTDiagnosticsCoordinatorTests.swift; sourceTree = "<group>"; };
 		X20005 /* STTDiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTDiagnosticsView.swift; sourceTree = "<group>"; };
+		Y20001 /* TTSDiagnosticsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSDiagnosticsViewModel.swift; sourceTree = "<group>"; };
+		Y20002 /* TTSDiagnosticsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSDiagnosticsViewModelTests.swift; sourceTree = "<group>"; };
+		Y20003 /* TTSDiagnosticsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSDiagnosticsCoordinator.swift; sourceTree = "<group>"; };
+		Y20004 /* TTSDiagnosticsCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSDiagnosticsCoordinatorTests.swift; sourceTree = "<group>"; };
+		Y20005 /* TTSDiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSDiagnosticsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -279,6 +289,9 @@
 				X20001 /* STTDiagnosticsViewModel.swift */,
 				X20003 /* STTDiagnosticsCoordinator.swift */,
 				X20005 /* STTDiagnosticsView.swift */,
+				Y20001 /* TTSDiagnosticsViewModel.swift */,
+				Y20003 /* TTSDiagnosticsCoordinator.swift */,
+				Y20005 /* TTSDiagnosticsView.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -344,6 +357,8 @@
 				W20006 /* RetryingWebhookClientTests.swift */,
 				X20002 /* STTDiagnosticsViewModelTests.swift */,
 				X20004 /* STTDiagnosticsCoordinatorTests.swift */,
+				Y20002 /* TTSDiagnosticsViewModelTests.swift */,
+				Y20004 /* TTSDiagnosticsCoordinatorTests.swift */,
 			);
 			path = ZaapTests;
 			sourceTree = "<group>";
@@ -490,6 +505,9 @@
 				X10001 /* STTDiagnosticsViewModel.swift in Sources */,
 				X10003 /* STTDiagnosticsCoordinator.swift in Sources */,
 				X10005 /* STTDiagnosticsView.swift in Sources */,
+				Y10001 /* TTSDiagnosticsViewModel.swift in Sources */,
+				Y10003 /* TTSDiagnosticsCoordinator.swift in Sources */,
+				Y10005 /* TTSDiagnosticsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -533,6 +551,8 @@
 				W10006 /* RetryingWebhookClientTests.swift in Sources */,
 				X10002 /* STTDiagnosticsViewModelTests.swift in Sources */,
 				X10004 /* STTDiagnosticsCoordinatorTests.swift in Sources */,
+				Y10002 /* TTSDiagnosticsViewModelTests.swift in Sources */,
+				Y10004 /* TTSDiagnosticsCoordinatorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

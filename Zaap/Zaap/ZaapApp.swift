@@ -62,6 +62,16 @@ struct ZaapApp: App {
         )
         logger.info("Retry queue loaded: \(retryQueue.count) items pending")
 
+        // Surface pending retry count to the request log UI
+        Task { @MainActor in
+            RequestLog.shared.pendingRetryCount = retryQueue.count
+        }
+        retryQueue.onCountChange = { (newCount: Int) in
+            Task { @MainActor in
+                RequestLog.shared.pendingRetryCount = newCount
+            }
+        }
+
         let deliveryLog = DeliveryLogService(context: context)
         LocationDeliveryService.shared.configure(deliveryLog: deliveryLog)
         LocationDeliveryService.shared.configure(webhookClient: retryingClient)
