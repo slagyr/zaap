@@ -163,8 +163,13 @@ struct VoiceChatView: View {
             }
         } label: {
             HStack(spacing: 4) {
-                Image(systemName: "bubble.left.fill")
-                    .font(.system(size: 14))
+                if sessionPicker.isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Image(systemName: "bubble.left.fill")
+                        .font(.system(size: 14))
+                }
                 Text(sessionPicker.selectedSessionTitle)
                     .lineLimit(1)
                     .font(.subheadline)

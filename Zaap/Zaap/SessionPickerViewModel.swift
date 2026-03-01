@@ -47,15 +47,21 @@ final class SessionPickerViewModel: ObservableObject {
             // Filter: only keep agent:main: sessions that are main or Discord
             let filtered = result.filter { $0.key.hasPrefix("agent:main:") && ($0.key == "agent:main:main" || $0.key.contains(":discord:")) }
             print("📋 [SESSION_PICKER] after filter: \(filtered.count) sessions")
-            // Clean up titles
+            // Clean up titles, then drop discord sessions with no resolved channel name
             let cleaned = filtered.map { Self.cleanSessionTitle($0) }
+                .filter { !($0.key.contains(":discord:") && $0.title.hasPrefix("discord:")) }
             // Ensure agent:main:main is always present as fallback
             let mainFallback = GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main")
             var merged = cleaned
             if !merged.contains(where: { $0.key == "agent:main:main" }) {
                 merged.insert(mainFallback, at: 0)
             }
-            sessions = merged
+            // Sort: Main first, then alphabetical by title
+            sessions = merged.sorted { a, b in
+                if a.key == "agent:main:main" { return true }
+                if b.key == "agent:main:main" { return false }
+                return a.title.localizedCaseInsensitiveCompare(b.title) == .orderedAscending
+            }
         } catch {
             print("⚠️ [SESSION_PICKER] loadSessions failed: \(error)")
             // Keep existing sessions (including static fallback) on failure

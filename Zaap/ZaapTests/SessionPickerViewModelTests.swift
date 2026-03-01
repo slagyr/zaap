@@ -276,15 +276,15 @@ extension SessionPickerViewModelTests {
         XCTAssertEqual(session?.title, "my-cool-channel")
     }
 
-    func testDiscordTitleWithoutHashKeepsOriginal() async {
+    func testDiscordTitleWithoutHashIsFilteredOut() async {
         lister.sessionsToReturn = [
             GatewaySession(key: "agent:main:discord:channel:789", title: "discord:g-1471680593497554998", lastMessage: nil, channelType: "discord"),
         ]
 
         await viewModel.loadSessions()
 
-        let session = viewModel.sessions.first(where: { $0.key.contains("discord") })
-        XCTAssertEqual(session?.title, "discord:g-1471680593497554998")
+        // Discord sessions with no resolved channel name (no #) are filtered out
+        XCTAssertFalse(viewModel.sessions.contains(where: { $0.key.contains("discord") }))
     }
 
     func testMainFallbackAlwaysHasMainTitle() async {
@@ -297,5 +297,36 @@ extension SessionPickerViewModelTests {
 
         let main = viewModel.sessions.first(where: { $0.key == "agent:main:main" })
         XCTAssertEqual(main?.title, "Main")
+    }
+
+    // MARK: - Alphabetical Sort
+
+    func testSessionsSortedAlphabeticallyWithMainFirst() async {
+        lister.sessionsToReturn = [
+            GatewaySession(key: "agent:main:discord:channel:1", title: "discord:111#zaap", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main"),
+            GatewaySession(key: "agent:main:discord:channel:2", title: "discord:111#general", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:main:discord:channel:3", title: "discord:111#braids", lastMessage: nil, channelType: "discord"),
+        ]
+
+        await viewModel.loadSessions()
+
+        let titles = viewModel.sessions.map(\.title)
+        XCTAssertEqual(titles, ["Main", "braids", "general", "zaap"])
+    }
+
+    // MARK: - Filter discord:g- sessions
+
+    func testFiltersOutDiscordSessionsWithNoChannelName() async {
+        lister.sessionsToReturn = [
+            GatewaySession(key: "agent:main:discord:channel:123", title: "discord:111#general", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:main:discord:channel:789", title: "discord:g-1471680593497554998", lastMessage: nil, channelType: "discord"),
+        ]
+
+        await viewModel.loadSessions()
+
+        XCTAssertEqual(viewModel.sessions.count, 2) // general + Main fallback
+        XCTAssertTrue(viewModel.sessions.contains(where: { $0.title == "general" }))
+        XCTAssertFalse(viewModel.sessions.contains(where: { $0.title.hasPrefix("discord:g-") }))
     }
 }
