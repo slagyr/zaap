@@ -435,4 +435,20 @@ final class SessionPreviewTests: XCTestCase {
     func testPreviewMessagesStartEmpty() {
         XCTAssertTrue(viewModel.previewMessages.isEmpty)
     }
+
+    func testLoadSessionsAutoLoadsPreviewForSelectedSession() async {
+        previewer.previewToReturn = [
+            PreviewMessage(role: "user", text: "Hi from main"),
+            PreviewMessage(role: "assistant", text: "Hello!")
+        ]
+        lister.sessionsToReturn = [
+            GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main"),
+        ]
+
+        await viewModel.loadSessions()
+
+        XCTAssertEqual(previewer.previewCallCount, 1)
+        XCTAssertEqual(previewer.lastRequestedSessionKey, "agent:main:main")
+        XCTAssertEqual(viewModel.previewMessages.count, 2)
+    }
 }

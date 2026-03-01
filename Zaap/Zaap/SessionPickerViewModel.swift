@@ -90,6 +90,8 @@ final class SessionPickerViewModel: ObservableObject {
             selectedSessionKey = first.key
         }
         isLoading = false
+        // Auto-load preview for the selected session
+        await loadPreview(forSession: selectedSessionKey)
     }
 
     /// The session key to use for voice transcripts.
