@@ -86,6 +86,46 @@ final class VoicePairingViewModel: ObservableObject, GatewayConnectionDelegate {
         return nil
     }
 
+    // MARK: - Step Progress
+
+    var totalSteps: Int { Self.rolesToPair.count }
+
+    var currentStep: Int {
+        guard let index = Self.rolesToPair.firstIndex(where: { $0.name == currentRole }) else {
+            return totalSteps
+        }
+        return index + 1
+    }
+
+    // MARK: - Role Description
+
+    private static let roleDescriptions: [String: String] = [
+        "node": "Voice sends audio and receives spoken responses.",
+        "operator": "Operator sends commands and manages your session."
+    ]
+
+    var roleDescription: String {
+        Self.roleDescriptions[currentRole] ?? ""
+    }
+
+    // MARK: - Friendly Status Message
+
+    var statusMessage: String {
+        switch status {
+        case .idle:
+            return ""
+        case .connecting:
+            let channel = currentRole == "node" ? "voice" : "operator"
+            return "Setting up \(channel) channel..."
+        case .awaitingApproval:
+            return "Waiting for approval on gateway..."
+        case .paired:
+            return "All set! Device is paired."
+        case .failed(let message):
+            return message
+        }
+    }
+
     // MARK: - Actions
 
     func requestPairing() {
@@ -225,9 +265,13 @@ struct VoicePairingView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
 
+            // Step progress indicator
+            if viewModel.status != .paired {
+                stepIndicator
+            }
+
             if !viewModel.nodeId.isEmpty {
                 VStack(spacing: 12) {
-                    // Key fingerprint
                     VStack(spacing: 4) {
                         Label("Key Fingerprint", systemImage: "key")
                             .font(.caption)
@@ -251,7 +295,7 @@ struct VoicePairingView: View {
                 .padding(.horizontal)
             }
 
-            Text("To enable voice, approve this device on your gateway:\n\nopenclaw devices list\nopenclaw devices approve <id>")
+            Text("Approve this device on your gateway:\n\nopenclaw devices list\nopenclaw devices approve <id>")
                 .font(.callout)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -259,9 +303,8 @@ struct VoicePairingView: View {
 
             statusView
 
-            Button(action: { 
-                print("🚨 [CRITICAL] BUTTON TAPPED!")
-                viewModel.requestPairing() 
+            Button(action: {
+                viewModel.requestPairing()
             }) {
                 HStack {
                     if viewModel.status == .connecting || viewModel.status == .awaitingApproval {
@@ -291,6 +334,39 @@ struct VoicePairingView: View {
         }
     }
 
+    // MARK: - Step Indicator
+
+    private var stepIndicator: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 12) {
+                ForEach(1...viewModel.totalSteps, id: \.self) { step in
+                    stepDot(step: step)
+                }
+            }
+            Text("Step \(viewModel.currentStep) of \(viewModel.totalSteps): \(roleLabel) channel")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            Text(viewModel.roleDescription)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+    }
+
+    private func stepDot(step: Int) -> some View {
+        Circle()
+            .fill(step < viewModel.currentStep ? Color.green :
+                  step == viewModel.currentStep ? Color.blue : Color.gray.opacity(0.3))
+            .frame(width: 10, height: 10)
+            .overlay(
+                Circle()
+                    .stroke(step == viewModel.currentStep ? Color.blue : Color.clear, lineWidth: 2)
+                    .frame(width: 16, height: 16)
+            )
+    }
+
+    // MARK: - Helpers
+
     private var buttonDisabled: Bool {
         switch viewModel.status {
         case .connecting, .awaitingApproval, .paired: return true
@@ -299,7 +375,7 @@ struct VoicePairingView: View {
     }
 
     private var roleLabel: String {
-        viewModel.currentRole == "node" ? "voice" : "operator"
+        viewModel.currentRole == "node" ? "Voice" : "Operator"
     }
 
     @ViewBuilder
@@ -308,11 +384,11 @@ struct VoicePairingView: View {
         case .idle:
             EmptyView()
         case .connecting:
-            Label("Connecting \(roleLabel) to gateway...", systemImage: "network")
+            Label(viewModel.statusMessage, systemImage: "network")
                 .foregroundColor(.blue)
         case .awaitingApproval:
             VStack(spacing: 6) {
-                Label("Awaiting \(roleLabel) approval on gateway...", systemImage: "clock")
+                Label(viewModel.statusMessage, systemImage: "clock")
                     .foregroundColor(.orange)
                 if !viewModel.approvalRequestId.isEmpty {
                     Text("openclaw devices approve \(viewModel.approvalRequestId)")
@@ -323,7 +399,7 @@ struct VoicePairingView: View {
                 }
             }
         case .paired:
-            Label("Paired!", systemImage: "checkmark.circle.fill")
+            Label(viewModel.statusMessage, systemImage: "checkmark.circle.fill")
                 .foregroundColor(.green)
         case .failed(let message):
             Label(message, systemImage: "exclamationmark.triangle")

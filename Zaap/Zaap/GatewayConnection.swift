@@ -500,7 +500,7 @@ final class GatewayConnection {
 // MARK: - Session Listing
 
 extension GatewayConnection: SessionListing {
-    func listSessions(limit: Int, activeMinutes: Int?, includeDerivedTitles: Bool, includeLastMessage: Bool) async throws -> [GatewaySession] {
+    func listSessions(limit: Int?, activeMinutes: Int?, includeDerivedTitles: Bool, includeLastMessage: Bool) async throws -> [GatewaySession] {
         let ws: WebSocketTaskProtocol = try lock.withLock {
             guard state == .connected, let ws = webSocket else {
                 throw GatewayConnectionError.connectionFailed("Not connected")
@@ -510,10 +510,12 @@ extension GatewayConnection: SessionListing {
 
         let requestId = UUID().uuidString
         var params: [String: Any] = [
-            "limit": limit,
             "includeDerivedTitles": includeDerivedTitles,
             "includeLastMessage": includeLastMessage
         ]
+        if let lim = limit {
+            params["limit"] = lim
+        }
         if let mins = activeMinutes {
             params["activeMinutes"] = mins
         }

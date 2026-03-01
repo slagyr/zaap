@@ -14,7 +14,7 @@ struct GatewaySession: Equatable, Identifiable {
 // MARK: - Session Listing Protocol
 
 protocol SessionListing: AnyObject {
-    func listSessions(limit: Int, activeMinutes: Int?, includeDerivedTitles: Bool, includeLastMessage: Bool) async throws -> [GatewaySession]
+    func listSessions(limit: Int?, activeMinutes: Int?, includeDerivedTitles: Bool, includeLastMessage: Bool) async throws -> [GatewaySession]
 }
 
 // MARK: - ViewModel
@@ -35,10 +35,10 @@ final class SessionPickerViewModel: ObservableObject {
         isLoading = true
         do {
             let result = try await sessionLister.listSessions(
-                limit: 20,
+                limit: nil,
                 activeMinutes: nil,
                 includeDerivedTitles: true,
-                includeLastMessage: true
+                includeLastMessage: false
             )
             print("📋 [SESSION_PICKER] sessions.list returned \(result.count) sessions")
             for session in result {

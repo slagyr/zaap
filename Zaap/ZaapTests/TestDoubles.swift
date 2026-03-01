@@ -225,7 +225,7 @@ final class MockGatewayConnecting: GatewayConnecting, SessionListing {
 
     var sessionsToReturn: [GatewaySession] = []
 
-    func listSessions(limit: Int, activeMinutes: Int?, includeDerivedTitles: Bool, includeLastMessage: Bool) async throws -> [GatewaySession] {
+    func listSessions(limit: Int?, activeMinutes: Int?, includeDerivedTitles: Bool, includeLastMessage: Bool) async throws -> [GatewaySession] {
         return sessionsToReturn
     }
 

@@ -21,7 +21,7 @@ protocol GatewayConnecting: AnyObject {
     func connect(to url: URL)
     func disconnect()
     func sendVoiceTranscript(_ text: String, sessionKey: String) async throws
-    func listSessions(limit: Int, activeMinutes: Int?, includeDerivedTitles: Bool, includeLastMessage: Bool) async throws -> [GatewaySession]
+    func listSessions(limit: Int?, activeMinutes: Int?, includeDerivedTitles: Bool, includeLastMessage: Bool) async throws -> [GatewaySession]
 }
 
 extension GatewayConnection: GatewayConnecting {}

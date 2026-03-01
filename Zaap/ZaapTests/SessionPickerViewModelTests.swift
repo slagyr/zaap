@@ -8,7 +8,7 @@ final class MockSessionListing: SessionListing {
     var shouldThrow: Error?
     var listCallCount = 0
 
-    func listSessions(limit: Int, activeMinutes: Int?, includeDerivedTitles: Bool, includeLastMessage: Bool) async throws -> [GatewaySession] {
+    func listSessions(limit: Int?, activeMinutes: Int?, includeDerivedTitles: Bool, includeLastMessage: Bool) async throws -> [GatewaySession] {
         listCallCount += 1
         if let error = shouldThrow {
             throw error

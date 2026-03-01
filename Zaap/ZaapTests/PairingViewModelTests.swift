@@ -339,4 +339,86 @@ final class DualRolePairingTests: XCTestCase {
 
         XCTAssertTrue(nodeGateway.disconnectCalled)
     }
+
+    // MARK: - Step Progress Indicator
+
+    func testCurrentStepIsOneWhenPairingNode() {
+        let vm = createViewModel()
+        XCTAssertEqual(vm.currentStep, 1)
+        XCTAssertEqual(vm.totalSteps, 2)
+    }
+
+    func testCurrentStepIsTwoWhenPairingOperator() throws {
+        try pairingManager.storeToken("node-token", forRole: "node")
+        let vm = createViewModel()
+        XCTAssertEqual(vm.currentStep, 2)
+        XCTAssertEqual(vm.totalSteps, 2)
+    }
+
+    func testStepAdvancesFromOneToTwoAfterNodePaired() async throws {
+        let vm = createViewModel()
+        SettingsManager.shared.webhookURL = "test.host"
+        vm.requestPairing()
+
+        let nodeGateway = mockFactory.createdGateways[0]
+        try pairingManager.storeToken("node-token", forRole: "node")
+        nodeGateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertEqual(vm.currentStep, 2)
+    }
+
+    // MARK: - Role Descriptions
+
+    func testRoleDescriptionForNode() {
+        let vm = createViewModel()
+        XCTAssertEqual(vm.roleDescription, "Voice sends audio and receives spoken responses.")
+    }
+
+    func testRoleDescriptionForOperator() throws {
+        try pairingManager.storeToken("node-token", forRole: "node")
+        let vm = createViewModel()
+        XCTAssertEqual(vm.roleDescription, "Operator sends commands and manages your session.")
+    }
+
+    // MARK: - Friendly Status Messages
+
+    func testConnectingStatusMessageForNode() {
+        let vm = createViewModel()
+        SettingsManager.shared.webhookURL = "test.host"
+        vm.requestPairing()
+        XCTAssertEqual(vm.statusMessage, "Setting up voice channel...")
+    }
+
+    func testConnectingStatusMessageForOperator() throws {
+        try pairingManager.storeToken("node-token", forRole: "node")
+        let vm = createViewModel()
+        SettingsManager.shared.webhookURL = "test.host"
+        vm.requestPairing()
+        XCTAssertEqual(vm.statusMessage, "Setting up operator channel...")
+    }
+
+    func testAwaitingApprovalStatusMessage() async throws {
+        let vm = createViewModel()
+        SettingsManager.shared.webhookURL = "test.host"
+        vm.requestPairing()
+
+        let nodeGateway = mockFactory.createdGateways[0]
+        nodeGateway.simulateError(.challengeFailed("pairing_required:req-node-1"))
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertEqual(vm.statusMessage, "Waiting for approval on gateway...")
+    }
+
+    func testPairedStatusMessage() throws {
+        try pairingManager.storeToken("node-token", forRole: "node")
+        try pairingManager.storeToken("operator-token", forRole: "operator")
+        let vm = createViewModel()
+        XCTAssertEqual(vm.statusMessage, "All set! Device is paired.")
+    }
+
+    func testIdleStatusMessageIsEmpty() {
+        let vm = createViewModel()
+        XCTAssertEqual(vm.statusMessage, "")
+    }
 }
