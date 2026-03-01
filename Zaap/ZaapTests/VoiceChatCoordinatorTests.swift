@@ -405,6 +405,24 @@ final class VoiceChatCoordinatorTests: XCTestCase {
         XCTAssertTrue(repairingReceived)
         _ = cancellable
     }
+
+    func testNonPairingChallengeFailedDoesNotTriggerRepairing() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+
+        var repairingReceived = false
+        let cancellable = coordinator.needsRepairingPublisher.sink {
+            repairingReceived = true
+        }
+
+        // Transient server error — should NOT wipe pairing
+        gateway.simulateError(.challengeFailed("Connection timeout"))
+
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertFalse(repairingReceived, "Non-pairing challengeFailed should not trigger re-pairing")
+        _ = cancellable
+    }
 }
 
 // MARK: - Conversation Mode (mic stays hot across listen→process→speak)
