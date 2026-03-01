@@ -16,21 +16,30 @@ struct VoiceChatView: View {
             audioSession: RealAudioSessionConfigurator(),
             timerFactory: RealTimerFactory()
         )
-        let gateway = GatewayConnection(
-            pairingManager: NodePairingManager(),
+        let pairingManager = NodePairingManager()
+        let nodeGateway = GatewayConnection(
+            pairingManager: pairingManager,
             webSocketFactory: URLSessionWebSocketFactory(),
-            networkMonitor: NWNetworkMonitor()
+            networkMonitor: NWNetworkMonitor(),
+            role: .node
+        )
+        let operatorGateway = GatewayConnection(
+            pairingManager: pairingManager,
+            webSocketFactory: URLSessionWebSocketFactory(),
+            networkMonitor: NWNetworkMonitor(),
+            role: .operator
         )
         let speaker = ResponseSpeaker(synthesizer: AVSpeechSynthesizer())
         let coord = VoiceChatCoordinator(
             viewModel: vm,
             voiceEngine: engine,
-            gateway: gateway,
-            speaker: speaker
+            gateway: nodeGateway,
+            speaker: speaker,
+            operatorGateway: operatorGateway
         )
         _viewModel = StateObject(wrappedValue: vm)
         _coordinator = StateObject(wrappedValue: coord)
-        let picker = SessionPickerViewModel(sessionLister: gateway)
+        let picker = SessionPickerViewModel(sessionLister: operatorGateway)
         coord.sessionPicker = picker
         _sessionPicker = StateObject(wrappedValue: picker)
     }

@@ -983,3 +983,93 @@ extension VoiceChatCoordinatorTests {
         XCTAssertEqual(viewModel.conversationLog.last?.role, .agent)
     }
 }
+
+// MARK: - Dual Gateway (Operator + Node)
+
+extension VoiceChatCoordinatorTests {
+
+    func testConnectGatewayConnectsBothGateways() {
+        let operatorGw = MockGatewayConnecting()
+        let dualCoordinator = VoiceChatCoordinator(
+            viewModel: viewModel,
+            voiceEngine: voiceEngine,
+            gateway: gateway,
+            speaker: speaker,
+            operatorGateway: operatorGw
+        )
+
+        let url = URL(string: "wss://gateway.local:18789")!
+        dualCoordinator.connectGateway(url: url)
+
+        XCTAssertEqual(gateway.connectURL, url, "Node gateway should connect")
+        XCTAssertEqual(operatorGw.connectURL, url, "Operator gateway should connect")
+    }
+
+    func testOperatorGatewayConnectTriggersSessionLoad() async throws {
+        let operatorGw = MockGatewayConnecting()
+        operatorGw.sessionsToReturn = [
+            GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main")
+        ]
+        let picker = SessionPickerViewModel(sessionLister: operatorGw)
+        let dualCoordinator = VoiceChatCoordinator(
+            viewModel: viewModel,
+            voiceEngine: voiceEngine,
+            gateway: gateway,
+            speaker: speaker,
+            operatorGateway: operatorGw
+        )
+        dualCoordinator.sessionPicker = picker
+
+        let url = URL(string: "wss://gateway.local:18789")!
+        dualCoordinator.connectGateway(url: url)
+        operatorGw.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertEqual(picker.sessions.count, 1, "Sessions should load via operator gateway")
+    }
+
+    func testNodeGatewayConnectDoesNotLoadSessionsWhenOperatorExists() async throws {
+        let operatorGw = MockGatewayConnecting()
+        let picker = SessionPickerViewModel(sessionLister: operatorGw)
+        let dualCoordinator = VoiceChatCoordinator(
+            viewModel: viewModel,
+            voiceEngine: voiceEngine,
+            gateway: gateway,
+            speaker: speaker,
+            operatorGateway: operatorGw
+        )
+        dualCoordinator.sessionPicker = picker
+
+        // Only connect node gateway (not operator)
+        let url = URL(string: "wss://gateway.local:18789")!
+        gateway.state = .disconnected
+        gateway.connect(to: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Sessions should NOT have been loaded since operator gateway didn't connect
+        XCTAssertFalse(picker.isLoading, "Node gateway connect should not trigger session loading when operator gateway exists")
+    }
+
+    func testOperatorChallengeFailedTriggersRepairing() async throws {
+        let operatorGw = MockGatewayConnecting()
+        let dualCoordinator = VoiceChatCoordinator(
+            viewModel: viewModel,
+            voiceEngine: voiceEngine,
+            gateway: gateway,
+            speaker: speaker,
+            operatorGateway: operatorGw
+        )
+
+        var repairingReceived = false
+        let cancellable = dualCoordinator.needsRepairingPublisher.sink {
+            repairingReceived = true
+        }
+
+        operatorGw.simulateError(.challengeFailed("pairing_required"))
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(repairingReceived, "Operator challengeFailed should trigger re-pairing")
+        _ = cancellable
+    }
+}

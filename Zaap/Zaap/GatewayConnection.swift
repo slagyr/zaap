@@ -70,6 +70,17 @@ enum GatewayConnectionError: Error, Equatable {
     case requestFailed(String)
 }
 
+// MARK: - Connection Role
+
+/// Configures the role and scopes for a gateway connection.
+struct ConnectionRole: Equatable {
+    let name: String
+    let scopes: [String]
+
+    static let node = ConnectionRole(name: "node", scopes: ["operator.read"])
+    static let `operator` = ConnectionRole(name: "operator", scopes: ["operator.read"])
+}
+
 // MARK: - GatewayConnection
 
 /// WebSocket client for connecting to the OpenClaw gateway as a paired node.
@@ -94,6 +105,7 @@ final class GatewayConnection {
     private let pairingManager: NodePairingManager
     private let webSocketFactory: WebSocketFactory
     private let networkMonitor: NetworkPathMonitoring
+    let role: ConnectionRole
 
     // MARK: - Internal State
 
@@ -108,10 +120,12 @@ final class GatewayConnection {
 
     init(pairingManager: NodePairingManager,
          webSocketFactory: WebSocketFactory,
-         networkMonitor: NetworkPathMonitoring) {
+         networkMonitor: NetworkPathMonitoring,
+         role: ConnectionRole = .node) {
         self.pairingManager = pairingManager
         self.webSocketFactory = webSocketFactory
         self.networkMonitor = networkMonitor
+        self.role = role
 
         self.networkMonitor.start { [weak self] connected in
             guard let self = self else { return }
@@ -335,17 +349,17 @@ final class GatewayConnection {
         do {
             let identity = try pairingManager.generateIdentity()
 
-            // Use stored device token if already paired; otherwise use gateway bearer token from settings.
+            // Use stored device token for this role; fallback to gateway bearer token from settings.
             // Empty token is valid — gateway will respond with 1008 (pairing required) if not yet approved.
-            let authToken = pairingManager.loadToken() ?? SettingsManager.shared.gatewayToken
+            let authToken = pairingManager.loadToken(forRole: role.name) ?? SettingsManager.shared.gatewayToken
 
             let sig = try pairingManager.signChallenge(
                 nonce: nonce,
                 deviceId: identity.nodeId,
                 clientId: "openclaw-ios",
-                clientMode: "node",
-                role: "node",
-                scopes: ["operator.read"],
+                clientMode: role.name,
+                role: role.name,
+                scopes: role.scopes,
                 token: authToken,
                 platform: "ios",
                 deviceFamily: "iphone"
@@ -361,13 +375,13 @@ final class GatewayConnection {
                     "maxProtocol": 3,
                     "client": [
                         "id": "openclaw-ios",
-                        "mode": "node",
+                        "mode": role.name,
                         "platform": "ios",
                         "deviceFamily": "iphone",
                         "version": "1.0.0"
                     ] as [String: Any],
-                    "role": "node",
-                    "scopes": ["operator.read"],
+                    "role": role.name,
+                    "scopes": role.scopes,
                     "caps": [],
                     "commands": [],
                     "permissions": [:] as [String: Any],
@@ -385,7 +399,7 @@ final class GatewayConnection {
             ]
 
             let data = try JSONSerialization.data(withJSONObject: connectMessage)
-            print("📤 [GATEWAY] sending connect: role=node token=\(authToken.isEmpty ? "empty" : "\(authToken.count)chars")")
+            print("📤 [GATEWAY] sending connect: role=\(role.name) token=\(authToken.isEmpty ? "empty" : "\(authToken.count)chars")")
             Task {
                 do {
                     try await webSocket?.send(.data(data))
@@ -402,11 +416,11 @@ final class GatewayConnection {
         state = .connected
         reconnectAttempt = 0
 
-        // If the gateway issued a device token, store it for future connections.
+        // If the gateway issued a device token, store it for this role's future connections.
         if let auth = payload?["auth"] as? [String: Any],
            let deviceToken = auth["deviceToken"] as? String,
            !deviceToken.isEmpty {
-            try? pairingManager.storeToken(deviceToken)
+            try? pairingManager.storeToken(deviceToken, forRole: role.name)
         }
 
         delegate?.gatewayDidConnect()

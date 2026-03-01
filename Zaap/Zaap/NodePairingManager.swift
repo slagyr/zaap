@@ -36,7 +36,6 @@ class NodePairingManager {
 
     private static let privateKeyTag = "co.airworthy.zaap.node.privateKey"
     private static let publicKeyTag = "co.airworthy.zaap.node.publicKey"
-    private static let tokenTag = "co.airworthy.zaap.node.token"
     private static let gatewayURLTag = "co.airworthy.zaap.node.gatewayURL"
 
     init(keychain: KeychainAccessing) {
@@ -108,18 +107,23 @@ class NodePairingManager {
         )
     }
 
-    /// Store the pairing token in Keychain.
-    func storeToken(_ token: String) throws {
+    /// Store the pairing token in Keychain for a specific role.
+    func storeToken(_ token: String, forRole role: String = "node") throws {
         guard let tokenData = token.data(using: .utf8) else {
             throw NodePairingError.keychainError("UTF-8 encoding failed")
         }
-        try keychain.save(key: Self.tokenTag, data: tokenData)
+        try keychain.save(key: Self.tokenKey(forRole: role), data: tokenData)
     }
 
-    /// Load the pairing token from Keychain.
-    func loadToken() -> String? {
-        guard let data = keychain.load(key: Self.tokenTag) else { return nil }
+    /// Load the pairing token from Keychain for a specific role.
+    func loadToken(forRole role: String = "node") -> String? {
+        guard let data = keychain.load(key: Self.tokenKey(forRole: role)) else { return nil }
         return String(data: data, encoding: .utf8)
+    }
+
+    /// Keychain key for a role's device token.
+    private static func tokenKey(forRole role: String) -> String {
+        "co.airworthy.zaap.\(role).token"
     }
 
     /// Store the gateway URL in Keychain.
@@ -144,10 +148,11 @@ class NodePairingManager {
 
     /// Clear all pairing data from Keychain.
     func clearPairing() {
-        // Only clear the pairing token — NOT the keypair.
+        // Only clear pairing tokens — NOT the keypair.
         // The keypair is the device's stable identity; regenerating it creates a new
         // device ID and floods the gateway with redundant pending pair requests.
-        keychain.delete(key: Self.tokenTag)
+        keychain.delete(key: Self.tokenKey(forRole: "node"))
+        keychain.delete(key: Self.tokenKey(forRole: "operator"))
         keychain.delete(key: Self.gatewayURLTag)
     }
 

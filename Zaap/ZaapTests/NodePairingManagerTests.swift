@@ -249,6 +249,49 @@ final class NodePairingManagerTests: XCTestCase {
         let message = manager.buildPairRequestMessage()
         XCTAssertNil(message)
     }
+
+    // MARK: - Per-Role Token Storage
+
+    func testStoreTokenForRoleSavesToRoleSpecificKey() throws {
+        try manager.storeToken("node-token", forRole: "node")
+        try manager.storeToken("operator-token", forRole: "operator")
+
+        XCTAssertEqual(mockKeychain.savedKeys["co.airworthy.zaap.node.token"], "node-token".data(using: .utf8))
+        XCTAssertEqual(mockKeychain.savedKeys["co.airworthy.zaap.operator.token"], "operator-token".data(using: .utf8))
+    }
+
+    func testLoadTokenForRoleRetrievesCorrectToken() throws {
+        try manager.storeToken("node-token", forRole: "node")
+        try manager.storeToken("operator-token", forRole: "operator")
+
+        XCTAssertEqual(manager.loadToken(forRole: "node"), "node-token")
+        XCTAssertEqual(manager.loadToken(forRole: "operator"), "operator-token")
+    }
+
+    func testLoadTokenForRoleReturnsNilWhenNoToken() {
+        XCTAssertNil(manager.loadToken(forRole: "operator"))
+    }
+
+    func testDefaultStoreTokenUsesNodeRole() throws {
+        try manager.storeToken("my-token")
+        XCTAssertEqual(manager.loadToken(forRole: "node"), "my-token")
+    }
+
+    func testDefaultLoadTokenUsesNodeRole() throws {
+        try manager.storeToken("my-token", forRole: "node")
+        XCTAssertEqual(manager.loadToken(), "my-token")
+    }
+
+    func testClearPairingRemovesBothRoleTokens() throws {
+        _ = try manager.generateIdentity()
+        try manager.storeToken("node-token", forRole: "node")
+        try manager.storeToken("operator-token", forRole: "operator")
+
+        manager.clearPairing()
+
+        XCTAssertNil(manager.loadToken(forRole: "node"))
+        XCTAssertNil(manager.loadToken(forRole: "operator"))
+    }
 }
 
 // MARK: - SimulatorKeychain Tests

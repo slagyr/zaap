@@ -50,28 +50,43 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     private let viewModel: VoiceChatViewModel
     private let voiceEngine: VoiceEngineProtocol
     private let gateway: GatewayConnecting
+    private let operatorGateway: GatewayConnecting?
     private let speaker: ResponseSpeaking
     private var sessionKey: String = ""
     @Published private(set) var isSessionActive = false
     @Published private(set) var isConversationModeOn = false
-    weak var sessionPicker: SessionPickerViewModel?
+    weak var sessionPicker: SessionPickerViewModel? {
+        didSet { operatorDelegate?.sessionPicker = sessionPicker }
+    }
     let needsRepairingPublisher = PassthroughSubject<Void, Never>()
     var logHandler: (String) -> Void = { print($0) }
     var micRestartDelay: TimeInterval = 0.5
     private var micRestartTask: Task<Void, Never>?
     private var recentSpokenTexts: [String] = []
     private let maxSpokenTextHistory = 10
+    private var operatorDelegate: OperatorGatewayDelegate?
 
     init(viewModel: VoiceChatViewModel,
          voiceEngine: VoiceEngineProtocol,
          gateway: GatewayConnecting,
-         speaker: ResponseSpeaking) {
+         speaker: ResponseSpeaking,
+         operatorGateway: GatewayConnecting? = nil) {
         self.viewModel = viewModel
         self.voiceEngine = voiceEngine
         self.gateway = gateway
+        self.operatorGateway = operatorGateway
         self.speaker = speaker
 
         gateway.delegate = self
+
+        if let opGw = operatorGateway {
+            let opDelegate = OperatorGatewayDelegate()
+            opDelegate.onChallengeFailed = { [weak self] in
+                self?.needsRepairingPublisher.send()
+            }
+            self.operatorDelegate = opDelegate
+            opGw.delegate = opDelegate
+        }
 
         speaker.onStateChange = { [weak self] newState in
             guard let self = self, self.isSessionActive else { return }
@@ -107,11 +122,15 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
     // MARK: - Gateway Connection
 
-    /// Connect the gateway eagerly (e.g. on view appear) so sessions load
+    /// Connect both gateways eagerly (e.g. on view appear) so sessions load
     /// without starting a voice session.
     func connectGateway(url: URL) {
-        guard gateway.state == .disconnected else { return }
-        gateway.connect(to: url)
+        if gateway.state == .disconnected {
+            gateway.connect(to: url)
+        }
+        if let opGw = operatorGateway, opGw.state == .disconnected {
+            opGw.connect(to: url)
+        }
     }
 
     // MARK: - Session Management
@@ -248,8 +267,10 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
     nonisolated func gatewayDidConnect() {
         Task { @MainActor in
-            // Load sessions whenever gateway connects (not just during active voice session)
-            await sessionPicker?.loadSessions()
+            // Load sessions via operator gateway if no separate operator connection exists
+            if operatorGateway == nil {
+                await sessionPicker?.loadSessions()
+            }
             guard isSessionActive else { return }
             // Gateway is ready — transition UI to listening and start capturing voice
             viewModel.tapMic() // idle → listening
@@ -372,6 +393,31 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             viewModel.handleResponseComplete()
         default:
             logHandler("⚠️ [VOICE] unhandled chat state=\(state)")
+        }
+    }
+}
+
+// MARK: - Operator Gateway Delegate
+
+/// Lightweight delegate for the operator gateway connection.
+/// Loads sessions when connected; forwards auth errors to the coordinator.
+final class OperatorGatewayDelegate: GatewayConnectionDelegate {
+    weak var sessionPicker: SessionPickerViewModel?
+    var onChallengeFailed: (() -> Void)?
+
+    nonisolated func gatewayDidConnect() {
+        Task { @MainActor in
+            await sessionPicker?.loadSessions()
+        }
+    }
+
+    nonisolated func gatewayDidDisconnect() {}
+
+    nonisolated func gatewayDidReceiveEvent(_ event: String, payload: [String: Any]) {}
+
+    nonisolated func gatewayDidFailWithError(_ error: GatewayConnectionError) {
+        if case .challengeFailed = error {
+            onChallengeFailed?()
         }
     }
 }

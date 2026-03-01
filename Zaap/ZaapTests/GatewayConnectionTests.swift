@@ -589,6 +589,122 @@ extension GatewayConnectionTests {
     }
 }
 
+// MARK: - Role Configuration
+
+extension GatewayConnectionTests {
+
+    func testDefaultRoleIsNode() {
+        XCTAssertEqual(connection.role.name, "node")
+    }
+
+    func testOperatorRoleSendsOperatorInConnectMessage() async throws {
+        let operatorConnection = GatewayConnection(
+            pairingManager: pairingManager,
+            webSocketFactory: mockWSFactory,
+            networkMonitor: mockNetworkMonitor,
+            role: .operator
+        )
+        operatorConnection.delegate = mockDelegate
+
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage(["type": "event", "event": "connect.challenge", "payload": ["nonce": "op-nonce"]])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+
+        _ = try pairingManager.generateIdentity()
+        try pairingManager.storeToken("op-token", forRole: "operator")
+
+        operatorConnection.connect(to: url)
+        try await Task.sleep(nanoseconds: 200_000_000)
+
+        let json = mockTask.sentJSON(at: 0)
+        let params = json?["params"] as? [String: Any]
+        XCTAssertEqual(params?["role"] as? String, "operator")
+        XCTAssertEqual(params?["scopes"] as? [String], ["operator.read"])
+        let client = params?["client"] as? [String: Any]
+        XCTAssertEqual(client?["mode"] as? String, "operator")
+    }
+
+    func testOperatorRoleLoadsOperatorToken() async throws {
+        let operatorConnection = GatewayConnection(
+            pairingManager: pairingManager,
+            webSocketFactory: mockWSFactory,
+            networkMonitor: mockNetworkMonitor,
+            role: .operator
+        )
+        operatorConnection.delegate = mockDelegate
+
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage(["type": "event", "event": "connect.challenge", "payload": ["nonce": "op-nonce"]])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+
+        _ = try pairingManager.generateIdentity()
+        try pairingManager.storeToken("node-token", forRole: "node")
+        try pairingManager.storeToken("operator-token", forRole: "operator")
+
+        operatorConnection.connect(to: url)
+        try await Task.sleep(nanoseconds: 200_000_000)
+
+        let json = mockTask.sentJSON(at: 0)
+        let params = json?["params"] as? [String: Any]
+        let auth = params?["auth"] as? [String: Any]
+        XCTAssertEqual(auth?["token"] as? String, "operator-token")
+    }
+
+    func testNodeRoleLoadsNodeToken() async throws {
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage(["type": "event", "event": "connect.challenge", "payload": ["nonce": "node-nonce"]])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+
+        _ = try pairingManager.generateIdentity()
+        try pairingManager.storeToken("node-token", forRole: "node")
+        try pairingManager.storeToken("operator-token", forRole: "operator")
+
+        connection.connect(to: url)
+        try await Task.sleep(nanoseconds: 200_000_000)
+
+        let json = mockTask.sentJSON(at: 0)
+        let params = json?["params"] as? [String: Any]
+        let auth = params?["auth"] as? [String: Any]
+        XCTAssertEqual(auth?["token"] as? String, "node-token")
+    }
+
+    func testOperatorRoleStoresOperatorDeviceToken() async throws {
+        let operatorConnection = GatewayConnection(
+            pairingManager: pairingManager,
+            webSocketFactory: mockWSFactory,
+            networkMonitor: mockNetworkMonitor,
+            role: .operator
+        )
+        operatorConnection.delegate = mockDelegate
+
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage([
+                "type": "res", "id": "1", "ok": true,
+                "payload": ["type": "hello-ok", "auth": ["deviceToken": "new-op-token"]]
+            ])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+
+        _ = try pairingManager.generateIdentity()
+        operatorConnection.connect(to: url)
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(pairingManager.loadToken(forRole: "operator"), "new-op-token")
+        XCTAssertNil(pairingManager.loadToken(forRole: "node"), "Operator token should not overwrite node token")
+    }
+}
+
 // MARK: - Error Classification
 
 extension GatewayConnectionTests {
