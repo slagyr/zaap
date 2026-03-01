@@ -81,9 +81,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
         if let opGw = operatorGateway {
             let opDelegate = OperatorGatewayDelegate()
-            opDelegate.onChallengeFailed = { [weak self] in
-                self?.needsRepairingPublisher.send()
-            }
+            opDelegate.logHandler = logHandler
             self.operatorDelegate = opDelegate
             opGw.delegate = opDelegate
         }
@@ -400,10 +398,12 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 // MARK: - Operator Gateway Delegate
 
 /// Lightweight delegate for the operator gateway connection.
-/// Loads sessions when connected; forwards auth errors to the coordinator.
+/// Loads sessions when connected. Does NOT forward challengeFailed to needsRepairingPublisher
+/// because operator auth failures are expected during first-time role-upgrade pairing and
+/// should not wipe the node's valid pairing state.
 final class OperatorGatewayDelegate: GatewayConnectionDelegate {
     weak var sessionPicker: SessionPickerViewModel?
-    var onChallengeFailed: (() -> Void)?
+    var logHandler: (String) -> Void = { print($0) }
 
     nonisolated func gatewayDidConnect() {
         Task { @MainActor in
@@ -416,8 +416,13 @@ final class OperatorGatewayDelegate: GatewayConnectionDelegate {
     nonisolated func gatewayDidReceiveEvent(_ event: String, payload: [String: Any]) {}
 
     nonisolated func gatewayDidFailWithError(_ error: GatewayConnectionError) {
-        if case .challengeFailed = error {
-            onChallengeFailed?()
+        switch error {
+        case .challengeFailed(let msg):
+            logHandler("⚠️ [OPERATOR] auth failed (role-upgrade needed?): \(msg)")
+        case .requestFailed(let msg):
+            logHandler("⚠️ [OPERATOR] request failed: \(msg)")
+        default:
+            break
         }
     }
 }
