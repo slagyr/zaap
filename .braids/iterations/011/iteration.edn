@@ -6,8 +6,7 @@
            {:id "zaap-9nl" :title "Response text truncated — only first few words appear on screen"}
            {:id "zaap-d8p" :title "AEC insufficient on real device — need software echo suppression"}
            {:id "zaap-qpt" :title "Persistent webhook retry queue — retry failed pushes on reconnect"}
-           {:id "zaap-7c1" :title "Fix error routing: non-auth errors misclassified as challengeFailed"}
-           {:id "zaap-z8h" :title "Add operator WebSocket connection for session listing and chat"}]
+           {:id "zaap-kck" :title "Show pending retry count at top of request log (depends on zaap-qpt)"}]
  :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
               "No force unwraps (!) anywhere in codebase"
               "Tests must pass before commit — run xcodebuild test first"
@@ -18,6 +17,4 @@
          "zaap-bgg P1 — re-pairing every launch is blocking usability"
          "zaap-3bz P1 — transcript cut-off makes voice unusable"
          "zaap-9nl P1 — truncated responses make output unreadable"
-         "zaap-d8p P1 — AEC on real device still needs improvement"
-         "zaap-7c1 P1 — error routing fix must land before operator connection work"
-         "zaap-z8h P1 — operator connection enables sessions.list; depends on zaap-7c1"]}
+         "zaap-d8p P1 — AEC on real device still needs improvement"]}
