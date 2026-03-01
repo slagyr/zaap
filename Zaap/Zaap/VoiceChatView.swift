@@ -7,6 +7,8 @@ struct VoiceChatView: View {
     @StateObject private var coordinator: VoiceChatCoordinator
     @StateObject private var sessionPicker: SessionPickerViewModel
     @State private var isPaired = false
+    @StateObject private var sttDiagnosticsVM = STTDiagnosticsViewModel()
+    @StateObject private var sttDiagnosticsCoordinator: STTDiagnosticsCoordinator
 
     init() {
         let vm = VoiceChatViewModel()
@@ -42,6 +44,20 @@ struct VoiceChatView: View {
         let picker = SessionPickerViewModel(sessionLister: operatorGateway, sessionPreviewer: operatorGateway)
         coord.sessionPicker = picker
         _sessionPicker = StateObject(wrappedValue: picker)
+
+        let diagVM = STTDiagnosticsViewModel()
+        let diagEngine = VoiceEngine(
+            speechRecognizer: RealSpeechRecognizer(),
+            audioEngine: RealAudioEngineProvider(),
+            audioSession: RealAudioSessionConfigurator(),
+            timerFactory: RealTimerFactory()
+        )
+        let diagCoord = STTDiagnosticsCoordinator(
+            diagnosticsViewModel: diagVM,
+            voiceEngine: diagEngine
+        )
+        _sttDiagnosticsVM = StateObject(wrappedValue: diagVM)
+        _sttDiagnosticsCoordinator = StateObject(wrappedValue: diagCoord)
     }
 
     var body: some View {
@@ -90,6 +106,22 @@ struct VoiceChatView: View {
 
     private var micUI: some View {
         VStack(spacing: 0) {
+            // Debug gear button — top right
+            HStack {
+                Spacer()
+                debugGearMenu
+            }
+            .padding(.horizontal)
+            .padding(.top, 4)
+
+            // STT Diagnostics panel — shown when active
+            if sttDiagnosticsVM.isActive {
+                STTDiagnosticsView(viewModel: sttDiagnosticsVM)
+                    .frame(maxHeight: 250)
+                    .padding(.horizontal, 8)
+                    .padding(.bottom, 4)
+            }
+
             // Conversation log — fills all remaining vertical space
             ScrollViewReader { proxy in
                 ScrollView {
@@ -267,6 +299,45 @@ struct VoiceChatView: View {
 
     private var micAccessibilityLabel: String {
         coordinator.isConversationModeOn ? "Turn off conversation mode" : "Turn on conversation mode"
+    }
+
+    // MARK: - Debug Gear Menu
+
+    private var debugGearMenu: some View {
+        Menu {
+            Button(action: toggleSTTDebug) {
+                Label(
+                    sttDiagnosticsCoordinator.isRunning ? "Stop STT Debug" : "STT Debug",
+                    systemImage: sttDiagnosticsCoordinator.isRunning ? "stop.circle" : "waveform"
+                )
+            }
+            if sttDiagnosticsVM.isActive || !sttDiagnosticsVM.logEntries.isEmpty {
+                Button(role: .destructive, action: {
+                    sttDiagnosticsCoordinator.stop()
+                    sttDiagnosticsVM.clearLog()
+                }) {
+                    Label("Clear STT Log", systemImage: "trash")
+                }
+            }
+        } label: {
+            Image(systemName: "gearshape")
+                .font(.system(size: 16))
+                .foregroundColor(.secondary)
+                .frame(width: 32, height: 32)
+        }
+        .accessibilityLabel("Debug menu")
+    }
+
+    private func toggleSTTDebug() {
+        if sttDiagnosticsCoordinator.isRunning {
+            sttDiagnosticsCoordinator.stop()
+        } else {
+            // Stop any active voice session first to avoid audio conflicts
+            if coordinator.isSessionActive {
+                coordinator.stopSession()
+            }
+            sttDiagnosticsCoordinator.start()
+        }
     }
 }
 

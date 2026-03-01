@@ -89,6 +89,11 @@
 		W10004 /* RetryDrainServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20004 /* RetryDrainServiceTests.swift */; };
 		W10005 /* RetryingWebhookClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20005 /* RetryingWebhookClient.swift */; };
 		W10006 /* RetryingWebhookClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20006 /* RetryingWebhookClientTests.swift */; };
+		X10001 /* STTDiagnosticsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = X20001 /* STTDiagnosticsViewModel.swift */; };
+		X10002 /* STTDiagnosticsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = X20002 /* STTDiagnosticsViewModelTests.swift */; };
+		X10003 /* STTDiagnosticsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = X20003 /* STTDiagnosticsCoordinator.swift */; };
+		X10004 /* STTDiagnosticsCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = X20004 /* STTDiagnosticsCoordinatorTests.swift */; };
+		X10005 /* STTDiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = X20005 /* STTDiagnosticsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -188,6 +193,11 @@
 		W20004 /* RetryDrainServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryDrainServiceTests.swift; sourceTree = "<group>"; };
 		W20005 /* RetryingWebhookClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryingWebhookClient.swift; sourceTree = "<group>"; };
 		W20006 /* RetryingWebhookClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryingWebhookClientTests.swift; sourceTree = "<group>"; };
+		X20001 /* STTDiagnosticsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTDiagnosticsViewModel.swift; sourceTree = "<group>"; };
+		X20002 /* STTDiagnosticsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTDiagnosticsViewModelTests.swift; sourceTree = "<group>"; };
+		X20003 /* STTDiagnosticsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTDiagnosticsCoordinator.swift; sourceTree = "<group>"; };
+		X20004 /* STTDiagnosticsCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTDiagnosticsCoordinatorTests.swift; sourceTree = "<group>"; };
+		X20005 /* STTDiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTDiagnosticsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -266,6 +276,9 @@
 				V20001 /* SessionPickerViewModel.swift */,
 				V20002 /* SessionPickerView.swift */,
 				V20001 /* SessionPickerViewModel.swift */,
+				X20001 /* STTDiagnosticsViewModel.swift */,
+				X20003 /* STTDiagnosticsCoordinator.swift */,
+				X20005 /* STTDiagnosticsView.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -329,6 +342,8 @@
 				W20002 /* WebhookRetryQueueTests.swift */,
 				W20004 /* RetryDrainServiceTests.swift */,
 				W20006 /* RetryingWebhookClientTests.swift */,
+				X20002 /* STTDiagnosticsViewModelTests.swift */,
+				X20004 /* STTDiagnosticsCoordinatorTests.swift */,
 			);
 			path = ZaapTests;
 			sourceTree = "<group>";
@@ -472,6 +487,9 @@
 				V10002 /* SessionPickerView.swift in Sources */,
 				V10001 /* SessionPickerViewModel.swift in Sources */,
 				E6606BBF48384523A4EAF3E7 /* SessionPickerViewModel.swift in Sources */,
+				X10001 /* STTDiagnosticsViewModel.swift in Sources */,
+				X10003 /* STTDiagnosticsCoordinator.swift in Sources */,
+				X10005 /* STTDiagnosticsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -513,6 +531,8 @@
 				W10002 /* WebhookRetryQueueTests.swift in Sources */,
 				W10004 /* RetryDrainServiceTests.swift in Sources */,
 				W10006 /* RetryingWebhookClientTests.swift in Sources */,
+				X10002 /* STTDiagnosticsViewModelTests.swift in Sources */,
+				X10004 /* STTDiagnosticsCoordinatorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
