@@ -514,7 +514,7 @@ final class VoiceEngineTests: XCTestCase {
     }
 
     @MainActor
-    func testSecondUtteranceEmitsOnlyNewPortion() async {
+    func testSecondUtteranceEmitsFullTextFromNewTask() async {
         var emittedTranscripts: [String] = []
         engine.onUtteranceComplete = { text in emittedTranscripts.append(text) }
 
@@ -526,9 +526,9 @@ final class VoiceEngineTests: XCTestCase {
 
         XCTAssertEqual(emittedTranscripts, ["First utterance"])
 
-        // After emit+restart, new task created. Simulate cumulative text on it.
+        // After emit+restart, new task starts fresh. Simulate new speech.
         let latestTask = speechRecognizer.allCreatedTasks.last!
-        latestTask.simulateResult("First utterance second part", isFinal: false)
+        latestTask.simulateResult("Second thing entirely", isFinal: false)
         await Task.yield()
         RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
 
@@ -536,8 +536,8 @@ final class VoiceEngineTests: XCTestCase {
         await Task.yield()
         RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
 
-        XCTAssertEqual(emittedTranscripts, ["First utterance", "second part"],
-                       "Should only emit the new portion after the last emitted offset")
+        XCTAssertEqual(emittedTranscripts, ["First utterance", "Second thing entirely"],
+                       "New task starts fresh so full transcript should be emitted")
     }
 
     @MainActor
@@ -568,7 +568,7 @@ final class VoiceEngineTests: XCTestCase {
     }
 
     @MainActor
-    func testLateCallbackAfterEmitDoesNotReEmitOldText() async {
+    func testRestartTimerDoesNotEmitWithoutNewPartials() async {
         var emittedTranscripts: [String] = []
         engine.onUtteranceComplete = { text in emittedTranscripts.append(text) }
 
@@ -581,17 +581,15 @@ final class VoiceEngineTests: XCTestCase {
 
         XCTAssertEqual(emittedTranscripts, ["Complete sentence here"])
 
-        let latestTask = speechRecognizer.allCreatedTasks.last!
-        latestTask.simulateResult("Complete sentence here", isFinal: false)
-        await Task.yield()
-        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
-
+        // The restart silence timer fires without any new speech from the new task.
+        // currentTranscript was set to "" by restartRecognition resetting state,
+        // so there's nothing to emit.
         timerFactory.lastFireHandler?()
         await Task.yield()
         RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
 
         XCTAssertEqual(emittedTranscripts, ["Complete sentence here"],
-                       "Late callback with same text should not cause re-emission")
+                       "Restart timer firing with no new partials should not emit anything")
     }
 
     @MainActor
@@ -629,5 +627,94 @@ final class VoiceEngineTests: XCTestCase {
         XCTAssertNil(emittedTranscript, "Short utterance should not be emitted")
         XCTAssertGreaterThan(timerToken.invalidateCount, 0,
                              "Silence timer should be invalidated even when utterance is too short to emit")
+    }
+
+    // MARK: - Bug Fix: Silence timer must run after utterance restart
+
+    @MainActor
+    func testSilenceTimerRunsAfterUtteranceEmitAndRestart() async {
+        var emittedTranscripts: [String] = []
+        engine.onUtteranceComplete = { text in emittedTranscripts.append(text) }
+
+        engine.startListening()
+        await simulateResultAndWait("Hello world test", isFinal: false)
+
+        // Emit via silence timer
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(emittedTranscripts, ["Hello world test"])
+
+        // After restart, a new silence timer should be scheduled immediately
+        // (to catch the case where no new partials arrive — the user already stopped talking)
+        let timerCountAfterRestart = timerFactory.allTokens.count
+        XCTAssertGreaterThan(timerCountAfterRestart, 1,
+                             "A silence timer should be scheduled after recognition restart so continued silence triggers a cut")
+    }
+
+    // MARK: - Bug Fix: lastEmittedLength reset after restart
+
+    @MainActor
+    func testRestartRecognitionResetsEmittedOffset() async {
+        var emittedTranscripts: [String] = []
+        engine.onUtteranceComplete = { text in emittedTranscripts.append(text) }
+
+        engine.startListening()
+        await simulateResultAndWait("Have you ever told you about my Nazi knock knock joke", isFinal: false)
+
+        // Emit first utterance via silence timer
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(emittedTranscripts.count, 1)
+
+        // New task created by restartRecognition — simulate a completely new transcript
+        let newTask = speechRecognizer.allCreatedTasks.last!
+        newTask.simulateResult("Knock knock who's there", isFinal: false)
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        // Emit second utterance — should be the FULL new transcript, not truncated
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(emittedTranscripts, [
+            "Have you ever told you about my Nazi knock knock joke",
+            "Knock knock who's there"
+        ], "After restart, emit should use full new transcript, not drop characters from old offset")
+    }
+
+    @MainActor
+    func testSilenceTimerAfterRestartFiresWithoutNewPartials() async {
+        var emittedTranscripts: [String] = []
+        engine.onUtteranceComplete = { text in emittedTranscripts.append(text) }
+
+        engine.startListening()
+        await simulateResultAndWait("First sentence here", isFinal: false)
+
+        // Emit first utterance
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(emittedTranscripts, ["First sentence here"])
+
+        // The restart timer fires without any new partials arriving —
+        // this simulates the case where user stopped talking entirely.
+        // Since there's no new text (or text is too short), it should NOT crash
+        // and should NOT emit garbage.
+        let restartTimerHandler = timerFactory.lastFireHandler
+        XCTAssertNotNil(restartTimerHandler, "A timer handler should exist after restart")
+
+        restartTimerHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        // Should still only have the first emission — no new text arrived
+        XCTAssertEqual(emittedTranscripts, ["First sentence here"],
+                       "Firing silence timer after restart with no new partials should not emit anything")
     }
 }

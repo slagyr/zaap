@@ -129,15 +129,12 @@ final class STTDiagnosticsCoordinatorTests: XCTestCase {
         XCTAssertTrue(events.contains(.utteranceEmitted("complete sentence")))
     }
 
-    func testUtteranceCompleteLogsSilenceThresholdHit() {
+    func testUtteranceCompleteLogsSilenceThresholdHitWithElapsed() {
+        voiceEngine.silenceThreshold = 1.5
         coordinator.start()
         voiceEngine.onUtteranceComplete?("complete sentence")
         let events = diagnosticsVM.logEntries.map(\.event)
-        let hasSilenceHit = events.contains { event in
-            if case .silenceThresholdHit = event { return true }
-            return false
-        }
-        XCTAssertTrue(hasSilenceHit)
+        XCTAssertTrue(events.contains(.silenceThresholdHit(elapsed: 1.5)))
     }
 
     func testUtteranceCompleteClearsPartialTranscript() {

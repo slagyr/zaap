@@ -7,6 +7,7 @@ import Combine
 protocol VoiceEngineProtocol: AnyObject {
     var isListening: Bool { get }
     var currentTranscript: String { get }
+    var silenceThreshold: TimeInterval { get }
     var onUtteranceComplete: ((String) -> Void)? { get set }
     var onPartialTranscript: ((String) -> Void)? { get set }
     var onError: ((VoiceEngineError) -> Void)? { get set }

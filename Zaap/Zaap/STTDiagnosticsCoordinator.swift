@@ -29,7 +29,8 @@ final class STTDiagnosticsCoordinator: ObservableObject {
         }
 
         voiceEngine.onUtteranceComplete = { [weak self] text in
-            self?.diagnosticsViewModel.appendLog(.silenceThresholdHit(elapsed: 0))
+            let threshold = self?.voiceEngine.silenceThreshold ?? 0
+            self?.diagnosticsViewModel.appendLog(.silenceThresholdHit(elapsed: threshold))
             self?.diagnosticsViewModel.appendLog(.utteranceEmitted(text))
             self?.diagnosticsViewModel.updatePartialTranscript("")
             self?.diagnosticsViewModel.clearSilenceTimer()

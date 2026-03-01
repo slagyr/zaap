@@ -220,11 +220,14 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         let newPortion = String(full.dropFirst(lastEmittedLength)).trimmingCharacters(in: .whitespacesAndNewlines)
         guard newPortion.count >= minimumTranscriptLength else { return }
         onUtteranceComplete?(newPortion)
-        lastEmittedLength = full.count
+        lastEmittedLength = 0
         restartRecognition()
     }
 
     private func restartRecognition() {
+        // Reset transcript state — new task starts fresh.
+        currentTranscript = ""
+
         // Tear down the current recognition task so the next callback does not
         // restore the old accumulated transcript into currentTranscript.
         recognitionTask?.cancel()
@@ -267,6 +270,10 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
                 }
             }
         }
+
+        // Schedule a silence timer so that if no new partials arrive
+        // (user already stopped talking), the silence cut still fires.
+        resetSilenceTimer()
     }
 }
 

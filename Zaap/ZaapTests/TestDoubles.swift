@@ -180,6 +180,7 @@ final class MockWorkoutReader: WorkoutReading {
 final class MockVoiceEngine: VoiceEngineProtocol {
     var isListening = false
     var currentTranscript = ""
+    var silenceThreshold: TimeInterval = 1.5
     var onUtteranceComplete: ((String) -> Void)?
     var onPartialTranscript: ((String) -> Void)?
     var onError: ((VoiceEngineError) -> Void)?
