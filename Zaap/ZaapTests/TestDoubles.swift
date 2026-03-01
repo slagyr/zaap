@@ -199,7 +199,7 @@ final class MockVoiceEngine: VoiceEngineProtocol {
 
 // MARK: - Mock Gateway Connecting
 
-final class MockGatewayConnecting: GatewayConnecting {
+final class MockGatewayConnecting: GatewayConnecting, SessionListing {
     var state: ConnectionState = .disconnected
     weak var delegate: GatewayConnectionDelegate?
     var connectURL: URL?

@@ -100,6 +100,15 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         }
     }
 
+    // MARK: - Gateway Connection
+
+    /// Connect the gateway eagerly (e.g. on view appear) so sessions load
+    /// without starting a voice session.
+    func connectGateway(url: URL) {
+        guard gateway.state == .disconnected else { return }
+        gateway.connect(to: url)
+    }
+
     // MARK: - Session Management
 
     func startSession(gatewayURL: URL, sessionKey: String? = nil) {

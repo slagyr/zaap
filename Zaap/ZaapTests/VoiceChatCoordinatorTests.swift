@@ -721,6 +721,57 @@ extension VoiceChatCoordinatorTests {
 
 }
 
+// MARK: - Eager Gateway Connection
+
+extension VoiceChatCoordinatorTests {
+
+    func testConnectGatewayConnectsWithoutStartingSession() {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.connectGateway(url: url)
+
+        XCTAssertEqual(gateway.connectURL, url, "Should connect to the provided URL")
+        XCTAssertFalse(coordinator.isSessionActive, "Should not start a session")
+        XCTAssertFalse(coordinator.isConversationModeOn, "Should not enable conversation mode")
+        XCTAssertFalse(voiceEngine.startListeningCalled, "Should not start voice engine")
+    }
+
+    func testConnectGatewayTriggersSessionLoad() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        let picker = SessionPickerViewModel(sessionLister: gateway)
+        coordinator.sessionPicker = picker
+        gateway.sessionsToReturn = [
+            GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main"),
+            GatewaySession(key: "agent:main:discord:abc", title: "Discord", lastMessage: nil, channelType: "discord")
+        ]
+
+        coordinator.connectGateway(url: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertEqual(picker.sessions.count, 2, "Sessions should be loaded after eager connect")
+        XCTAssertFalse(coordinator.isSessionActive, "Session should not be active after eager connect")
+        XCTAssertFalse(voiceEngine.startListeningCalled, "Mic should not start after eager connect")
+    }
+
+    func testConnectGatewaySkipsIfAlreadyConnected() {
+        let url = URL(string: "wss://gateway.local:18789")!
+        gateway.state = .connected
+
+        coordinator.connectGateway(url: url)
+
+        XCTAssertNil(gateway.connectURL, "Should not call connect when already connected")
+    }
+
+    func testConnectGatewaySkipsIfAlreadyConnecting() {
+        let url = URL(string: "wss://gateway.local:18789")!
+        gateway.state = .connecting
+
+        coordinator.connectGateway(url: url)
+
+        XCTAssertNil(gateway.connectURL, "Should not call connect when already connecting")
+    }
+}
+
 // MARK: - Gateway Event Logging
 
 extension VoiceChatCoordinatorTests {

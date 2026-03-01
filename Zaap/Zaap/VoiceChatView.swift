@@ -50,7 +50,10 @@ struct VoiceChatView: View {
             // Check if device is already paired with gateway
             let mgr = NodePairingManager()
             isPaired = mgr.isPaired
-            // Sessions load automatically when gateway connects (see VoiceChatCoordinator.gatewayDidConnect)
+            // Connect gateway eagerly so session picker populates before mic tap
+            if isPaired, let url = SettingsManager.shared.voiceWebSocketURL {
+                coordinator.connectGateway(url: url)
+            }
             // Request microphone + speech recognition authorization
             AVAudioSession.sharedInstance().requestRecordPermission { _ in }
             SFSpeechRecognizer.requestAuthorization { _ in }
