@@ -15,6 +15,7 @@ protocol AudioPlayerNodeProtocol {
     func pause()
     func stop()
     func scheduleBuffer(_ buffer: AVAudioPCMBuffer)
+    func scheduleBuffer(_ buffer: AVAudioPCMBuffer, completionHandler: @escaping () -> Void)
 }
 
 protocol PlaybackEngineProtocol {
@@ -34,6 +35,8 @@ class TTSAudioPlayer {
 
     private(set) var isPlaying = false
     private(set) var isPaused = false
+    private var pendingBufferCount = 0
+    private var synthesisComplete = false
 
     var onWordBoundary: ((NSRange) -> Void)?
     var onFinish: (() -> Void)?
@@ -63,19 +66,24 @@ class TTSAudioPlayer {
         playerNode.play()
         isPlaying = true
         isPaused = false
+        pendingBufferCount = 0
+        synthesisComplete = false
 
         synthesizer.synthesize(
             utterance: utterance,
             bufferCallback: { [weak self] buffer in
                 guard let pcmBuffer = buffer as? AVAudioPCMBuffer else { return }
-                self?.playerNode.scheduleBuffer(pcmBuffer)
+                self?.pendingBufferCount += 1
+                self?.playerNode.scheduleBuffer(pcmBuffer) { [weak self] in
+                    self?.bufferCompleted()
+                }
             },
             markerCallback: { [weak self] range in
                 self?.onWordBoundary?(range)
             },
             finishCallback: { [weak self] in
-                self?.isPlaying = false
-                self?.onFinish?()
+                self?.synthesisComplete = true
+                self?.checkFinished()
             }
         )
     }
@@ -98,5 +106,20 @@ class TTSAudioPlayer {
         synthesizer.cancelSynthesis()
         isPlaying = false
         isPaused = false
+        pendingBufferCount = 0
+        synthesisComplete = false
+    }
+
+    // MARK: - Buffer Completion Tracking
+
+    private func bufferCompleted() {
+        pendingBufferCount -= 1
+        checkFinished()
+    }
+
+    private func checkFinished() {
+        guard synthesisComplete, pendingBufferCount <= 0 else { return }
+        isPlaying = false
+        onFinish?()
     }
 }
