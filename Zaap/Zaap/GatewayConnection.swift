@@ -592,7 +592,8 @@ extension GatewayConnection: SessionPreviewing {
         let requestId = UUID().uuidString
         let params: [String: Any] = [
             "keys": [key],
-            "limit": limit
+            "limit": limit,
+            "maxChars": 2000
         ]
 
         let message: [String: Any] = [

@@ -912,6 +912,7 @@ extension GatewayConnectionTests {
         XCTAssertEqual(json["method"] as? String, "sessions.preview")
         XCTAssertEqual(params["keys"] as? [String], ["agent:main:discord:channel:123"])
         XCTAssertEqual(params["limit"] as? Int, 5)
+        XCTAssertEqual(params["maxChars"] as? Int, 2000)
         XCTAssertNil(params["sessionKey"], "Should not send sessionKey — API expects keys array")
     }
 

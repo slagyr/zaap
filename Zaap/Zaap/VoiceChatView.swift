@@ -112,6 +112,7 @@ struct VoiceChatView: View {
             isPaired = false
         }
         .onChange(of: sessionPicker.selectedSessionKey) { _, newKey in
+            coordinator.updateSessionKey(newKey)
             Task {
                 await sessionPicker.loadPreview(forSession: newKey)
             }

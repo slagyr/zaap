@@ -134,6 +134,10 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
     // MARK: - Session Management
 
+    func updateSessionKey(_ key: String) {
+        sessionKey = key
+    }
+
     func startSession(gatewayURL: URL, sessionKey: String? = nil) {
         self.sessionKey = sessionKey ?? UUID().uuidString
         isSessionActive = true

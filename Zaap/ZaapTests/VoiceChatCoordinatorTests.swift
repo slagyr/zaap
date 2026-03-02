@@ -220,6 +220,39 @@ final class VoiceChatCoordinatorTests: XCTestCase {
         XCTAssertNotEqual(gateway.sentTranscripts[0].sessionKey, gateway.sentTranscripts[1].sessionKey)
     }
 
+    func testUpdateSessionKeyChangesSessionKeyDuringActiveSession() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main")
+        gateway.simulateConnect()
+
+        voiceEngine.onUtteranceComplete?("Hello from main")
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        coordinator.updateSessionKey("agent:main:discord:channel:123")
+
+        voiceEngine.onUtteranceComplete?("Hello from discord")
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertEqual(gateway.sentTranscripts.count, 2)
+        XCTAssertEqual(gateway.sentTranscripts[0].sessionKey, "agent:main:main")
+        XCTAssertEqual(gateway.sentTranscripts[1].sessionKey, "agent:main:discord:channel:123")
+    }
+
+    func testUpdateSessionKeyWorksWhenSessionInactive() async throws {
+        coordinator.updateSessionKey("agent:main:discord:channel:456")
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: nil)
+        gateway.simulateConnect()
+
+        voiceEngine.onUtteranceComplete?("Hello")
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // When sessionKey is nil, startSession generates a UUID — not the pre-set key
+        // This test verifies updateSessionKey doesn't break startSession's own key assignment
+        XCTAssertEqual(gateway.sentTranscripts.count, 1)
+        XCTAssertFalse(gateway.sentTranscripts[0].sessionKey.isEmpty)
+    }
+
     // MARK: - Stop Session Stops Speaking
 
     func testStopSessionPreventsIncomingResponseFromSpeaking() async throws {
