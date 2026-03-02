@@ -34,16 +34,6 @@ final class TTSAudioPlayerTests: XCTestCase {
         XCTAssertEqual(mockSynthesizer.lastUtteranceText, "Hello world")
     }
 
-    func testPlayAttachesPlayerNodeToEngine() {
-        player.play(text: "Hello world")
-        XCTAssertTrue(mockEngine.attachCalled)
-    }
-
-    func testPlayConnectsPlayerNodeToMixer() {
-        player.play(text: "Hello world")
-        XCTAssertTrue(mockEngine.connectCalled)
-    }
-
     func testPlayStartsEngine() {
         player.play(text: "Hello world")
         XCTAssertTrue(mockEngine.startCalled)
@@ -87,12 +77,6 @@ final class TTSAudioPlayerTests: XCTestCase {
         player.play(text: "Hello")
         player.stop()
         XCTAssertTrue(mockPlayerNode.stopCalled)
-    }
-
-    func testStopDetachesPlayerNode() {
-        player.play(text: "Hello")
-        player.stop()
-        XCTAssertTrue(mockEngine.detachCalled)
     }
 
     // MARK: - State
@@ -206,11 +190,6 @@ final class TTSAudioPlayerTests: XCTestCase {
         XCTAssertNotNil(receivedError)
     }
 
-    func testPlayDetachesPlayerNodeWhenEngineStartFails() {
-        mockEngine.startError = NSError(domain: "AVAudioEngine", code: -1, userInfo: nil)
-        player.play(text: "Hello")
-        XCTAssertTrue(mockEngine.detachCalled)
-    }
 }
 
 // MARK: - Test Doubles
@@ -289,28 +268,13 @@ final class MockAudioPlayerNode: AudioPlayerNodeProtocol {
 }
 
 final class MockPlaybackEngine: PlaybackEngineProtocol {
-    var attachCalled = false
-    var connectCalled = false
     var startCalled = false
-    var detachCalled = false
     var startError: Error?
-
-    func attachPlayerNode(_ node: AudioPlayerNodeProtocol) {
-        attachCalled = true
-    }
-
-    func connectPlayerNode(_ node: AudioPlayerNodeProtocol, format: AVAudioFormat?) {
-        connectCalled = true
-    }
 
     func start() throws {
         startCalled = true
         if let error = startError {
             throw error
         }
-    }
-
-    func detachPlayerNode(_ node: AudioPlayerNodeProtocol) {
-        detachCalled = true
     }
 }

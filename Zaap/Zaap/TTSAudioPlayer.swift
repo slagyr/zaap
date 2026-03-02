@@ -19,10 +19,7 @@ protocol AudioPlayerNodeProtocol {
 }
 
 protocol PlaybackEngineProtocol {
-    func attachPlayerNode(_ node: AudioPlayerNodeProtocol)
-    func connectPlayerNode(_ node: AudioPlayerNodeProtocol, format: AVAudioFormat?)
     func start() throws
-    func detachPlayerNode(_ node: AudioPlayerNodeProtocol)
 }
 
 // MARK: - TTSAudioPlayer
@@ -52,13 +49,10 @@ class TTSAudioPlayer {
 
     func play(text: String) {
         let utterance = AVSpeechUtterance(string: text)
-        engine.attachPlayerNode(playerNode)
-        engine.connectPlayerNode(playerNode, format: nil)
 
         do {
             try engine.start()
         } catch {
-            engine.detachPlayerNode(playerNode)
             onError?(error)
             return
         }
@@ -102,7 +96,6 @@ class TTSAudioPlayer {
 
     func stop() {
         playerNode.stop()
-        engine.detachPlayerNode(playerNode)
         synthesizer.cancelSynthesis()
         isPlaying = false
         isPaused = false

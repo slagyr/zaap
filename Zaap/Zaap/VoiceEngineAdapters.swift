@@ -109,29 +109,46 @@ final class RealSpeechRecognitionRequest: SpeechRecognitionRequesting {
 // MARK: - Real AVAudioEngine Adapter
 
 final class RealAudioEngineProvider: AudioEngineProviding {
-    private let engine = AVAudioEngine()
+    let rawEngine = AVAudioEngine()
+    let ttsPlayerNode = RealAudioPlayerNode()
 
-    var isRunning: Bool { engine.isRunning }
+    init() {
+        // Attach player node BEFORE engine starts so VPIO includes it in graph.
+        rawEngine.attach(ttsPlayerNode.node)
 
-    func prepare() { engine.prepare() }
+        // Enable voice processing on input node (engine must be stopped).
+        do {
+            try rawEngine.inputNode.setVoiceProcessingEnabled(true)
+        } catch {
+            print("Could not enable voice processing: \(error)")
+        }
 
-    func start() throws { try engine.start() }
+        // Connect player node to mainMixer for TTS playback through VPIO.
+        let ttsFormat = AVAudioFormat(standardFormatWithSampleRate: 22050, channels: 1)!
+        rawEngine.connect(ttsPlayerNode.node, to: rawEngine.mainMixerNode, format: ttsFormat)
+    }
 
-    func stop() { engine.stop() }
+    var isRunning: Bool { rawEngine.isRunning }
+
+    func prepare() { rawEngine.prepare() }
+
+    func start() throws { try rawEngine.start() }
+
+    func stop() { rawEngine.stop() }
 
     func installTap(onBus bus: Int, bufferSize: UInt32, format: AVAudioFormat?,
                      block: @escaping (AVAudioPCMBuffer) -> Void) {
-        engine.inputNode.installTap(onBus: bus, bufferSize: bufferSize, format: format) { buffer, _ in
+        rawEngine.inputNode.installTap(onBus: bus, bufferSize: bufferSize, format: format) { buffer, _ in
             block(buffer)
         }
     }
 
     func removeTap(onBus bus: Int) {
-        engine.inputNode.removeTap(onBus: bus)
+        rawEngine.inputNode.removeTap(onBus: bus)
     }
 
     func inputFormat(forBus bus: Int) -> AVAudioFormat {
-        engine.inputNode.outputFormat(forBus: bus)
+        rawEngine.inputNode.outputFormat(forBus: bus)
     }
 }
 
@@ -363,33 +380,19 @@ final class RealAudioPlayerNode: AudioPlayerNodeProtocol {
 
 // MARK: - Real Playback Engine
 
-/// Dedicated AVAudioEngine for TTS playback output.
-/// Uses its own engine separate from the mic-capture engine to avoid
-/// conflicts with Voice Processing IO graph management.
+/// Uses the shared AVAudioEngine for TTS playback output.
+/// The player node must be attached and connected before the engine starts
+/// so that VPIO includes it in its graph for echo cancellation.
 final class RealPlaybackEngine: PlaybackEngineProtocol {
-    private let engine = AVAudioEngine()
+    private let engine: AVAudioEngine
 
-    func attachPlayerNode(_ node: AudioPlayerNodeProtocol) {
-        guard let realNode = node as? RealAudioPlayerNode else { return }
-        engine.attach(realNode.node)
-    }
-
-    func connectPlayerNode(_ node: AudioPlayerNodeProtocol, format: AVAudioFormat?) {
-        guard let realNode = node as? RealAudioPlayerNode else { return }
-        let connectFormat = format ?? AVAudioFormat(standardFormatWithSampleRate: 22050, channels: 1)!
-        engine.connect(realNode.node, to: engine.mainMixerNode, format: connectFormat)
+    init(engine: AVAudioEngine) {
+        self.engine = engine
     }
 
     func start() throws {
         guard !engine.isRunning else { return }
         engine.prepare()
         try engine.start()
-    }
-
-    func detachPlayerNode(_ node: AudioPlayerNodeProtocol) {
-        guard let realNode = node as? RealAudioPlayerNode else { return }
-        realNode.node.stop()
-        engine.disconnectNodeOutput(realNode.node)
-        engine.detach(realNode.node)
     }
 }

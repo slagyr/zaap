@@ -63,10 +63,11 @@ struct VoiceChatView: View {
         _sttDiagnosticsCoordinator = StateObject(wrappedValue: diagCoord)
 
         let ttsVM = TTSDiagnosticsViewModel()
+        // Share the same AVAudioEngine so VPIO can echo-cancel TTS output
         let ttsPlayer = TTSAudioPlayer(
             synthesizer: RealTTSBufferSynthesizer(),
-            playerNode: RealAudioPlayerNode(),
-            engine: RealPlaybackEngine()
+            playerNode: sharedAudioEngine.ttsPlayerNode,
+            engine: RealPlaybackEngine(engine: sharedAudioEngine.rawEngine)
         )
         let ttsCoord = TTSDiagnosticsCoordinator(
             viewModel: ttsVM,
