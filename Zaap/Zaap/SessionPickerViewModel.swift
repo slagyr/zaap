@@ -81,9 +81,15 @@ final class SessionPickerViewModel: ObservableObject {
             print("⚠️ [SESSION_PICKER] loadSessions failed: \(error)")
             // Keep existing sessions (including static fallback) on failure
         }
-        // Auto-select: keep current selection if still valid, otherwise prefer agent:main:main, fallback to first
+        // Auto-select: keep current selection if still valid, otherwise prefer #general, fallback to Main, then first
         if sessions.contains(where: { $0.key == selectedSessionKey }) {
-            // Keep existing selection
+            // Keep existing selection — but if it's the initial default (Main) and #general is available, switch
+            if selectedSessionKey == "agent:main:main",
+               let general = sessions.first(where: { $0.title.lowercased() == "general" }) {
+                selectedSessionKey = general.key
+            }
+        } else if let general = sessions.first(where: { $0.title.lowercased() == "general" }) {
+            selectedSessionKey = general.key
         } else if sessions.contains(where: { $0.key == "agent:main:main" }) {
             selectedSessionKey = "agent:main:main"
         } else if let first = sessions.first {
@@ -120,7 +126,9 @@ final class SessionPickerViewModel: ObservableObject {
             previewMessages = messages.compactMap { msg in
                 switch msg.role {
                 case "user":
-                    return ConversationEntry(role: .user, text: msg.text)
+                    let cleaned = Self.cleanPreviewText(msg.text)
+                    guard let text = cleaned else { return nil }
+                    return ConversationEntry(role: .user, text: text)
                 case "assistant":
                     return ConversationEntry(role: .agent, text: msg.text)
                 default:
@@ -130,6 +138,44 @@ final class SessionPickerViewModel: ObservableObject {
         } catch {
             previewMessages = []
         }
+    }
+
+    /// Clean preview text by filtering system-injected messages and stripping metadata preambles.
+    /// Returns nil if the message should be filtered out entirely.
+    static func cleanPreviewText(_ text: String) -> String? {
+        if text.hasPrefix("System: [") { return nil }
+        if text.hasPrefix("Read HEARTBEAT.md") { return nil }
+        if text.hasPrefix("[System Message]") { return nil }
+
+        let result = stripMetadataPreambles(text)
+        return result.isEmpty ? nil : result
+    }
+
+    /// Strip gateway-injected metadata preamble blocks from message text.
+    /// Blocks look like: `Label (untrusted metadata):\n```json\n{...}\n```\n\n`
+    /// There may be multiple (e.g. "Conversation info" followed by "Sender").
+    private static func stripMetadataPreambles(_ text: String) -> String {
+        var remaining = text
+        let metadataSuffix = " (untrusted metadata):"
+        while remaining.contains(metadataSuffix),
+              let labelEnd = remaining.range(of: metadataSuffix) {
+            let beforeLabel = remaining[..<labelEnd.lowerBound]
+            let isAtStart = !beforeLabel.contains("\n")
+            guard isAtStart else { break }
+
+            // Find the opening ``` fence (e.g. ```json)
+            let searchStart = labelEnd.upperBound
+            guard let openFence = remaining.range(of: "```", range: searchStart..<remaining.endIndex) else {
+                return ""
+            }
+            // Find the closing ``` fence after the opening one
+            let afterOpen = openFence.upperBound
+            guard let closeFence = remaining.range(of: "```", range: afterOpen..<remaining.endIndex) else {
+                return ""
+            }
+            remaining = String(remaining[closeFence.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return remaining
     }
 
     /// Clean up a session's title for display.

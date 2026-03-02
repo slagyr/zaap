@@ -184,16 +184,54 @@ extension SessionPickerViewModelTests {
         XCTAssertFalse(viewModel.sessions.contains(where: { $0.key.hasPrefix("agent:scrapper") }))
     }
 
-    func testLoadSessionsAutoSelectsMainSession() async {
+    func testLoadSessionsAutoSelectsGeneralWhenAvailable() async {
         lister.sessionsToReturn = [
-            GatewaySession(key: "agent:main:discord:123", title: "Discord", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:main:discord:123", title: "discord:111#general", lastMessage: nil, channelType: "discord"),
             GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main"),
-            GatewaySession(key: "agent:main:discord:456", title: "Other", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:main:discord:456", title: "discord:111#random", lastMessage: nil, channelType: "discord"),
+        ]
+
+        await viewModel.loadSessions()
+
+        XCTAssertEqual(viewModel.selectedSessionKey, "agent:main:discord:123")
+    }
+
+    func testLoadSessionsFallsBackToMainWhenNoGeneral() async {
+        lister.sessionsToReturn = [
+            GatewaySession(key: "agent:main:discord:123", title: "discord:111#random", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main"),
         ]
 
         await viewModel.loadSessions()
 
         XCTAssertEqual(viewModel.selectedSessionKey, "agent:main:main")
+    }
+
+    func testLoadSessionsAutoSelectsGeneralAndLoadsPreview() async {
+        lister.sessionsToReturn = [
+            GatewaySession(key: "agent:main:discord:channel:123", title: "discord:111#general", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main"),
+        ]
+        previewer.previewToReturn = [
+            PreviewMessage(role: "user", text: "Hello from general"),
+        ]
+
+        await viewModel.loadSessions()
+
+        XCTAssertEqual(previewer.lastRequestedSessionKey, "agent:main:discord:channel:123")
+    }
+
+    func testLoadSessionsKeepsUserSelectionOverGeneral() async {
+        viewModel.selectedSessionKey = "agent:main:discord:456"
+        lister.sessionsToReturn = [
+            GatewaySession(key: "agent:main:discord:123", title: "discord:111#general", lastMessage: nil, channelType: "discord"),
+            GatewaySession(key: "agent:main:main", title: "Main", lastMessage: nil, channelType: "main"),
+            GatewaySession(key: "agent:main:discord:456", title: "discord:111#random", lastMessage: nil, channelType: "discord"),
+        ]
+
+        await viewModel.loadSessions()
+
+        XCTAssertEqual(viewModel.selectedSessionKey, "agent:main:discord:456")
     }
 
     func testLoadSessionsFallsBackToMainFallbackWhenNoMainInResult() async {
@@ -434,6 +472,100 @@ final class SessionPreviewTests: XCTestCase {
 
     func testPreviewMessagesStartEmpty() {
         XCTAssertTrue(viewModel.previewMessages.isEmpty)
+    }
+
+    func testLoadPreviewFiltersSystemPrefixedUserMessages() async {
+        previewer.previewToReturn = [
+            PreviewMessage(role: "user", text: "System: [2026-02-28] Hook Hook: cron triggered"),
+            PreviewMessage(role: "user", text: "What's the weather?"),
+            PreviewMessage(role: "assistant", text: "It's sunny today."),
+        ]
+        await viewModel.loadPreview(forSession: "agent:main:main")
+        XCTAssertEqual(viewModel.previewMessages.count, 2)
+        XCTAssertEqual(viewModel.previewMessages[0].text, "What's the weather?")
+        XCTAssertEqual(viewModel.previewMessages[1].text, "It's sunny today.")
+    }
+
+    func testLoadPreviewFiltersHeartbeatMessages() async {
+        previewer.previewToReturn = [
+            PreviewMessage(role: "user", text: "Read HEARTBEAT.md if it exists and follow any instructions in it."),
+            PreviewMessage(role: "user", text: "Tell me a joke"),
+            PreviewMessage(role: "assistant", text: "Why did the chicken cross the road?"),
+        ]
+        await viewModel.loadPreview(forSession: "agent:main:main")
+        XCTAssertEqual(viewModel.previewMessages.count, 2)
+        XCTAssertEqual(viewModel.previewMessages[0].text, "Tell me a joke")
+    }
+
+    func testLoadPreviewFiltersSystemMessageBracketPrefix() async {
+        previewer.previewToReturn = [
+            PreviewMessage(role: "user", text: "[System Message] [session timeout] Auto-closing idle session"),
+            PreviewMessage(role: "assistant", text: "Session resumed."),
+        ]
+        await viewModel.loadPreview(forSession: "agent:main:main")
+        XCTAssertEqual(viewModel.previewMessages.count, 1)
+        XCTAssertEqual(viewModel.previewMessages[0].text, "Session resumed.")
+    }
+
+    func testLoadPreviewStripsDiscordMetadataPreamble() async {
+        let preamble = "Conversation info (untrusted metadata):\n```json\n{\"channel\": \"general\"}\n```\n\nHey can you help me?"
+        previewer.previewToReturn = [
+            PreviewMessage(role: "user", text: preamble),
+            PreviewMessage(role: "assistant", text: "Sure!"),
+        ]
+        await viewModel.loadPreview(forSession: "agent:main:main")
+        XCTAssertEqual(viewModel.previewMessages.count, 2)
+        XCTAssertEqual(viewModel.previewMessages[0].text, "Hey can you help me?")
+    }
+
+    func testLoadPreviewFiltersConversationInfoOnlyMessages() async {
+        let metadataOnly = "Conversation info (untrusted metadata):\n```json\n{\"channel\": \"general\"}\n```"
+        previewer.previewToReturn = [
+            PreviewMessage(role: "user", text: metadataOnly),
+            PreviewMessage(role: "assistant", text: "Hello!"),
+        ]
+        await viewModel.loadPreview(forSession: "agent:main:main")
+        XCTAssertEqual(viewModel.previewMessages.count, 1)
+        XCTAssertEqual(viewModel.previewMessages[0].text, "Hello!")
+    }
+
+    func testLoadPreviewStripsBothConversationAndSenderMetadata() async {
+        let fullPreamble = """
+            Conversation info (untrusted metadata):
+            ```json
+            {
+              "guild_id": "1471611817712418918",
+              "is_group_chat": true
+            }
+            ```
+
+            Sender (untrusted metadata):
+            ```json
+            {
+              "label": "slagyr",
+              "name": "slagyr"
+            }
+            ```
+
+            Yeah. The sanctuary adoption is an amazing idea.
+            """
+        previewer.previewToReturn = [
+            PreviewMessage(role: "user", text: fullPreamble),
+            PreviewMessage(role: "assistant", text: "Great!"),
+        ]
+        await viewModel.loadPreview(forSession: "agent:main:main")
+        XCTAssertEqual(viewModel.previewMessages.count, 2)
+        XCTAssertEqual(viewModel.previewMessages[0].text, "Yeah. The sanctuary adoption is an amazing idea.")
+    }
+
+    func testLoadPreviewStripsSenderMetadataAlone() async {
+        let senderOnly = "Sender (untrusted metadata):\n```json\n{\"name\": \"slagyr\"}\n```\n\nHello there!"
+        previewer.previewToReturn = [
+            PreviewMessage(role: "user", text: senderOnly),
+        ]
+        await viewModel.loadPreview(forSession: "agent:main:main")
+        XCTAssertEqual(viewModel.previewMessages.count, 1)
+        XCTAssertEqual(viewModel.previewMessages[0].text, "Hello there!")
     }
 
     func testLoadSessionsAutoLoadsPreviewForSelectedSession() async {
