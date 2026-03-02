@@ -109,8 +109,7 @@ final class RealSpeechRecognitionRequest: SpeechRecognitionRequesting {
 // MARK: - Real AVAudioEngine Adapter
 
 final class RealAudioEngineProvider: AudioEngineProviding {
-    let rawEngine = AVAudioEngine()
-    private var engine: AVAudioEngine { rawEngine }
+    private let engine = AVAudioEngine()
 
     var isRunning: Bool { engine.isRunning }
 
@@ -361,53 +360,27 @@ final class RealAudioPlayerNode: AudioPlayerNodeProtocol {
 
 // MARK: - Real Playback Engine
 
-/// Wraps AVAudioEngine for TTS output, sharing the same engine used for mic capture.
+/// Dedicated AVAudioEngine for TTS playback output.
+/// Uses its own engine separate from the mic-capture engine to avoid
+/// conflicts with Voice Processing IO graph management.
 final class RealPlaybackEngine: PlaybackEngineProtocol {
-    private let engine: AVAudioEngine
-
-    init(engine: AVAudioEngine) {
-        self.engine = engine
-    }
+    private let engine = AVAudioEngine()
 
     func attachPlayerNode(_ node: AudioPlayerNodeProtocol) {
         guard let realNode = node as? RealAudioPlayerNode else { return }
-        let wasRunning = engine.isRunning
-        if wasRunning { engine.pause() }
         engine.attach(realNode.node)
-        if wasRunning {
-            try? engine.start()
-        }
-        print("🔊 [TTS] attachPlayerNode: wasRunning=\(wasRunning) isRunning=\(engine.isRunning)")
     }
 
     func connectPlayerNode(_ node: AudioPlayerNodeProtocol, format: AVAudioFormat?) {
         guard let realNode = node as? RealAudioPlayerNode else { return }
-        let mixerFormat = engine.mainMixerNode.outputFormat(forBus: 0)
-        let connectFormat: AVAudioFormat
-        if let format = format {
-            connectFormat = format
-        } else if mixerFormat.channelCount > 0 && mixerFormat.sampleRate > 0 {
-            connectFormat = mixerFormat
-        } else {
-            connectFormat = AVAudioFormat(standardFormatWithSampleRate: 22050, channels: 1)!
-        }
-        let wasRunning = engine.isRunning
-        if wasRunning { engine.pause() }
+        let connectFormat = format ?? AVAudioFormat(standardFormatWithSampleRate: 22050, channels: 1)!
         engine.connect(realNode.node, to: engine.mainMixerNode, format: connectFormat)
-        if wasRunning {
-            try? engine.start()
-        }
-        print("🔊 [TTS] connectPlayerNode: format=\(connectFormat) mixerFormat=\(mixerFormat) wasRunning=\(wasRunning) isRunning=\(engine.isRunning)")
     }
 
     func start() throws {
-        guard !engine.isRunning else {
-            print("🔊 [TTS] start: engine already running, skipping")
-            return
-        }
+        guard !engine.isRunning else { return }
         engine.prepare()
         try engine.start()
-        print("🔊 [TTS] start: engine started successfully")
     }
 
     func detachPlayerNode(_ node: AudioPlayerNodeProtocol) {
@@ -415,6 +388,5 @@ final class RealPlaybackEngine: PlaybackEngineProtocol {
         realNode.node.stop()
         engine.disconnectNodeOutput(realNode.node)
         engine.detach(realNode.node)
-        print("🔊 [TTS] detachPlayerNode: done")
     }
 }

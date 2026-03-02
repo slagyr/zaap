@@ -66,7 +66,7 @@ struct VoiceChatView: View {
         let ttsPlayer = TTSAudioPlayer(
             synthesizer: RealTTSBufferSynthesizer(),
             playerNode: RealAudioPlayerNode(),
-            engine: RealPlaybackEngine(engine: sharedAudioEngine.rawEngine)
+            engine: RealPlaybackEngine()
         )
         let ttsCoord = TTSDiagnosticsCoordinator(
             viewModel: ttsVM,
