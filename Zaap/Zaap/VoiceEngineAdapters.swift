@@ -380,6 +380,12 @@ final class RealPlaybackEngine: PlaybackEngineProtocol {
         engine.connect(realNode.node, to: engine.mainMixerNode, format: connectFormat)
     }
 
+    func start() throws {
+        guard !engine.isRunning else { return }
+        engine.prepare()
+        try engine.start()
+    }
+
     func detachPlayerNode(_ node: AudioPlayerNodeProtocol) {
         guard let realNode = node as? RealAudioPlayerNode else { return }
         engine.detach(realNode.node)
