@@ -137,6 +137,40 @@ final class TTSAudioPlayerTests: XCTestCase {
         mockSynthesizer.simulateFinish()
         XCTAssertTrue(finishCalled)
     }
+
+    // MARK: - Engine Start Failure
+
+    func testPlayDoesNotStartPlayerNodeWhenEngineStartFails() {
+        mockEngine.startError = NSError(domain: "AVAudioEngine", code: -1, userInfo: nil)
+        player.play(text: "Hello")
+        XCTAssertFalse(mockPlayerNode.playCalled)
+    }
+
+    func testPlayDoesNotSynthesizeWhenEngineStartFails() {
+        mockEngine.startError = NSError(domain: "AVAudioEngine", code: -1, userInfo: nil)
+        player.play(text: "Hello")
+        XCTAssertFalse(mockSynthesizer.writeCalled)
+    }
+
+    func testPlayIsNotPlayingWhenEngineStartFails() {
+        mockEngine.startError = NSError(domain: "AVAudioEngine", code: -1, userInfo: nil)
+        player.play(text: "Hello")
+        XCTAssertFalse(player.isPlaying)
+    }
+
+    func testPlayCallsOnErrorWhenEngineStartFails() {
+        var receivedError: Error?
+        player.onError = { error in receivedError = error }
+        mockEngine.startError = NSError(domain: "AVAudioEngine", code: -1, userInfo: nil)
+        player.play(text: "Hello")
+        XCTAssertNotNil(receivedError)
+    }
+
+    func testPlayDetachesPlayerNodeWhenEngineStartFails() {
+        mockEngine.startError = NSError(domain: "AVAudioEngine", code: -1, userInfo: nil)
+        player.play(text: "Hello")
+        XCTAssertTrue(mockEngine.detachCalled)
+    }
 }
 
 // MARK: - Test Doubles
@@ -202,6 +236,7 @@ final class MockPlaybackEngine: PlaybackEngineProtocol {
     var connectCalled = false
     var startCalled = false
     var detachCalled = false
+    var startError: Error?
 
     func attachPlayerNode(_ node: AudioPlayerNodeProtocol) {
         attachCalled = true
@@ -213,6 +248,9 @@ final class MockPlaybackEngine: PlaybackEngineProtocol {
 
     func start() throws {
         startCalled = true
+        if let error = startError {
+            throw error
+        }
     }
 
     func detachPlayerNode(_ node: AudioPlayerNodeProtocol) {
