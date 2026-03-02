@@ -371,23 +371,50 @@ final class RealPlaybackEngine: PlaybackEngineProtocol {
 
     func attachPlayerNode(_ node: AudioPlayerNodeProtocol) {
         guard let realNode = node as? RealAudioPlayerNode else { return }
+        let wasRunning = engine.isRunning
+        if wasRunning { engine.pause() }
         engine.attach(realNode.node)
+        if wasRunning {
+            try? engine.start()
+        }
+        print("🔊 [TTS] attachPlayerNode: wasRunning=\(wasRunning) isRunning=\(engine.isRunning)")
     }
 
     func connectPlayerNode(_ node: AudioPlayerNodeProtocol, format: AVAudioFormat?) {
         guard let realNode = node as? RealAudioPlayerNode else { return }
-        let connectFormat = format ?? engine.mainMixerNode.outputFormat(forBus: 0)
+        let mixerFormat = engine.mainMixerNode.outputFormat(forBus: 0)
+        let connectFormat: AVAudioFormat
+        if let format = format {
+            connectFormat = format
+        } else if mixerFormat.channelCount > 0 && mixerFormat.sampleRate > 0 {
+            connectFormat = mixerFormat
+        } else {
+            connectFormat = AVAudioFormat(standardFormatWithSampleRate: 22050, channels: 1)!
+        }
+        let wasRunning = engine.isRunning
+        if wasRunning { engine.pause() }
         engine.connect(realNode.node, to: engine.mainMixerNode, format: connectFormat)
+        if wasRunning {
+            try? engine.start()
+        }
+        print("🔊 [TTS] connectPlayerNode: format=\(connectFormat) mixerFormat=\(mixerFormat) wasRunning=\(wasRunning) isRunning=\(engine.isRunning)")
     }
 
     func start() throws {
-        guard !engine.isRunning else { return }
+        guard !engine.isRunning else {
+            print("🔊 [TTS] start: engine already running, skipping")
+            return
+        }
         engine.prepare()
         try engine.start()
+        print("🔊 [TTS] start: engine started successfully")
     }
 
     func detachPlayerNode(_ node: AudioPlayerNodeProtocol) {
         guard let realNode = node as? RealAudioPlayerNode else { return }
+        realNode.node.stop()
+        engine.disconnectNodeOutput(realNode.node)
         engine.detach(realNode.node)
+        print("🔊 [TTS] detachPlayerNode: done")
     }
 }
