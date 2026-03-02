@@ -19,6 +19,7 @@ enum STTDiagnosticsEvent: Equatable {
     case recognitionError(String)
     case silenceTimerReset
     case transcriptTooShort(length: Int)
+    case audioSessionInfo(String)
 }
 
 // MARK: - Diagnostics Log Entry

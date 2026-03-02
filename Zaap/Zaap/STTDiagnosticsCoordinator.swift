@@ -1,4 +1,5 @@
 import Foundation
+import AVFoundation
 
 /// Wires VoiceEngine events to STTDiagnosticsViewModel in dry-run mode.
 /// Mic is live but no transcripts are sent to the gateway.
@@ -50,6 +51,18 @@ final class STTDiagnosticsCoordinator: ObservableObject {
         }
 
         voiceEngine.startListening()
+        logAudioSessionState()
+    }
+
+    private func logAudioSessionState() {
+        let session = AVAudioSession.sharedInstance()
+        let category = session.category.rawValue
+        let mode = session.mode.rawValue
+        let route = session.currentRoute
+        let outputs = route.outputs.map { "\($0.portName)(\($0.portType.rawValue))" }.joined(separator: ", ")
+        let inputs = route.inputs.map { "\($0.portName)(\($0.portType.rawValue))" }.joined(separator: ", ")
+        let info = "cat=\(category) mode=\(mode) in=[\(inputs)] out=[\(outputs)]"
+        diagnosticsViewModel.appendLog(.audioSessionInfo(info))
     }
 
     func stop() {

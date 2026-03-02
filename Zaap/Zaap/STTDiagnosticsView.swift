@@ -145,6 +145,7 @@ struct STTDiagnosticsView: View {
         case .recognitionError: return "[!]"
         case .silenceTimerReset: return " . "
         case .transcriptTooShort: return "<3>"
+        case .audioSessionInfo: return "[i]"
         }
     }
 
@@ -166,6 +167,8 @@ struct STTDiagnosticsView: View {
             return "silence timer reset"
         case .transcriptTooShort(let length):
             return "transcript too short (\(length) chars)"
+        case .audioSessionInfo(let info):
+            return info
         }
     }
 
@@ -179,6 +182,7 @@ struct STTDiagnosticsView: View {
         case .recognitionError: return .red
         case .silenceTimerReset: return .gray
         case .transcriptTooShort: return .orange
+        case .audioSessionInfo: return .white
         }
     }
 }
