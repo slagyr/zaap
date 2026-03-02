@@ -100,6 +100,8 @@
 		Y10004 /* TTSDiagnosticsCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = Y20004 /* TTSDiagnosticsCoordinatorTests.swift */; };
 		Y10005 /* TTSDiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = Y20005 /* TTSDiagnosticsView.swift */; };
 		Z10001 /* DualDiagnosticsPanelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = Z20001 /* DualDiagnosticsPanelTests.swift */; };
+		AA10001 /* TTSAudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20001 /* TTSAudioPlayer.swift */; };
+		AB10001 /* TTSAudioPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB20001 /* TTSAudioPlayerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -210,6 +212,8 @@
 		Y20004 /* TTSDiagnosticsCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSDiagnosticsCoordinatorTests.swift; sourceTree = "<group>"; };
 		Y20005 /* TTSDiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSDiagnosticsView.swift; sourceTree = "<group>"; };
 		Z20001 /* DualDiagnosticsPanelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualDiagnosticsPanelTests.swift; sourceTree = "<group>"; };
+		AA20001 /* TTSAudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSAudioPlayer.swift; sourceTree = "<group>"; };
+		AB20001 /* TTSAudioPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSAudioPlayerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -294,6 +298,7 @@
 				Y20001 /* TTSDiagnosticsViewModel.swift */,
 				Y20003 /* TTSDiagnosticsCoordinator.swift */,
 				Y20005 /* TTSDiagnosticsView.swift */,
+				AA20001 /* TTSAudioPlayer.swift */,
 				A20003 /* Assets.xcassets */,
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
@@ -362,6 +367,7 @@
 				Y20002 /* TTSDiagnosticsViewModelTests.swift */,
 				Y20004 /* TTSDiagnosticsCoordinatorTests.swift */,
 				Z20001 /* DualDiagnosticsPanelTests.swift */,
+				AB20001 /* TTSAudioPlayerTests.swift */,
 			);
 			path = ZaapTests;
 			sourceTree = "<group>";
@@ -511,6 +517,7 @@
 				Y10001 /* TTSDiagnosticsViewModel.swift in Sources */,
 				Y10003 /* TTSDiagnosticsCoordinator.swift in Sources */,
 				Y10005 /* TTSDiagnosticsView.swift in Sources */,
+				AA10001 /* TTSAudioPlayer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -557,6 +564,7 @@
 				Y10002 /* TTSDiagnosticsViewModelTests.swift in Sources */,
 				Y10004 /* TTSDiagnosticsCoordinatorTests.swift in Sources */,
 				Z10001 /* DualDiagnosticsPanelTests.swift in Sources */,
+				AB10001 /* TTSAudioPlayerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
