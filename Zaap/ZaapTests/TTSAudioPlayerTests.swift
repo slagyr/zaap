@@ -138,6 +138,46 @@ final class TTSAudioPlayerTests: XCTestCase {
         XCTAssertTrue(finishCalled)
     }
 
+    // MARK: - Finish fires after playback, not synthesis
+
+    func testOnFinishNotCalledWhenSynthesisCompletesButBuffersPending() {
+        var finishCalled = false
+        player.onFinish = { finishCalled = true }
+        let format = AVAudioFormat(standardFormatWithSampleRate: 22050, channels: 1)!
+        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 1024)!
+        buffer.frameLength = 512
+        mockSynthesizer.buffersToDeliver = [buffer]
+        player.play(text: "Hello")
+        // Synthesis is done (finishCallback fired), but buffer hasn't played yet
+        mockSynthesizer.simulateFinish()
+        XCTAssertFalse(finishCalled, "onFinish should not fire until buffers finish playing")
+        XCTAssertTrue(player.isPlaying, "Should still be playing while buffers are pending")
+    }
+
+    func testOnFinishCalledAfterAllBuffersPlayed() {
+        var finishCalled = false
+        player.onFinish = { finishCalled = true }
+        let format = AVAudioFormat(standardFormatWithSampleRate: 22050, channels: 1)!
+        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 1024)!
+        buffer.frameLength = 512
+        mockSynthesizer.buffersToDeliver = [buffer]
+        player.play(text: "Hello")
+        mockSynthesizer.simulateFinish()
+        mockPlayerNode.simulateAllBuffersPlayed()
+        XCTAssertTrue(finishCalled, "onFinish should fire after all buffers finish playing")
+        XCTAssertFalse(player.isPlaying)
+    }
+
+    func testIsPlayingTrueWhileBuffersStillPending() {
+        let format = AVAudioFormat(standardFormatWithSampleRate: 22050, channels: 1)!
+        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 1024)!
+        buffer.frameLength = 512
+        mockSynthesizer.buffersToDeliver = [buffer]
+        player.play(text: "Hello")
+        mockSynthesizer.simulateFinish()
+        XCTAssertTrue(player.isPlaying, "Should remain playing until buffers finish")
+    }
+
     // MARK: - Engine Start Failure
 
     func testPlayDoesNotStartPlayerNodeWhenEngineStartFails() {
@@ -213,6 +253,7 @@ final class MockAudioPlayerNode: AudioPlayerNodeProtocol {
     var pauseCalled = false
     var stopCalled = false
     var scheduledBuffers: [AVAudioPCMBuffer] = []
+    private var completionHandlers: [() -> Void] = []
 
     func play() {
         playCalled = true
@@ -228,6 +269,22 @@ final class MockAudioPlayerNode: AudioPlayerNodeProtocol {
 
     func scheduleBuffer(_ buffer: AVAudioPCMBuffer) {
         scheduledBuffers.append(buffer)
+    }
+
+    func scheduleBuffer(_ buffer: AVAudioPCMBuffer, completionHandler: @escaping () -> Void) {
+        scheduledBuffers.append(buffer)
+        completionHandlers.append(completionHandler)
+    }
+
+    func simulateAllBuffersPlayed() {
+        let handlers = completionHandlers
+        completionHandlers.removeAll()
+        handlers.forEach { $0() }
+    }
+
+    func simulateBufferPlayed(at index: Int) {
+        guard index < completionHandlers.count else { return }
+        completionHandlers[index]()
     }
 }
 

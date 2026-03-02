@@ -356,6 +356,9 @@ final class RealAudioPlayerNode: AudioPlayerNodeProtocol {
     func scheduleBuffer(_ buffer: AVAudioPCMBuffer) {
         node.scheduleBuffer(buffer)
     }
+    func scheduleBuffer(_ buffer: AVAudioPCMBuffer, completionHandler: @escaping () -> Void) {
+        node.scheduleBuffer(buffer, completionHandler: completionHandler)
+    }
 }
 
 // MARK: - Real Playback Engine
