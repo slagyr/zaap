@@ -1,17 +1,28 @@
 import AVFoundation
 
 /// Drives TTS diagnostics: speaks The Raven text with real-time word highlighting
-/// and audio level metering via AVSpeechSynthesizerDelegate.
+/// and audio level metering, routing audio through AVAudioEngine for AEC.
 @MainActor
-final class TTSDiagnosticsCoordinator: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
+final class TTSDiagnosticsCoordinator: ObservableObject {
     let viewModel: TTSDiagnosticsViewModel
-    private let synthesizer: SpeechSynthesizing
+    private let player: TTSAudioPlayer
 
     init(viewModel: TTSDiagnosticsViewModel,
-         synthesizer: SpeechSynthesizing) {
+         player: TTSAudioPlayer) {
         self.viewModel = viewModel
-        self.synthesizer = synthesizer
-        super.init()
+        self.player = player
+        setupCallbacks()
+    }
+
+    private func setupCallbacks() {
+        player.onWordBoundary = { [weak self] (range: NSRange) in
+            self?.viewModel.updateHighlightRange(range)
+            self?.pulseAudioLevel(wordLength: range.length)
+        }
+        player.onFinish = { [weak self] in
+            self?.viewModel.setPlaying(false)
+            self?.viewModel.updateAudioLevel(0.0)
+        }
     }
 
     /// Show the panel without starting playback.
@@ -21,7 +32,8 @@ final class TTSDiagnosticsCoordinator: NSObject, ObservableObject, AVSpeechSynth
 
     /// Stop playback and dismiss the panel.
     func close() {
-        _ = synthesizer.stopSpeaking(at: .immediate)
+        player.stop()
+        viewModel.updateAudioLevel(0.0)
         viewModel.deactivate()
     }
 
@@ -29,26 +41,22 @@ final class TTSDiagnosticsCoordinator: NSObject, ObservableObject, AVSpeechSynth
         guard !viewModel.isPlaying else { return }
         viewModel.setPlaying(true)
 
-        if synthesizer.isPaused {
-            _ = synthesizer.continueSpeaking()
+        if player.isPaused {
+            player.resume()
         } else {
-            synthesizer.delegate = self
-            let utterance = AVSpeechUtterance(string: viewModel.text)
-            utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
-            utterance.rate = AVSpeechUtteranceDefaultSpeechRate
-            synthesizer.speak(utterance)
+            player.play(text: viewModel.text)
         }
     }
 
     func pause() {
         guard viewModel.isPlaying else { return }
         viewModel.setPlaying(false)
-        _ = synthesizer.pauseSpeaking(at: .immediate)
+        player.pause()
     }
 
     /// Stop playback but keep the panel open.
     func stop() {
-        _ = synthesizer.stopSpeaking(at: .immediate)
+        player.stop()
         viewModel.setPlaying(false)
         viewModel.updateAudioLevel(0.0)
     }
@@ -83,24 +91,5 @@ final class TTSDiagnosticsCoordinator: NSObject, ObservableObject, AVSpeechSynth
         let base: Float = 0.4
         let scaled = Float(min(wordLength, 10)) / 10.0 * 0.6
         viewModel.updateAudioLevel(base + scaled)
-    }
-
-    // MARK: - AVSpeechSynthesizerDelegate
-
-    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer,
-                                       willSpeakRangeOfSpeechString characterRange: NSRange,
-                                       utterance: AVSpeechUtterance) {
-        Task { @MainActor in
-            self.viewModel.updateHighlightRange(characterRange)
-            self.pulseAudioLevel(wordLength: characterRange.length)
-        }
-    }
-
-    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer,
-                                       didFinish utterance: AVSpeechUtterance) {
-        Task { @MainActor in
-            self.viewModel.setPlaying(false)
-            self.viewModel.updateAudioLevel(0.0)
-        }
     }
 }

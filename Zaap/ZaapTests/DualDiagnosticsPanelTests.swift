@@ -9,7 +9,7 @@ final class DualDiagnosticsPanelTests: XCTestCase {
     var sttViewModel: STTDiagnosticsViewModel!
     var sttCoordinator: STTDiagnosticsCoordinator!
 
-    var ttsSynthesizer: MockTTSDiagSynthesizer!
+    var ttsPlayer: TTSAudioPlayer!
     var ttsViewModel: TTSDiagnosticsViewModel!
     var ttsCoordinator: TTSDiagnosticsCoordinator!
 
@@ -22,11 +22,18 @@ final class DualDiagnosticsPanelTests: XCTestCase {
             voiceEngine: sttVoiceEngine
         )
 
-        ttsSynthesizer = MockTTSDiagSynthesizer()
+        let mockSynth = MockBufferSynthesizer()
+        let mockNode = MockAudioPlayerNode()
+        let mockEngine = MockPlaybackEngine()
+        ttsPlayer = TTSAudioPlayer(
+            synthesizer: mockSynth,
+            playerNode: mockNode,
+            engine: mockEngine
+        )
         ttsViewModel = TTSDiagnosticsViewModel()
         ttsCoordinator = TTSDiagnosticsCoordinator(
             viewModel: ttsViewModel,
-            synthesizer: ttsSynthesizer
+            player: ttsPlayer
         )
     }
 

@@ -109,7 +109,8 @@ final class RealSpeechRecognitionRequest: SpeechRecognitionRequesting {
 // MARK: - Real AVAudioEngine Adapter
 
 final class RealAudioEngineProvider: AudioEngineProviding {
-    private let engine = AVAudioEngine()
+    let rawEngine = AVAudioEngine()
+    private var engine: AVAudioEngine { rawEngine }
 
     var isRunning: Bool { engine.isRunning }
 
@@ -281,5 +282,106 @@ final class SimulatorKeychain: KeychainAccessing {
 
     func delete(key: String) {
         defaults.removeObject(forKey: key)
+    }
+}
+
+// MARK: - Real TTS Buffer Synthesizer
+
+/// Wraps AVSpeechSynthesizer.write() to deliver PCM buffers and marker callbacks.
+/// Converts Float16 buffers to Float32 for AVAudioPlayerNode compatibility.
+final class RealTTSBufferSynthesizer: TTSBufferSynthesizing {
+    private let synthesizer = AVSpeechSynthesizer()
+
+    func synthesize(utterance: AVSpeechUtterance,
+                    bufferCallback: @escaping (AVAudioBuffer) -> Void,
+                    markerCallback: @escaping (NSRange) -> Void,
+                    finishCallback: @escaping () -> Void) {
+        synthesizer.write(utterance) { buffer in
+            guard let pcmBuffer = buffer as? AVAudioPCMBuffer else { return }
+
+            // write() delivers empty buffer with 0 frames to signal completion
+            guard pcmBuffer.frameLength > 0 else {
+                finishCallback()
+                return
+            }
+
+            // Convert Float16 to Float32 if needed
+            if let converted = Self.convertToFloat32(pcmBuffer) {
+                bufferCallback(converted)
+            } else {
+                bufferCallback(pcmBuffer)
+            }
+        }
+    }
+
+    func cancelSynthesis() {
+        synthesizer.stopSpeaking(at: .immediate)
+    }
+
+    /// Convert a Float16 PCM buffer to Float32 for AVAudioPlayerNode.
+    static func convertToFloat32(_ buffer: AVAudioPCMBuffer) -> AVAudioPCMBuffer? {
+        guard buffer.format.commonFormat != .pcmFormatFloat32 else { return nil }
+
+        guard let float32Format = AVAudioFormat(
+            standardFormatWithSampleRate: buffer.format.sampleRate,
+            channels: buffer.format.channelCount
+        ) else { return nil }
+
+        guard let converter = AVAudioConverter(from: buffer.format, to: float32Format) else { return nil }
+
+        guard let output = AVAudioPCMBuffer(
+            pcmFormat: float32Format,
+            frameCapacity: buffer.frameCapacity
+        ) else { return nil }
+
+        var error: NSError?
+        let status = converter.convert(to: output, error: &error) { _, outStatus in
+            outStatus.pointee = .haveData
+            return buffer
+        }
+
+        guard status != .error, error == nil else { return nil }
+        return output
+    }
+}
+
+// MARK: - Real Audio Player Node
+
+/// Wraps AVAudioPlayerNode for protocol-based injection.
+final class RealAudioPlayerNode: AudioPlayerNodeProtocol {
+    let node = AVAudioPlayerNode()
+
+    func play() { node.play() }
+    func pause() { node.pause() }
+    func stop() { node.stop() }
+    func scheduleBuffer(_ buffer: AVAudioPCMBuffer) {
+        node.scheduleBuffer(buffer)
+    }
+}
+
+// MARK: - Real Playback Engine
+
+/// Wraps AVAudioEngine for TTS output, sharing the same engine used for mic capture.
+final class RealPlaybackEngine: PlaybackEngineProtocol {
+    private let engine: AVAudioEngine
+
+    init(engine: AVAudioEngine) {
+        self.engine = engine
+    }
+
+    func attachPlayerNode(_ node: AudioPlayerNodeProtocol) {
+        guard let realNode = node as? RealAudioPlayerNode else { return }
+        engine.attach(realNode.node)
+    }
+
+    func connectPlayerNode(_ node: AudioPlayerNodeProtocol, format: AVAudioFormat?) {
+        guard let realNode = node as? RealAudioPlayerNode else { return }
+        let connectFormat = format ?? engine.mainMixerNode.outputFormat(forBus: 0)
+        engine.connect(realNode.node, to: engine.mainMixerNode, format: connectFormat)
+    }
+
+    func detachPlayerNode(_ node: AudioPlayerNodeProtocol) {
+        guard let realNode = node as? RealAudioPlayerNode else { return }
+        engine.detach(realNode.node)
     }
 }
