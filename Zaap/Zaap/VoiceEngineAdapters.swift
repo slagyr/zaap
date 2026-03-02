@@ -162,12 +162,9 @@ final class RealAudioEngineProvider: AudioEngineProviding {
             print("Could not enable voice processing: \(error)")
         }
 
-        // Connect TTS player to mainMixer, then mainMixer to output.
-        // Must mirror Apple's AVEchoTouch sample: all connections after VPIO, before start.
-        let voiceIOFormat = rawEngine.inputNode.outputFormat(forBus: 0)
+        // Connect TTS player to mainMixer. AVAudioEngine manages mainMixer → output internally.
         let ttsFormat = AVAudioFormat(standardFormatWithSampleRate: 22050, channels: 1)!
         rawEngine.connect(ttsPlayerNode.node, to: rawEngine.mainMixerNode, format: ttsFormat)
-        rawEngine.connect(rawEngine.mainMixerNode, to: rawEngine.outputNode, format: voiceIOFormat)
     }
 }
 
