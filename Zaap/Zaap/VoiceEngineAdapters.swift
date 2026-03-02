@@ -132,7 +132,9 @@ final class RealAudioEngineProvider: AudioEngineProviding {
     func installTap(onBus bus: Int, bufferSize: UInt32, format: AVAudioFormat?,
                      block: @escaping (AVAudioPCMBuffer) -> Void) {
         setupVoiceProcessingOnce()
-        rawEngine.inputNode.installTap(onBus: bus, bufferSize: bufferSize, format: format) { buffer, _ in
+        // Pass nil format to let VPIO choose the correct format for the recording tap.
+        // The format parameter from the caller may not match VPIO's internal format.
+        rawEngine.inputNode.installTap(onBus: bus, bufferSize: bufferSize, format: nil) { buffer, _ in
             block(buffer)
         }
     }
@@ -153,14 +155,19 @@ final class RealAudioEngineProvider: AudioEngineProviding {
         guard !voiceProcessingSetUp else { return }
         voiceProcessingSetUp = true
 
+        // Enable VPIO on input node (engine must be stopped).
         do {
             try rawEngine.inputNode.setVoiceProcessingEnabled(true)
         } catch {
             print("Could not enable voice processing: \(error)")
         }
 
+        // Connect TTS player to mainMixer, then mainMixer to output.
+        // Must mirror Apple's AVEchoTouch sample: all connections after VPIO, before start.
+        let voiceIOFormat = rawEngine.inputNode.outputFormat(forBus: 0)
         let ttsFormat = AVAudioFormat(standardFormatWithSampleRate: 22050, channels: 1)!
         rawEngine.connect(ttsPlayerNode.node, to: rawEngine.mainMixerNode, format: ttsFormat)
+        rawEngine.connect(rawEngine.mainMixerNode, to: rawEngine.outputNode, format: voiceIOFormat)
     }
 }
 
