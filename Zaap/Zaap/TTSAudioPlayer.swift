@@ -37,6 +37,7 @@ class TTSAudioPlayer {
 
     var onWordBoundary: ((NSRange) -> Void)?
     var onFinish: (() -> Void)?
+    var onError: ((Error) -> Void)?
 
     init(synthesizer: TTSBufferSynthesizing,
          playerNode: AudioPlayerNodeProtocol,
@@ -50,7 +51,15 @@ class TTSAudioPlayer {
         let utterance = AVSpeechUtterance(string: text)
         engine.attachPlayerNode(playerNode)
         engine.connectPlayerNode(playerNode, format: nil)
-        try? engine.start()
+
+        do {
+            try engine.start()
+        } catch {
+            engine.detachPlayerNode(playerNode)
+            onError?(error)
+            return
+        }
+
         playerNode.play()
         isPlaying = true
         isPaused = false
