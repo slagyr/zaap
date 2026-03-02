@@ -5,17 +5,27 @@ import AVFoundation
 @MainActor
 final class TTSDiagnosticsCoordinatorTests: XCTestCase {
 
-    var synthesizer: MockTTSDiagSynthesizer!
+    var mockSynthesizer: MockBufferSynthesizer!
+    var mockPlayerNode: MockAudioPlayerNode!
+    var mockEngine: MockPlaybackEngine!
+    var player: TTSAudioPlayer!
     var viewModel: TTSDiagnosticsViewModel!
     var coordinator: TTSDiagnosticsCoordinator!
 
     override func setUp() {
         super.setUp()
-        synthesizer = MockTTSDiagSynthesizer()
+        mockSynthesizer = MockBufferSynthesizer()
+        mockPlayerNode = MockAudioPlayerNode()
+        mockEngine = MockPlaybackEngine()
+        player = TTSAudioPlayer(
+            synthesizer: mockSynthesizer,
+            playerNode: mockPlayerNode,
+            engine: mockEngine
+        )
         viewModel = TTSDiagnosticsViewModel()
         coordinator = TTSDiagnosticsCoordinator(
             viewModel: viewModel,
-            synthesizer: synthesizer
+            player: player
         )
     }
 
@@ -31,9 +41,9 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
         XCTAssertFalse(viewModel.isPlaying)
     }
 
-    func testOpenDoesNotCallSynthesizer() {
+    func testOpenDoesNotCallPlayer() {
         coordinator.open()
-        XCTAssertFalse(synthesizer.speakCalled)
+        XCTAssertFalse(mockSynthesizer.writeCalled)
     }
 
     // MARK: - Close
@@ -49,7 +59,7 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
         coordinator.play()
         coordinator.close()
         XCTAssertFalse(viewModel.isPlaying)
-        XCTAssertTrue(synthesizer.stopCalled)
+        XCTAssertTrue(mockPlayerNode.stopCalled)
     }
 
     func testCloseResetsAudioLevel() {
@@ -68,30 +78,24 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
         XCTAssertTrue(viewModel.isPlaying)
     }
 
-    func testPlayCallsSynthesizerSpeak() {
+    func testPlayCallsPlayerPlay() {
         coordinator.open()
         coordinator.play()
-        XCTAssertTrue(synthesizer.speakCalled)
+        XCTAssertTrue(mockSynthesizer.writeCalled)
     }
 
     func testPlaySpeaksTheRavenText() {
         coordinator.open()
         coordinator.play()
-        XCTAssertTrue(synthesizer.lastUtteranceText?.contains("Once upon a midnight dreary") ?? false)
+        XCTAssertTrue(mockSynthesizer.lastUtteranceText?.contains("Once upon a midnight dreary") ?? false)
     }
 
     func testPlayWhileAlreadyPlayingDoesNothing() {
         coordinator.open()
         coordinator.play()
-        synthesizer.speakCalled = false
+        mockSynthesizer.writeCalled = false
         coordinator.play()
-        XCTAssertFalse(synthesizer.speakCalled)
-    }
-
-    func testPlaySetsSynthesizerDelegate() {
-        coordinator.open()
-        coordinator.play()
-        XCTAssertNotNil(synthesizer.delegate)
+        XCTAssertFalse(mockSynthesizer.writeCalled)
     }
 
     // MARK: - Pause
@@ -103,29 +107,29 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
         XCTAssertFalse(viewModel.isPlaying)
     }
 
-    func testPausePausesSynthesizerNotStops() {
+    func testPausePausesPlayerNode() {
         coordinator.open()
         coordinator.play()
         coordinator.pause()
-        XCTAssertTrue(synthesizer.pauseCalled)
-        XCTAssertFalse(synthesizer.stopCalled)
+        XCTAssertTrue(mockPlayerNode.pauseCalled)
     }
 
     func testPauseWhileNotPlayingDoesNothing() {
         coordinator.pause()
-        XCTAssertFalse(synthesizer.pauseCalled)
+        XCTAssertFalse(mockPlayerNode.pauseCalled)
     }
 
     // MARK: - Resume after Pause
 
-    func testPlayAfterPauseResumesSynthesizer() {
+    func testPlayAfterPauseResumesPlayer() {
         coordinator.open()
         coordinator.play()
         coordinator.pause()
-        synthesizer.speakCalled = false
+        mockSynthesizer.writeCalled = false
+        mockPlayerNode.playCalled = false
         coordinator.play()
-        XCTAssertTrue(synthesizer.continueCalled)
-        XCTAssertFalse(synthesizer.speakCalled, "Should resume, not start a new utterance")
+        XCTAssertTrue(mockPlayerNode.playCalled, "Should resume the player node")
+        XCTAssertFalse(mockSynthesizer.writeCalled, "Should not start a new synthesis")
     }
 
     func testPlayAfterPauseSetsPlaying() {
@@ -145,11 +149,11 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
         XCTAssertFalse(viewModel.isPlaying)
     }
 
-    func testStopStopsSynthesizer() {
+    func testStopStopsPlayer() {
         coordinator.open()
         coordinator.play()
         coordinator.stop()
-        XCTAssertTrue(synthesizer.stopCalled)
+        XCTAssertTrue(mockPlayerNode.stopCalled)
     }
 
     func testStopKeepsPanelActive() {
@@ -182,60 +186,60 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
         XCTAssertFalse(viewModel.isPlaying)
     }
 
-    // MARK: - Word Highlighting Delegate
+    // MARK: - Word Highlighting via Callback
 
-    func testWillSpeakRangeUpdatesHighlight() {
+    func testWordBoundaryCallbackUpdatesHighlight() {
         coordinator.open()
         coordinator.play()
-        coordinator.simulateWillSpeakRange(NSRange(location: 5, length: 4))
+        mockSynthesizer.simulateMarker(at: NSRange(location: 5, length: 4))
         XCTAssertEqual(viewModel.highlightRange, NSRange(location: 5, length: 4))
     }
 
     // MARK: - Finished Speaking
 
-    func testDidFinishSetsNotPlaying() {
+    func testFinishCallbackSetsNotPlaying() {
         coordinator.open()
         coordinator.play()
-        coordinator.simulateDidFinish()
+        mockSynthesizer.simulateFinish()
         XCTAssertFalse(viewModel.isPlaying)
     }
 
-    func testDidFinishClearsHighlight() {
+    func testFinishCallbackClearsHighlight() {
         coordinator.open()
         coordinator.play()
-        coordinator.simulateWillSpeakRange(NSRange(location: 0, length: 3))
-        coordinator.simulateDidFinish()
+        mockSynthesizer.simulateMarker(at: NSRange(location: 0, length: 3))
+        mockSynthesizer.simulateFinish()
         XCTAssertNil(viewModel.highlightRange)
     }
 
     // MARK: - Audio Level Pulsing
 
-    func testWillSpeakRangePulsesAudioLevel() {
+    func testWordBoundaryPulsesAudioLevel() {
         coordinator.open()
         coordinator.play()
-        coordinator.simulateWillSpeakRange(NSRange(location: 0, length: 4))
+        mockSynthesizer.simulateMarker(at: NSRange(location: 0, length: 4))
         XCTAssertGreaterThan(viewModel.audioLevel, 0.0)
     }
 
     func testAudioLevelPeakIsAtMostOne() {
         coordinator.open()
         coordinator.play()
-        coordinator.simulateWillSpeakRange(NSRange(location: 0, length: 4))
+        mockSynthesizer.simulateMarker(at: NSRange(location: 0, length: 4))
         XCTAssertLessThanOrEqual(viewModel.audioLevel, 1.0)
     }
 
-    func testDidFinishResetsAudioLevel() {
+    func testFinishResetsAudioLevel() {
         coordinator.open()
         coordinator.play()
-        coordinator.simulateWillSpeakRange(NSRange(location: 0, length: 4))
-        coordinator.simulateDidFinish()
+        mockSynthesizer.simulateMarker(at: NSRange(location: 0, length: 4))
+        mockSynthesizer.simulateFinish()
         XCTAssertEqual(viewModel.audioLevel, 0.0)
     }
 
     func testStopResetsAudioLevelAfterPulse() {
         coordinator.open()
         coordinator.play()
-        coordinator.simulateWillSpeakRange(NSRange(location: 0, length: 4))
+        mockSynthesizer.simulateMarker(at: NSRange(location: 0, length: 4))
         coordinator.stop()
         XCTAssertEqual(viewModel.audioLevel, 0.0)
     }
@@ -243,50 +247,27 @@ final class TTSDiagnosticsCoordinatorTests: XCTestCase {
     func testMultipleWordsPulseAudioLevel() {
         coordinator.open()
         coordinator.play()
-        coordinator.simulateWillSpeakRange(NSRange(location: 0, length: 4))
+        mockSynthesizer.simulateMarker(at: NSRange(location: 0, length: 4))
         let firstLevel = viewModel.audioLevel
-        coordinator.simulateWillSpeakRange(NSRange(location: 5, length: 4))
+        mockSynthesizer.simulateMarker(at: NSRange(location: 5, length: 4))
         let secondLevel = viewModel.audioLevel
         XCTAssertGreaterThan(firstLevel, 0.0)
         XCTAssertGreaterThan(secondLevel, 0.0)
     }
-}
 
-// MARK: - Mock Synthesizer for TTS Diagnostics
+    // MARK: - Simulate helpers still work
 
-final class MockTTSDiagSynthesizer: SpeechSynthesizing {
-    var delegate: (any AVSpeechSynthesizerDelegate)?
-    var isSpeaking = false
-    var isPaused = false
-    var speakCalled = false
-    var stopCalled = false
-    var pauseCalled = false
-    var continueCalled = false
-    var lastUtteranceText: String?
-
-    func speak(_ utterance: AVSpeechUtterance) {
-        speakCalled = true
-        isSpeaking = true
-        isPaused = false
-        lastUtteranceText = utterance.speechString
+    func testSimulateWillSpeakRangeUpdatesHighlight() {
+        coordinator.open()
+        coordinator.play()
+        coordinator.simulateWillSpeakRange(NSRange(location: 5, length: 4))
+        XCTAssertEqual(viewModel.highlightRange, NSRange(location: 5, length: 4))
     }
 
-    func stopSpeaking(at boundary: AVSpeechBoundary) -> Bool {
-        stopCalled = true
-        isSpeaking = false
-        isPaused = false
-        return true
-    }
-
-    func pauseSpeaking(at boundary: AVSpeechBoundary) -> Bool {
-        pauseCalled = true
-        isPaused = true
-        return true
-    }
-
-    func continueSpeaking() -> Bool {
-        continueCalled = true
-        isPaused = false
-        return true
+    func testSimulateDidFinishSetsNotPlaying() {
+        coordinator.open()
+        coordinator.play()
+        coordinator.simulateDidFinish()
+        XCTAssertFalse(viewModel.isPlaying)
     }
 }

@@ -48,9 +48,10 @@ struct VoiceChatView: View {
         _sessionPicker = StateObject(wrappedValue: picker)
 
         let diagVM = STTDiagnosticsViewModel()
+        let sharedAudioEngine = RealAudioEngineProvider()
         let diagEngine = VoiceEngine(
             speechRecognizer: RealSpeechRecognizer(),
-            audioEngine: RealAudioEngineProvider(),
+            audioEngine: sharedAudioEngine,
             audioSession: RealAudioSessionConfigurator(),
             timerFactory: RealTimerFactory()
         )
@@ -62,9 +63,14 @@ struct VoiceChatView: View {
         _sttDiagnosticsCoordinator = StateObject(wrappedValue: diagCoord)
 
         let ttsVM = TTSDiagnosticsViewModel()
+        let ttsPlayer = TTSAudioPlayer(
+            synthesizer: RealTTSBufferSynthesizer(),
+            playerNode: RealAudioPlayerNode(),
+            engine: RealPlaybackEngine(engine: sharedAudioEngine.rawEngine)
+        )
         let ttsCoord = TTSDiagnosticsCoordinator(
             viewModel: ttsVM,
-            synthesizer: AVSpeechSynthesizer()
+            player: ttsPlayer
         )
         _ttsDiagnosticsVM = StateObject(wrappedValue: ttsVM)
         _ttsDiagnosticsCoordinator = StateObject(wrappedValue: ttsCoord)
@@ -196,19 +202,22 @@ struct VoiceChatView: View {
                     }
                 }
             }
-
-            Divider()
-
-            // Compact single-row toolbar: [session picker] --- [status] --- [mic 44pt]
-            HStack(spacing: 12) {
-                compactSessionPicker
-                Spacer()
-                copyButton
-                statusDot
-                micButton
+            .safeAreaInset(edge: .bottom) {
+                VStack(spacing: 0) {
+                    Divider()
+                    // Compact single-row toolbar: [session picker] --- [status] --- [mic 44pt]
+                    HStack(spacing: 12) {
+                        compactSessionPicker
+                        Spacer()
+                        copyButton
+                        statusDot
+                        micButton
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                }
+                .background(.bar)
             }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
         }
     }
 
