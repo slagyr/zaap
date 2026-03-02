@@ -111,33 +111,27 @@ final class RealSpeechRecognitionRequest: SpeechRecognitionRequesting {
 final class RealAudioEngineProvider: AudioEngineProviding {
     let rawEngine = AVAudioEngine()
     let ttsPlayerNode = RealAudioPlayerNode()
+    private var voiceProcessingSetUp = false
 
     init() {
-        // Attach player node BEFORE engine starts so VPIO includes it in graph.
+        // Attach player node eagerly — safe without audio session.
         rawEngine.attach(ttsPlayerNode.node)
-
-        // Enable voice processing on input node (engine must be stopped).
-        do {
-            try rawEngine.inputNode.setVoiceProcessingEnabled(true)
-        } catch {
-            print("Could not enable voice processing: \(error)")
-        }
-
-        // Connect player node to mainMixer for TTS playback through VPIO.
-        let ttsFormat = AVAudioFormat(standardFormatWithSampleRate: 22050, channels: 1)!
-        rawEngine.connect(ttsPlayerNode.node, to: rawEngine.mainMixerNode, format: ttsFormat)
     }
 
     var isRunning: Bool { rawEngine.isRunning }
 
     func prepare() { rawEngine.prepare() }
 
-    func start() throws { try rawEngine.start() }
+    func start() throws {
+        setupVoiceProcessingOnce()
+        try rawEngine.start()
+    }
 
     func stop() { rawEngine.stop() }
 
     func installTap(onBus bus: Int, bufferSize: UInt32, format: AVAudioFormat?,
                      block: @escaping (AVAudioPCMBuffer) -> Void) {
+        setupVoiceProcessingOnce()
         rawEngine.inputNode.installTap(onBus: bus, bufferSize: bufferSize, format: format) { buffer, _ in
             block(buffer)
         }
@@ -148,7 +142,25 @@ final class RealAudioEngineProvider: AudioEngineProviding {
     }
 
     func inputFormat(forBus bus: Int) -> AVAudioFormat {
-        rawEngine.inputNode.outputFormat(forBus: bus)
+        setupVoiceProcessingOnce()
+        return rawEngine.inputNode.outputFormat(forBus: bus)
+    }
+
+    /// Enable VPIO and connect the TTS player node.
+    /// Called once, after the audio session is configured for .playAndRecord
+    /// but before the engine starts — so VPIO includes the player node in its graph.
+    private func setupVoiceProcessingOnce() {
+        guard !voiceProcessingSetUp else { return }
+        voiceProcessingSetUp = true
+
+        do {
+            try rawEngine.inputNode.setVoiceProcessingEnabled(true)
+        } catch {
+            print("Could not enable voice processing: \(error)")
+        }
+
+        let ttsFormat = AVAudioFormat(standardFormatWithSampleRate: 22050, channels: 1)!
+        rawEngine.connect(ttsPlayerNode.node, to: rawEngine.mainMixerNode, format: ttsFormat)
     }
 }
 
