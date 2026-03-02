@@ -20,6 +20,7 @@ protocol AudioPlayerNodeProtocol {
 protocol PlaybackEngineProtocol {
     func attachPlayerNode(_ node: AudioPlayerNodeProtocol)
     func connectPlayerNode(_ node: AudioPlayerNodeProtocol, format: AVAudioFormat?)
+    func start() throws
     func detachPlayerNode(_ node: AudioPlayerNodeProtocol)
 }
 
@@ -49,6 +50,7 @@ class TTSAudioPlayer {
         let utterance = AVSpeechUtterance(string: text)
         engine.attachPlayerNode(playerNode)
         engine.connectPlayerNode(playerNode, format: nil)
+        try? engine.start()
         playerNode.play()
         isPlaying = true
         isPaused = false

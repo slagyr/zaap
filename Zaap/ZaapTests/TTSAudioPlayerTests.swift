@@ -44,6 +44,11 @@ final class TTSAudioPlayerTests: XCTestCase {
         XCTAssertTrue(mockEngine.connectCalled)
     }
 
+    func testPlayStartsEngine() {
+        player.play(text: "Hello world")
+        XCTAssertTrue(mockEngine.startCalled)
+    }
+
     func testPlayStartsPlayerNode() {
         player.play(text: "Hello world")
         XCTAssertTrue(mockPlayerNode.playCalled)
@@ -195,6 +200,7 @@ final class MockAudioPlayerNode: AudioPlayerNodeProtocol {
 final class MockPlaybackEngine: PlaybackEngineProtocol {
     var attachCalled = false
     var connectCalled = false
+    var startCalled = false
     var detachCalled = false
 
     func attachPlayerNode(_ node: AudioPlayerNodeProtocol) {
@@ -203,6 +209,10 @@ final class MockPlaybackEngine: PlaybackEngineProtocol {
 
     func connectPlayerNode(_ node: AudioPlayerNodeProtocol, format: AVAudioFormat?) {
         connectCalled = true
+    }
+
+    func start() throws {
+        startCalled = true
     }
 
     func detachPlayerNode(_ node: AudioPlayerNodeProtocol) {
