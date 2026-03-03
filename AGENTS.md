@@ -110,3 +110,12 @@ Steps:
      --apiIssuer 69a6de84-bbb3-47e3-e053-5b8c7c11a4d1
    ```
 4. Notify Micah in #zaap once the build is processing on TestFlight.
+
+## ⚠️ File Tool Path Note
+
+The `read`, `edit`, and `write` tools do **not** expand `~` paths. Always use absolute paths:
+
+- ✅ `/Users/zane/Projects/zaap/...`
+- ❌ `~/Projects/zaap/...` (will fail with "file not found")
+
+When in doubt, use `exec` with `echo $HOME` to confirm the home directory, or use shell commands (`cp`, `cat >`) via `exec` instead of the file tools for tilde paths.
