@@ -76,6 +76,7 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
 
     // Configuration
     let silenceThreshold: TimeInterval
+    let watchdogInterval: TimeInterval
     let minimumTranscriptLength = 3
 
     // Callbacks
@@ -94,18 +95,22 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
     private var recognitionTask: SpeechRecognitionTaskProtocol?
     private var recognitionRequest: (any SpeechRecognitionRequesting)?
     private var silenceTimer: TimerToken?
+    private var watchdogTimer: TimerToken?
+    private var hasReceivedPartial = false
     private var lastEmittedLength = 0
 
     init(speechRecognizer: any SpeechRecognizing,
          audioEngine: AudioEngine,
          audioSession: any AudioSessionConfiguring,
          timerFactory: any TimerScheduling,
-         silenceThreshold: TimeInterval = 1.5) {
+         silenceThreshold: TimeInterval = 1.5,
+         watchdogInterval: TimeInterval = 3.0) {
         self.speechRecognizer = speechRecognizer
         self.audioEngine = audioEngine
         self.audioSession = audioSession
         self.timerFactory = timerFactory
         self.silenceThreshold = silenceThreshold
+        self.watchdogInterval = watchdogInterval
 
         audioSession.registerInterruptionHandler { [weak self] began in
             Task { @MainActor in
@@ -178,6 +183,11 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
                 guard let result = result else { return }
 
                 self.currentTranscript = result.bestTranscriptionString
+                if !self.hasReceivedPartial {
+                    self.hasReceivedPartial = true
+                    self.watchdogTimer?.invalidate()
+                    self.watchdogTimer = nil
+                }
                 self.onPartialTranscript?(self.currentTranscript)
                 self.resetSilenceTimer()
 
@@ -198,11 +208,15 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         }
 
         isListening = true
+        hasReceivedPartial = false
+        startWatchdog()
         logHandler("🎙️ [STT] startListening: now listening")
     }
 
     func stopListening() {
         logHandler("🎙️ [STT] stopListening")
+        watchdogTimer?.invalidate()
+        watchdogTimer = nil
         silenceTimer?.invalidate()
         silenceTimer = nil
         recognitionTask?.cancel()
@@ -222,6 +236,23 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         silenceTimer = timerFactory.scheduleTimer(interval: silenceThreshold) { [weak self] in
             Task { @MainActor in
                 self?.emitUtteranceIfValid()
+            }
+        }
+    }
+
+    /// Start a watchdog timer that restarts recognition if no partial results arrive.
+    /// On first app launch, SFSpeechRecognizer's on-device model may not be loaded yet,
+    /// causing the first recognition task to produce zero results. The watchdog detects
+    /// this and creates a fresh task.
+    private func startWatchdog() {
+        watchdogTimer?.invalidate()
+        watchdogTimer = timerFactory.scheduleTimer(interval: watchdogInterval) { [weak self] in
+            Task { @MainActor in
+                guard let self = self, self.isListening, !self.hasReceivedPartial else { return }
+                self.logHandler("🎙️ [STT] watchdog: no partials after \(self.watchdogInterval)s, restarting recognition")
+                self.restartRecognition()
+                // Re-arm watchdog in case the model still isn't ready
+                self.startWatchdog()
             }
         }
     }

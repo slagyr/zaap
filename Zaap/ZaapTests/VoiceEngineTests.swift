@@ -780,4 +780,120 @@ final class VoiceEngineTests: XCTestCase {
         engine.logHandler("test message")
         // No crash = success; actual AppLog integration tested elsewhere
     }
+
+    // MARK: - Cold Start Watchdog
+
+    @MainActor
+    func testWatchdogRestartsRecognitionWhenNoPartialsArrive() async {
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5,
+            watchdogInterval: 3.0
+        )
+        engine.onUtteranceComplete = { _ in }
+
+        engine.startListening()
+        XCTAssertEqual(speechRecognizer.taskCreationCount, 1)
+
+        // Simulate watchdog timer firing (no partials arrived)
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        // Should have restarted recognition — new task created
+        XCTAssertEqual(speechRecognizer.taskCreationCount, 2,
+                       "Watchdog should restart recognition when no partials arrive")
+        XCTAssertTrue(engine.isListening, "Engine should still be listening after watchdog restart")
+    }
+
+    @MainActor
+    func testWatchdogCancelledWhenPartialArrives() async {
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5,
+            watchdogInterval: 3.0
+        )
+
+        engine.startListening()
+
+        // Grab the watchdog timer token
+        let watchdogToken = timerFactory.allTokens.first!
+
+        // Simulate a partial result arriving — watchdog should be cancelled
+        await simulateResultAndWait("Hello", isFinal: false)
+
+        XCTAssertGreaterThan(watchdogToken.invalidateCount, 0,
+                             "Watchdog timer should be cancelled when first partial arrives")
+    }
+
+    @MainActor
+    func testWatchdogDoesNotFireAfterStop() async {
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5,
+            watchdogInterval: 3.0
+        )
+
+        engine.startListening()
+        engine.stopListening()
+
+        // Fire watchdog after stop
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        // Should NOT restart — only the initial task should exist
+        XCTAssertEqual(speechRecognizer.taskCreationCount, 1,
+                       "Watchdog should not restart recognition after stopListening")
+    }
+
+    @MainActor
+    func testWatchdogDefaultsTo3Seconds() {
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5
+        )
+
+        engine.startListening()
+
+        // The first timer scheduled should be the watchdog at 3.0s
+        XCTAssertEqual(timerFactory.allTokens.count, 1)
+        XCTAssertEqual(timerFactory.lastInterval, 3.0,
+                       "Watchdog should default to 3 seconds")
+    }
+
+    @MainActor
+    func testWatchdogLogsRestart() async {
+        var logMessages: [String] = []
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5,
+            watchdogInterval: 3.0
+        )
+        engine.logHandler = { logMessages.append($0) }
+        engine.onUtteranceComplete = { _ in }
+
+        engine.startListening()
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        let hasWatchdogLog = logMessages.contains { $0.contains("watchdog") }
+        XCTAssertTrue(hasWatchdogLog, "Watchdog restart should log. Got: \(logMessages)")
+    }
 }
