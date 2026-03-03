@@ -36,14 +36,13 @@ final class ActivityDeliveryService {
 
     // MARK: - Public
 
-    /// Start the service. If activity tracking was previously enabled, deliver the latest summary.
+    /// Start the service. Registers observers but does not trigger immediate delivery.
     /// Call once at app launch.
     func start() {
         guard settings.activityTrackingEnabled && settings.isConfigured else {
             logger.info("Activity delivery not started — disabled or not configured")
             return
         }
-        deliverLatest()
     }
 
     /// Enable or disable activity tracking. Updates settings and triggers delivery if enabled.

@@ -40,22 +40,14 @@ final class HeartRateDeliveryService {
     var reader: any HeartRateReading { heartRateReader }
 
     /// Start the heart rate delivery service.
-    /// Requests HealthKit authorization and delivers an initial summary if enabled.
+    /// Registers observers but does not trigger immediate delivery.
     func start() {
         guard settings.heartRateTrackingEnabled && settings.isConfigured else {
             logger.info("Heart rate delivery not started — not configured or tracking disabled")
             return
         }
 
-        Task {
-            do {
-                try await heartRateReader.requestAuthorization()
-                await deliverDailySummary()
-                logger.info("Heart rate delivery started")
-            } catch {
-                logger.error("Heart rate delivery start failed: \(error.localizedDescription, privacy: .public)")
-            }
-        }
+        logger.info("Heart rate delivery started")
     }
 
     /// Enable or disable heart rate tracking. Updates settings and triggers delivery if enabled.

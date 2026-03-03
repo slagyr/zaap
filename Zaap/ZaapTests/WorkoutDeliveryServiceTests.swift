@@ -17,28 +17,15 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
         XCTAssertEqual(webhook.postCallCount, 0)
     }
 
-    func testStartDeliversWhenEnabled() {
-        let (service, reader, webhook, settings, _) = makeService()
+    func testStartDoesNotDeliverEagerly() {
+        let (service, _, webhook, settings, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.workoutTrackingEnabled = true
 
-        reader.sessionsToReturn = [
-            WorkoutReader.WorkoutSession(
-                workoutType: "running",
-                startDate: Date(), endDate: Date(),
-                durationMinutes: 30, totalCalories: 300, distanceMeters: 5000
-            )
-        ]
-
         service.start()
 
-        let exp = expectation(description: "delivery")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { exp.fulfill() }
-        waitForExpectations(timeout: 2)
-
-        XCTAssertEqual(webhook.postCallCount, 1)
-        XCTAssertEqual(webhook.lastPath, "/workout")
+        XCTAssertEqual(webhook.postCallCount, 0)
     }
 
     func testSetTrackingUpdatesSettings() {

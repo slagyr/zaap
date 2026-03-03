@@ -36,14 +36,13 @@ final class WorkoutDeliveryService {
 
     // MARK: - Public
 
-    /// Start the service. If workout tracking was previously enabled, deliver the latest sessions.
+    /// Start the service. Registers observers but does not trigger immediate delivery.
     /// Call once at app launch.
     func start() {
         guard settings.workoutTrackingEnabled && settings.isConfigured else {
             logger.info("Workout delivery not started — disabled or not configured")
             return
         }
-        deliverLatest()
     }
 
     /// Enable or disable workout tracking. Updates settings and triggers delivery if enabled.

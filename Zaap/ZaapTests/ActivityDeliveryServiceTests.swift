@@ -63,25 +63,15 @@ final class ActivityDeliveryServiceTests: XCTestCase {
         XCTAssertFalse(settings.activityTrackingEnabled)
     }
 
-    func testStartDeliversWhenEnabled() {
-        let (service, reader, webhook, settings, _) = makeService()
+    func testStartDoesNotDeliverEagerly() {
+        let (service, _, webhook, settings, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.activityTrackingEnabled = true
 
-        reader.summaryToReturn = ActivityReader.ActivitySummary(
-            date: "2026-02-15", steps: 5000,
-            distanceMeters: 4000, activeEnergyKcal: 200,
-            timestamp: Date()
-        )
-
         service.start()
 
-        let exp = expectation(description: "delivery")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { exp.fulfill() }
-        waitForExpectations(timeout: 2)
-
-        XCTAssertEqual(webhook.postCallCount, 1)
+        XCTAssertEqual(webhook.postCallCount, 0)
     }
 
     func testActivityDeliveryLogsSuccessOnPost() {

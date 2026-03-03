@@ -18,27 +18,15 @@ final class SleepDeliveryServiceTests: XCTestCase {
         XCTAssertEqual(webhook.postCallCount, 0)
     }
 
-    func testStartDeliversWhenEnabled() {
-        let (service, reader, webhook, settings, _) = makeService()
+    func testStartDoesNotDeliverEagerly() {
+        let (service, _, webhook, settings, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.sleepTrackingEnabled = true
 
-        reader.summaryToReturn = SleepDataReader.SleepSummary(
-            date: "2026-02-15", bedtime: nil, wakeTime: nil,
-            totalInBedMinutes: 480, totalAsleepMinutes: 420,
-            deepSleepMinutes: 90, remSleepMinutes: 120, coreSleepMinutes: 210,
-            awakeMinutes: 30, sessions: []
-        )
-
         service.start()
 
-        let exp = expectation(description: "delivery")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { exp.fulfill() }
-        waitForExpectations(timeout: 2)
-
-        XCTAssertEqual(webhook.postCallCount, 1)
-        XCTAssertEqual(webhook.lastPath, "/sleep")
+        XCTAssertEqual(webhook.postCallCount, 0)
     }
 
     func testSetTrackingEnabledTriggersDelivery() {

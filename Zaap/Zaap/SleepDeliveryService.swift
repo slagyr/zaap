@@ -36,14 +36,13 @@ final class SleepDeliveryService {
 
     // MARK: - Public
 
-    /// Start the service. If sleep tracking was previously enabled, deliver the latest summary.
+    /// Start the service. Registers observers but does not trigger immediate delivery.
     /// Call once at app launch.
     func start() {
         guard settings.sleepTrackingEnabled && settings.isConfigured else {
             logger.info("Sleep delivery not started — disabled or not configured")
             return
         }
-        deliverLatest()
     }
 
     /// Enable or disable sleep tracking. Updates settings and triggers delivery if enabled.
