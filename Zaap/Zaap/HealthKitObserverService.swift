@@ -69,7 +69,7 @@ final class HealthKitObserverService {
 
     private func frequency(for dataType: ObservedHealthDataType) -> ObserverFrequency {
         switch dataType {
-        case .heartRate: return .immediate
+        case .heartRate: return .hourly
         case .workout: return .immediate
         case .sleep: return .immediate
         case .activity: return .hourly

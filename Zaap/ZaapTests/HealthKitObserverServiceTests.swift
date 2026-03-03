@@ -74,7 +74,7 @@ final class HealthKitObserverServiceTests: XCTestCase {
             uniquingKeysWith: { _, last in last }
         )
 
-        XCTAssertEqual(freqByType[.heartRate], .immediate)
+        XCTAssertEqual(freqByType[.heartRate], .hourly)
         XCTAssertEqual(freqByType[.workout], .immediate)
         XCTAssertEqual(freqByType[.sleep], .immediate)
         XCTAssertEqual(freqByType[.activity], .hourly)
