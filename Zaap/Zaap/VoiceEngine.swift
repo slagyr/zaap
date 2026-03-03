@@ -82,6 +82,7 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
     var onUtteranceComplete: ((String) -> Void)?
     var onPartialTranscript: ((String) -> Void)?
     var onError: ((VoiceEngineError) -> Void)?
+    var logHandler: (String) -> Void = { AppLog.shared.log($0) }
 
     // Dependencies
     private let speechRecognizer: any SpeechRecognizing
@@ -116,24 +117,32 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
     }
 
     func startListening() {
-        guard !isListening else { return }
+        guard !isListening else {
+            logHandler("🎙️ [STT] startListening: already listening, skipping")
+            return
+        }
 
+        logHandler("🎙️ [STT] startListening: beginning setup")
         lastEmittedLength = 0
         currentTranscript = ""
 
         guard speechRecognizer.authorizationStatus == .authorized else {
+            logHandler("🎙️ [STT] startListening: notAuthorized (status=\(speechRecognizer.authorizationStatus))")
             onError?(.notAuthorized)
             return
         }
 
         guard speechRecognizer.isAvailable else {
+            logHandler("🎙️ [STT] startListening: recognizer unavailable")
             onError?(.recognizerUnavailable)
             return
         }
 
         do {
             try audioSession.configureForVoice()
+            logHandler("🎙️ [STT] startListening: audio session configured")
         } catch {
+            logHandler("🎙️ [STT] startListening: audio session failed: \(error.localizedDescription)")
             onError?(.audioSessionFailed(error.localizedDescription))
             return
         }
@@ -162,6 +171,7 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
                     let nsErr = error as NSError
                     let isCanceled = desc.contains("cancel") || nsErr.code == 301 || nsErr.code == 216
                     guard !isCanceled else { return }
+                    self.logHandler("🎙️ [STT] recognition error: \(error.localizedDescription)")
                     self.onError?(.recognitionFailed(error.localizedDescription))
                     return
                 }
@@ -172,6 +182,7 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
                 self.resetSilenceTimer()
 
                 if result.isFinal {
+                    self.logHandler("🎙️ [STT] final result: \"\(result.bestTranscriptionString.prefix(80))\"")
                     self.emitUtteranceIfValid()
                 }
             }
@@ -181,14 +192,17 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         do {
             try audioEngine.start()
         } catch {
+            logHandler("🎙️ [STT] startListening: engine start failed: \(error.localizedDescription)")
             onError?(.audioSessionFailed(error.localizedDescription))
             return
         }
 
         isListening = true
+        logHandler("🎙️ [STT] startListening: now listening")
     }
 
     func stopListening() {
+        logHandler("🎙️ [STT] stopListening")
         silenceTimer?.invalidate()
         silenceTimer = nil
         recognitionTask?.cancel()
@@ -218,13 +232,18 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
 
         let full = currentTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
         let newPortion = String(full.dropFirst(lastEmittedLength)).trimmingCharacters(in: .whitespacesAndNewlines)
-        guard newPortion.count >= minimumTranscriptLength else { return }
+        guard newPortion.count >= minimumTranscriptLength else {
+            logHandler("🎙️ [STT] utterance too short (\(newPortion.count) chars): \"\(newPortion)\"")
+            return
+        }
+        logHandler("🎙️ [STT] emitting utterance: \"\(newPortion.prefix(80))\"")
         onUtteranceComplete?(newPortion)
         lastEmittedLength = 0
         restartRecognition()
     }
 
     private func restartRecognition() {
+        logHandler("🎙️ [STT] restartRecognition: creating new recognition task")
         // Reset transcript state — new task starts fresh.
         currentTranscript = ""
 

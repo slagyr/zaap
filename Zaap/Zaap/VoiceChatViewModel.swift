@@ -80,9 +80,12 @@ final class VoiceChatViewModel: ObservableObject {
     }
 
     /// Replace the conversation log with preview messages from a session.
-    /// Only works while idle — ignored during active voice sessions.
+    /// Works in any state so session switching updates the display immediately,
+    /// even while the mic is active. Clears in-flight partial/response text
+    /// since they belong to the previous session.
     func loadPreviewMessages(_ messages: [ConversationEntry]) {
-        guard state == .idle else { return }
         conversationLog = messages
+        partialTranscript = ""
+        responseText = ""
     }
 }

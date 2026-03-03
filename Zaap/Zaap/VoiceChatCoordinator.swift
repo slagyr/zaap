@@ -88,11 +88,15 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         }
 
         speaker.onStateChange = { [weak self] newState in
-            guard let self = self, self.isSessionActive else { return }
+            guard let self = self else { return }
+            self.logHandler("🔊 [SPEAKER] state → \(newState) sessionActive=\(self.isSessionActive) conversationMode=\(self.isConversationModeOn)")
+            guard self.isSessionActive else { return }
             if newState == .speaking {
                 // Stop mic during TTS to prevent echo pickup (hardware AEC insufficient on device)
+                self.logHandler("🔊 [SPEAKER] stopping mic for TTS playback")
                 self.voiceEngine.stopListening()
             } else if newState == .idle, self.isConversationModeOn {
+                self.logHandler("🔊 [SPEAKER] TTS finished, scheduling mic restart")
                 self.scheduleMicRestart()
             }
         }
@@ -201,9 +205,18 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
     private func scheduleMicRestart() {
         micRestartTask?.cancel()
+        logHandler("🎙️ [COORD] scheduleMicRestart: delay=\(micRestartDelay)s")
         micRestartTask = Task { @MainActor in
             try? await Task.sleep(nanoseconds: UInt64(micRestartDelay * 1_000_000_000))
-            guard !Task.isCancelled, isSessionActive, isConversationModeOn else { return }
+            guard !Task.isCancelled else {
+                logHandler("🎙️ [COORD] micRestart: cancelled")
+                return
+            }
+            guard isSessionActive, isConversationModeOn else {
+                logHandler("🎙️ [COORD] micRestart: skipped (sessionActive=\(isSessionActive) conversationMode=\(isConversationModeOn))")
+                return
+            }
+            logHandler("🎙️ [COORD] micRestart: restarting voice engine, vmState=\(viewModel.state)")
             voiceEngine.startListening()
             if viewModel.state == .idle {
                 viewModel.tapMic() // idle → listening

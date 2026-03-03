@@ -226,21 +226,52 @@ final class VoiceChatViewModelTests: XCTestCase {
         XCTAssertEqual(vm.conversationLog[0].text, "New message")
     }
 
-    func testLoadPreviewMessagesDoesNothingWhileListening() {
+    func testLoadPreviewMessagesWorksWhileListening() {
         let vm = VoiceChatViewModel()
         vm.tapMic() // state = .listening
-        vm.loadPreviewMessages([ConversationEntry(role: .agent, text: "Should not appear")])
-        XCTAssertTrue(vm.conversationLog.isEmpty)
+        let messages = [ConversationEntry(role: .agent, text: "New session preview")]
+        vm.loadPreviewMessages(messages)
+        XCTAssertEqual(vm.conversationLog.count, 1)
+        XCTAssertEqual(vm.conversationLog[0].text, "New session preview")
     }
 
-    func testLoadPreviewMessagesDoesNothingWhileProcessing() {
+    func testLoadPreviewMessagesWorksWhileProcessing() {
         let vm = VoiceChatViewModel()
         vm.tapMic()
         vm.handleUtteranceComplete("Hello")
-        vm.loadPreviewMessages([ConversationEntry(role: .agent, text: "Should not appear")])
-        // Should only have the user message from handleUtteranceComplete
+        let messages = [ConversationEntry(role: .agent, text: "Switched session")]
+        vm.loadPreviewMessages(messages)
         XCTAssertEqual(vm.conversationLog.count, 1)
-        XCTAssertEqual(vm.conversationLog[0].role, .user)
+        XCTAssertEqual(vm.conversationLog[0].text, "Switched session")
+    }
+
+    func testLoadPreviewMessagesWorksWhileSpeaking() {
+        let vm = VoiceChatViewModel()
+        vm.tapMic()
+        vm.handleUtteranceComplete("Hello")
+        vm.handleResponseToken("Hi")
+        XCTAssertEqual(vm.state, .speaking)
+        let messages = [ConversationEntry(role: .agent, text: "Different session")]
+        vm.loadPreviewMessages(messages)
+        XCTAssertEqual(vm.conversationLog.count, 1)
+        XCTAssertEqual(vm.conversationLog[0].text, "Different session")
+    }
+
+    func testLoadPreviewMessagesClearsPartialTranscript() {
+        let vm = VoiceChatViewModel()
+        vm.tapMic()
+        vm.updatePartialTranscript("Hel")
+        vm.loadPreviewMessages([ConversationEntry(role: .user, text: "New session")])
+        XCTAssertEqual(vm.partialTranscript, "")
+    }
+
+    func testLoadPreviewMessagesClearsResponseText() {
+        let vm = VoiceChatViewModel()
+        vm.tapMic()
+        vm.handleUtteranceComplete("Hello")
+        vm.handleResponseToken("Partial response")
+        vm.loadPreviewMessages([ConversationEntry(role: .user, text: "New session")])
+        XCTAssertEqual(vm.responseText, "")
     }
 
     func testLoadPreviewEmptyArrayClearsLog() {

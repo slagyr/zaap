@@ -717,4 +717,67 @@ final class VoiceEngineTests: XCTestCase {
         XCTAssertEqual(emittedTranscripts, ["First sentence here"],
                        "Firing silence timer after restart with no new partials should not emit anything")
     }
+
+    // MARK: - Logging
+
+    @MainActor
+    func testStartListeningLogs() {
+        var logMessages: [String] = []
+        engine.logHandler = { logMessages.append($0) }
+
+        engine.startListening()
+
+        let hasStartLog = logMessages.contains { $0.contains("startListening") }
+        XCTAssertTrue(hasStartLog, "startListening should log. Got: \(logMessages)")
+    }
+
+    @MainActor
+    func testStopListeningLogs() {
+        var logMessages: [String] = []
+        engine.logHandler = { logMessages.append($0) }
+
+        engine.startListening()
+        logMessages.removeAll()
+        engine.stopListening()
+
+        let hasStopLog = logMessages.contains { $0.contains("stopListening") }
+        XCTAssertTrue(hasStopLog, "stopListening should log. Got: \(logMessages)")
+    }
+
+    @MainActor
+    func testUtteranceEmissionLogs() async {
+        var logMessages: [String] = []
+        engine.logHandler = { logMessages.append($0) }
+        engine.onUtteranceComplete = { _ in }
+
+        engine.startListening()
+        await simulateResultAndWait("Hello world test", isFinal: false)
+
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        let hasEmitLog = logMessages.contains { $0.contains("utterance") }
+        XCTAssertTrue(hasEmitLog, "Utterance emission should log. Got: \(logMessages)")
+    }
+
+    @MainActor
+    func testAuthErrorLogs() {
+        var logMessages: [String] = []
+        engine.logHandler = { logMessages.append($0) }
+        speechRecognizer.authorizationStatus = .denied
+
+        engine.startListening()
+
+        let hasErrorLog = logMessages.contains { $0.contains("notAuthorized") }
+        XCTAssertTrue(hasErrorLog, "Auth error should log. Got: \(logMessages)")
+    }
+
+    @MainActor
+    func testDefaultLogHandlerUsesAppLog() {
+        // The default logHandler should be set (not nil)
+        // We just verify the property exists and is callable
+        engine.logHandler("test message")
+        // No crash = success; actual AppLog integration tested elsewhere
+    }
 }

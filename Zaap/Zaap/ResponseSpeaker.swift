@@ -29,11 +29,15 @@ final class ResponseSpeaker: NSObject, AVSpeechSynthesizerDelegate {
     private let synthesizer: SpeechSynthesizing
     private let settings: SettingsManager
     private var buffer: String = ""
+    var logHandler: (String) -> Void = { AppLog.shared.log($0) }
 
     /// Current speaker state, observable by UI.
     private(set) var state: SpeakerState = .idle {
         didSet {
-            if state != oldValue { onStateChange?(state) }
+            if state != oldValue {
+                logHandler("🔈 [TTS] state: \(oldValue) → \(state)")
+                onStateChange?(state)
+            }
         }
     }
     var onStateChange: ((SpeakerState) -> Void)?
@@ -84,6 +88,8 @@ final class ResponseSpeaker: NSObject, AVSpeechSynthesizerDelegate {
     func speakImmediate(_ text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
+        logHandler("🔈 [TTS] speakImmediate: \"\(trimmed.prefix(60))\"")
+
 
         let utterance = AVSpeechUtterance(string: trimmed)
         let voiceId = settings.ttsVoiceIdentifier
@@ -113,13 +119,18 @@ final class ResponseSpeaker: NSObject, AVSpeechSynthesizerDelegate {
     func flush() {
         let trimmed = buffer.trimmingCharacters(in: .whitespacesAndNewlines)
         buffer = ""
+        if trimmed.isEmpty {
+            logHandler("🔈 [TTS] flush: buffer empty, nothing to speak")
+        }
         guard !trimmed.isEmpty else { return }
+        logHandler("🔈 [TTS] flush: speaking remainder \"\(trimmed.prefix(60))\"")
         speakImmediate(trimmed)
     }
 
     /// Interrupt current speech and clear buffer. Call when the user starts
     /// speaking to allow them to take over.
     func interrupt() {
+        logHandler("🔈 [TTS] interrupt: state=\(state)")
         buffer = ""
         guard state == .speaking else { return }
         _ = synthesizer.stopSpeaking(at: .immediate)
@@ -134,6 +145,7 @@ final class ResponseSpeaker: NSObject, AVSpeechSynthesizerDelegate {
 
     /// Called when an utterance finishes (also used by mock).
     func handleDidFinish() {
+        logHandler("🔈 [TTS] didFinish: isSpeaking=\(synthesizer.isSpeaking)")
         if !synthesizer.isSpeaking {
             state = .idle
         }
