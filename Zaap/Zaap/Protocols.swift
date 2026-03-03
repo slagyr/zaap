@@ -83,6 +83,12 @@ protocol HRVReading {
     func fetchDailySummary(for date: Date) async throws -> HRVReader.DailyHRVSummary
 }
 
+extension HRVReading {
+    func fetchDailySummary() async throws -> HRVReader.DailyHRVSummary {
+        try await fetchDailySummary(for: Date())
+    }
+}
+
 extension HRVReader: HRVReading {}
 
 /// Protocol for reading SpO2 (blood oxygen) data.

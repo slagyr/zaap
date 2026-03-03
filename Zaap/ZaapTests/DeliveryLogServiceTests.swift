@@ -26,7 +26,7 @@ final class DeliveryLogServiceTests: XCTestCase {
 
     func testDataTypeHasAllCases() {
         let cases = DeliveryDataType.allCases
-        XCTAssertEqual(cases.count, 5)
+        XCTAssertEqual(cases.count, 7)
         XCTAssertTrue(cases.contains(.location))
         XCTAssertTrue(cases.contains(.sleep))
         XCTAssertTrue(cases.contains(.heartRate))

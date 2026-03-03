@@ -422,3 +422,41 @@ final class MockSpO2Reader: SpO2Reading {
         return summary
     }
 }
+
+
+final class MockRestingHeartRateReader: RestingHeartRateReading {
+    var summaryToReturn: RestingHeartRateReader.DailyRestingHRSummary?
+    var shouldThrow: Error?
+
+    func requestAuthorization() async throws {
+        if let error = shouldThrow { throw error }
+    }
+
+    func fetchDailySummary(for date: Date) async throws -> RestingHeartRateReader.DailyRestingHRSummary {
+        if let error = shouldThrow { throw error }
+        guard let summary = summaryToReturn else {
+            throw RestingHeartRateReader.RestingHRError.noData
+        }
+        return summary
+    }
+}
+
+
+// MARK: - Mock Respiratory Rate Reader
+
+final class MockRespiratoryRateReader: RespiratoryRateReading {
+    var authorizationRequested = false
+    var summaryToReturn: RespiratoryRateReader.DailyRespiratoryRateSummary?
+    var shouldThrow: Error?
+
+    func requestAuthorization() async throws {
+        authorizationRequested = true
+        if let error = shouldThrow { throw error }
+    }
+
+    func fetchDailySummary(for date: Date) async throws -> RespiratoryRateReader.DailyRespiratoryRateSummary {
+        if let error = shouldThrow { throw error }
+        guard let summary = summaryToReturn else { throw RespiratoryRateReader.RespiratoryRateError.noData }
+        return summary
+    }
+}

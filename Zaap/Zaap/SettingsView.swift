@@ -314,6 +314,9 @@ struct SettingsView: View {
                     onToggle: { enabled in ActivityDeliveryService.shared.setTracking(enabled: enabled) },
                     onSendNow: { try await ActivityDeliveryService.shared.sendNow() }
                 )
+
+                dataSourceRow(
+                )
             } header: {
                 Text("Data Sources")
             } footer: {
