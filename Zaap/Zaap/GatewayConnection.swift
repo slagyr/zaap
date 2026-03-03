@@ -314,9 +314,7 @@ final class GatewayConnection {
             return
         }
 
-        // Log raw incoming data for debugging
         let rawString = String(data: data, encoding: .utf8) ?? "<binary: \(data.count) bytes>"
-        log("📥 raw message: \(rawString)")
 
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             log("❌ Failed to parse message as JSON object: \(rawString)")
@@ -327,8 +325,6 @@ final class GatewayConnection {
         let type = json["type"] as? String ?? ""
         let event = json["event"] as? String
         let payload = json["payload"] as? [String: Any]
-
-        log("📨 parsed: type=\(type) event=\(event ?? "-") ok=\(json["ok"] ?? "-")")
 
         if type == "event" && event == "connect.challenge" {
             // Protocol: {type:"event", event:"connect.challenge", payload:{nonce, ts}}

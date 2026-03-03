@@ -959,7 +959,7 @@ extension VoiceChatCoordinatorTests {
         XCTAssertTrue(hasNilTextLog, "Should log when text extraction returns nil. Got: \(loggedMessages)")
     }
 
-    func testLogsWhenSessionKeyMismatchDropsEvent() async throws {
+    func testSessionKeyMismatchDropsSilently() async throws {
         var loggedMessages: [String] = []
         coordinator.logHandler = { loggedMessages.append($0) }
 
@@ -967,6 +967,7 @@ extension VoiceChatCoordinatorTests {
         coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:abc")
         gateway.simulateConnect()
         try await Task.sleep(nanoseconds: 50_000_000)
+        loggedMessages.removeAll()
 
         gateway.simulateEvent("chat.event", payload: [
             "sessionKey": "agent:main:discord:xyz",
@@ -975,11 +976,12 @@ extension VoiceChatCoordinatorTests {
         ])
         try await Task.sleep(nanoseconds: 50_000_000)
 
-        let hasDropLog = loggedMessages.contains { $0.contains("dropping") && $0.contains("session key mismatch") }
-        XCTAssertTrue(hasDropLog, "Should log when event dropped due to session key mismatch. Got: \(loggedMessages)")
+        // Mismatched events should be dropped silently to avoid flooding the log buffer
+        XCTAssertTrue(loggedMessages.isEmpty,
+                      "Mismatched session key events should not produce log entries. Got: \(loggedMessages)")
     }
 
-    func testLogsWhenChatEventSessionKeyMismatchDropsEvent() async throws {
+    func testChatEventSessionKeyMismatchDropsSilently() async throws {
         var loggedMessages: [String] = []
         coordinator.logHandler = { loggedMessages.append($0) }
 
@@ -987,6 +989,7 @@ extension VoiceChatCoordinatorTests {
         coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:abc")
         gateway.simulateConnect()
         try await Task.sleep(nanoseconds: 50_000_000)
+        loggedMessages.removeAll()
 
         gateway.simulateEvent("chat", payload: [
             "sessionKey": "agent:main:discord:xyz",
@@ -995,8 +998,8 @@ extension VoiceChatCoordinatorTests {
         ])
         try await Task.sleep(nanoseconds: 50_000_000)
 
-        let hasDropLog = loggedMessages.contains { $0.contains("dropping") && $0.contains("session key") }
-        XCTAssertTrue(hasDropLog, "Should log when chat event dropped due to session key mismatch. Got: \(loggedMessages)")
+        XCTAssertTrue(loggedMessages.isEmpty,
+                      "Mismatched chat events should not produce log entries. Got: \(loggedMessages)")
     }
 
     // MARK: - Echo Suppression

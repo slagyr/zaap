@@ -31,13 +31,13 @@ final class AppLogTests: XCTestCase {
     }
 
     func testLogCapsAtMaxEntries() {
-        for i in 0..<1100 {
+        for i in 0..<5100 {
             AppLog.shared.log("Entry \(i)")
         }
-        XCTAssertEqual(AppLog.shared.entries.count, 1000)
+        XCTAssertEqual(AppLog.shared.entries.count, 5000)
         // Oldest entries should be dropped
         XCTAssertTrue(AppLog.shared.entries[0].contains("Entry 100"))
-        XCTAssertTrue(AppLog.shared.entries.last?.contains("Entry 1099") ?? false)
+        XCTAssertTrue(AppLog.shared.entries.last?.contains("Entry 5099") ?? false)
     }
 
     func testExportReturnsNewlineSeparatedEntries() {

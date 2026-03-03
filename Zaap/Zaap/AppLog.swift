@@ -6,7 +6,7 @@ final class AppLog: @unchecked Sendable {
 
     static let shared = AppLog()
 
-    private let maxEntries = 1000
+    private let maxEntries = 5000
     private let lock = NSLock()
     private var _entries: [String] = []
 

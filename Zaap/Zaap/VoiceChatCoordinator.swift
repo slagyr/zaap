@@ -323,14 +323,14 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     // MARK: - Gateway → ResponseSpeaker
 
     private func handleGatewayEvent(_ event: String, payload: [String: Any]) {
-        logHandler("📥 [VOICE] event=\(event) sessionActive=\(isSessionActive) keys=\(Array(payload.keys))")
-
-        // Filter by session key — only process events for the active session
-        if let eventSessionKey = payload["sessionKey"] as? String,
-           eventSessionKey != sessionKey {
-            logHandler("🚫 [VOICE] dropping event=\(event): session key mismatch (event=\(eventSessionKey) active=\(sessionKey))")
+        // Filter by session key — only process events for the active session.
+        // Drop silently to avoid flooding the log buffer with high-frequency mismatches.
+        let eventSessionKey = payload["sessionKey"] as? String
+        if eventSessionKey != nil, eventSessionKey != sessionKey {
             return
         }
+
+        logHandler("📥 [VOICE] event=\(event) sessionActive=\(isSessionActive)")
 
         // Handle gateway chat streaming events (delta/final from agent run)
         if event == "chat" {
@@ -360,13 +360,9 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     }
 
     private func handleChatEvent(_ payload: [String: Any]) {
-        // Require matching session key — ignore events from other sessions
-        guard let eventSessionKey = payload["sessionKey"] as? String,
-              eventSessionKey == sessionKey else {
-            let eventKey = payload["sessionKey"] as? String ?? "<missing>"
-            logHandler("🚫 [VOICE] dropping chat event: session key mismatch (event=\(eventKey) active=\(sessionKey))")
-            return
-        }
+        // Chat events must have a matching session key (already filtered for mismatches above,
+        // but we also need to reject events with no session key at all)
+        guard let eventKey = payload["sessionKey"] as? String, eventKey == sessionKey else { return }
         guard let state = payload["state"] as? String else {
             logHandler("⚠️ [VOICE] chat event missing 'state' field")
             return
