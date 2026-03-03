@@ -163,6 +163,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             micRestartTask?.cancel()
             micRestartTask = nil
             voiceEngine.stopListening()
+            speaker.interrupt()
             if viewModel.state == .listening {
                 viewModel.tapMic() // listening → idle
             }
@@ -387,16 +388,16 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
                 viewModel.setResponseText(t)
             }
         case "final":
-            logHandler("📥 [VOICE] chat final: text=\(text?.prefix(50) ?? "nil") sessionActive=\(isSessionActive)")
+            logHandler("📥 [VOICE] chat final: text=\(text?.prefix(50) ?? "nil") sessionActive=\(isSessionActive) conversationMode=\(isConversationModeOn)")
             // Set authoritative final text before completing (zaap-9nl)
             if let t = text, !t.isEmpty {
                 viewModel.setResponseText(t)
             }
-            if isSessionActive, let t = text, !t.isEmpty {
+            if isSessionActive, isConversationModeOn, let t = text, !t.isEmpty {
                 trackSpokenText(t)
                 speaker.bufferToken(t)
             }
-            if isSessionActive {
+            if isSessionActive, isConversationModeOn {
                 speaker.flush()
             }
             viewModel.handleResponseComplete()

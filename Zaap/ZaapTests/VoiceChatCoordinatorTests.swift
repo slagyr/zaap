@@ -691,6 +691,47 @@ extension VoiceChatCoordinatorTests {
                        "Speaker finishing should NOT restart mic when conversation mode is off")
     }
 
+    func testToggleConversationModeOffInterruptsSpeaker() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Speaker is speaking
+        speaker.simulateStateChange(.speaking)
+
+        // Turn off conversation mode
+        coordinator.toggleConversationMode()
+
+        XCTAssertTrue(speaker.interruptCalled,
+                      "Toggling conversation mode off should interrupt the speaker")
+    }
+
+    func testChatFinalDoesNotSpeakWhenConversationModeOff() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Turn off conversation mode (mic off)
+        coordinator.toggleConversationMode()
+        speaker.bufferedTokens.removeAll()
+        speaker.flushCalled = false
+
+        // A chat final arrives from the gateway
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main",
+            "state": "final",
+            "message": ["content": [["text": "Should not be spoken"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(speaker.bufferedTokens.isEmpty,
+                      "Chat final should NOT buffer tokens when conversation mode is off")
+        XCTAssertFalse(speaker.flushCalled,
+                       "Chat final should NOT flush speaker when conversation mode is off")
+    }
+
     func testConversationModeOnAfterToggleReenablesAutoRestart() async throws {
         let url = URL(string: "wss://gateway.local:18789")!
         coordinator.startSession(gatewayURL: url)

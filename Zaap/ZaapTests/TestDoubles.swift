@@ -271,10 +271,17 @@ final class MockResponseSpeaking: ResponseSpeaking {
     var bufferedTokens: [String] = []
     var flushCalled = false
     var interruptCalled = false
+    var speakImmediateCalled = false
 
     func speakImmediate(_ text: String) {
+        speakImmediateCalled = true
         spokenTexts.append(text)
         state = .speaking
+    }
+
+    func simulateStateChange(_ newState: SpeakerState) {
+        state = newState
+        onStateChange?(newState)
     }
 
     func bufferToken(_ token: String) {
