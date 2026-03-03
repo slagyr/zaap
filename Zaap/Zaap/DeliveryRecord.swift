@@ -9,7 +9,6 @@ enum DeliveryDataType: String, Codable, CaseIterable {
     case workout
     case hrv
     case spo2
-    case hrv
 }
 
 @Model
