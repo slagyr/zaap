@@ -27,6 +27,7 @@ struct SettingsView: View {
     @State private var workoutSendStatus: SendNowStatus = .idle
     @State private var heartRateSendStatus: SendNowStatus = .idle
     @State private var activitySendStatus: SendNowStatus = .idle
+    @State private var logsCopied = false
 
     // TTS voice picker
     @State private var availableVoices: [(id: String, name: String)] = []
@@ -323,6 +324,31 @@ struct SettingsView: View {
             }
 
             RequestLogView(log: requestLog)
+
+            Section {
+                Button(action: {
+                    UIPasteboard.general.string = AppLog.shared.export()
+                    logsCopied = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        logsCopied = false
+                    }
+                }) {
+                    HStack {
+                        Label(
+                            logsCopied ? "Copied!" : "Copy Logs",
+                            systemImage: logsCopied ? "checkmark" : "doc.on.doc"
+                        )
+                        Spacer()
+                        Text("\(AppLog.shared.entries.count) entries")
+                            .foregroundColor(.secondary)
+                            .font(.caption)
+                    }
+                }
+            } header: {
+                Text("Diagnostics")
+            } footer: {
+                Text("Copies recent app logs to the clipboard for debugging.")
+            }
 
         }
         .toolbar(.hidden, for: .navigationBar)

@@ -159,7 +159,7 @@ final class RealAudioEngineProvider: AudioEngineProviding {
         do {
             try rawEngine.inputNode.setVoiceProcessingEnabled(true)
         } catch {
-            print("Could not enable voice processing: \(error)")
+            AppLog.shared.log("⚠️ [AUDIO] Could not enable voice processing: \(error)")
         }
 
         // Connect TTS player to mainMixer. AVAudioEngine manages mainMixer → output internally.

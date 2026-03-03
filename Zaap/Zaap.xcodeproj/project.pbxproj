@@ -19,6 +19,7 @@
 		A10010 /* LocationDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20013 /* LocationDeliveryService.swift */; };
 		A10011 /* SleepDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20014 /* SleepDeliveryService.swift */; };
 		A10017 /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20020 /* Protocols.swift */; };
+		A10018 /* AppLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20021 /* AppLog.swift */; };
 		B10001 /* HeartRateReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20001 /* HeartRateReader.swift */; };
 		B10002 /* HeartRateDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20002 /* HeartRateDeliveryService.swift */; };
 		C10001 /* ActivityReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20001 /* ActivityReader.swift */; };
@@ -38,6 +39,7 @@
 		F10011 /* ActivityDeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20011 /* ActivityDeliveryServiceTests.swift */; };
 		F10012 /* WorkoutReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20012 /* WorkoutReaderTests.swift */; };
 		F10014 /* ProtocolsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20014 /* ProtocolsTests.swift */; };
+		F10015 /* AppLogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20015 /* AppLogTests.swift */; };
 		F10013 /* WorkoutDeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20013 /* WorkoutDeliveryServiceTests.swift */; };
 		G10001 /* DeliveryRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = G20001 /* DeliveryRecord.swift */; };
 		G10002 /* DeliveryLogService.swift in Sources */ = {isa = PBXBuildFile; fileRef = G20002 /* DeliveryLogService.swift */; };
@@ -130,6 +132,7 @@
 		A20013 /* LocationDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationDeliveryService.swift; sourceTree = "<group>"; };
 		A20014 /* SleepDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepDeliveryService.swift; sourceTree = "<group>"; };
 		A20020 /* Protocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
+		A20021 /* AppLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLog.swift; sourceTree = "<group>"; };
 		B20001 /* HeartRateReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateReader.swift; sourceTree = "<group>"; };
 		B20002 /* HeartRateDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateDeliveryService.swift; sourceTree = "<group>"; };
 		C20001 /* ActivityReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityReader.swift; sourceTree = "<group>"; };
@@ -150,6 +153,7 @@
 		F20011 /* ActivityDeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityDeliveryServiceTests.swift; sourceTree = "<group>"; };
 		F20012 /* WorkoutReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutReaderTests.swift; sourceTree = "<group>"; };
 		F20014 /* ProtocolsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolsTests.swift; sourceTree = "<group>"; };
+		F20015 /* AppLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogTests.swift; sourceTree = "<group>"; };
 		F20013 /* WorkoutDeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDeliveryServiceTests.swift; sourceTree = "<group>"; };
 		G20001 /* DeliveryRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryRecord.swift; sourceTree = "<group>"; };
 		G20002 /* DeliveryLogService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryLogService.swift; sourceTree = "<group>"; };
@@ -265,6 +269,7 @@
 				C20001 /* ActivityReader.swift */,
 				C20002 /* ActivityDeliveryService.swift */,
 				A20020 /* Protocols.swift */,
+				A20021 /* AppLog.swift */,
 				G20001 /* DeliveryRecord.swift */,
 				G20002 /* DeliveryLogService.swift */,
 				I20001 /* DashboardViewModel.swift */,
@@ -341,6 +346,7 @@
 				F20011 /* ActivityDeliveryServiceTests.swift */,
 				F20012 /* WorkoutReaderTests.swift */,
 				F20014 /* ProtocolsTests.swift */,
+				F20015 /* AppLogTests.swift */,
 				F20013 /* WorkoutDeliveryServiceTests.swift */,
 				G20003 /* DeliveryLogServiceTests.swift */,
 				I20003 /* DashboardViewModelTests.swift */,
@@ -483,6 +489,7 @@
 				B10001 /* HeartRateReader.swift in Sources */,
 				B10002 /* HeartRateDeliveryService.swift in Sources */,
 				A10017 /* Protocols.swift in Sources */,
+				A10018 /* AppLog.swift in Sources */,
 				G10001 /* DeliveryRecord.swift in Sources */,
 				G10002 /* DeliveryLogService.swift in Sources */,
 				I10001 /* DashboardViewModel.swift in Sources */,
@@ -538,6 +545,7 @@
 				F10011 /* ActivityDeliveryServiceTests.swift in Sources */,
 				F10012 /* WorkoutReaderTests.swift in Sources */,
 				F10014 /* ProtocolsTests.swift in Sources */,
+				F10015 /* AppLogTests.swift in Sources */,
 				F10013 /* WorkoutDeliveryServiceTests.swift in Sources */,
 				G10003 /* DeliveryLogServiceTests.swift in Sources */,
 				I10003 /* DashboardViewModelTests.swift in Sources */,

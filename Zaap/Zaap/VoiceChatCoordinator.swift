@@ -60,7 +60,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         didSet { operatorDelegate?.sessionPicker = sessionPicker }
     }
     let needsRepairingPublisher = PassthroughSubject<Void, Never>()
-    var logHandler: (String) -> Void = { print($0) }
+    var logHandler: (String) -> Void = { AppLog.shared.log($0) }
     var micRestartDelay: TimeInterval = 0.5
     private var micRestartTask: Task<Void, Never>?
     private var recentSpokenTexts: [String] = []
@@ -408,7 +408,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 /// should not wipe the node's valid pairing state.
 final class OperatorGatewayDelegate: GatewayConnectionDelegate {
     weak var sessionPicker: SessionPickerViewModel?
-    var logHandler: (String) -> Void = { print($0) }
+    var logHandler: (String) -> Void = { AppLog.shared.log($0) }
 
     nonisolated func gatewayDidConnect() {
         Task { @MainActor in

@@ -164,12 +164,16 @@ final class GatewayConnection {
 
     private var logPrefix: String { "[GATEWAY/\(role.name)]" }
 
+    private func log(_ message: String) {
+        AppLog.shared.log("\(logPrefix) \(message)")
+    }
+
     func connect(to url: URL) {
-        print("🔧 \(logPrefix) connect(to: \(url.absoluteString)) called")
-        print("🔧 \(logPrefix) Current state: \(state)")
+        log("🔧 connect(to: \(url.absoluteString)) called")
+        log("🔧 Current state: \(state)")
         
         guard state == .disconnected else { 
-            print("❌ \(logPrefix) Cannot connect - state is not disconnected, current state: \(state)")
+            log("❌ Cannot connect - state is not disconnected, current state: \(state)")
             return 
         }
         
@@ -177,7 +181,7 @@ final class GatewayConnection {
         gatewayURL = url
         reconnectAttempt = 0
         
-        print("🔧 \(logPrefix) Calling performConnect(to: \(url.absoluteString))")
+        log("🔧 Calling performConnect(to: \(url.absoluteString))")
         performConnect(to: url)
     }
 
@@ -265,20 +269,20 @@ final class GatewayConnection {
     // MARK: - Private: Connection Flow
 
     private func performConnect(to url: URL) {
-        print("🔧 \(logPrefix) performConnect(to: \(url.absoluteString)) called — scheme: \(url.scheme ?? "nil")")
+        log("🔧 performConnect(to: \(url.absoluteString)) called — scheme: \(url.scheme ?? "nil")")
         state = .connecting
         
-        print("🔧 \(logPrefix) Creating WebSocket task with factory")
+        log("🔧 Creating WebSocket task with factory")
         let ws = webSocketFactory.createWebSocketTask(with: url)
         self.webSocket = ws
         
-        print("🔧 \(logPrefix) Calling ws.resume() to start WebSocket connection")
+        log("🔧 Calling ws.resume() to start WebSocket connection")
         ws.resume()
         
-        print("🔧 \(logPrefix) Starting receive loop")
+        log("🔧 Starting receive loop")
         startReceiveLoop()
         
-        print("✅ \(logPrefix) performConnect completed, WebSocket should be connecting...")
+        log("✅ performConnect completed, WebSocket should be connecting...")
     }
 
     private func startReceiveLoop() {
@@ -312,10 +316,10 @@ final class GatewayConnection {
 
         // Log raw incoming data for debugging
         let rawString = String(data: data, encoding: .utf8) ?? "<binary: \(data.count) bytes>"
-        print("📥 \(logPrefix) raw message: \(rawString)")
+        log("📥 raw message: \(rawString)")
 
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            print("❌ \(logPrefix) Failed to parse message as JSON object: \(rawString)")
+            log("❌ Failed to parse message as JSON object: \(rawString)")
             delegate?.gatewayDidFailWithError(.invalidMessage)
             return
         }
@@ -324,7 +328,7 @@ final class GatewayConnection {
         let event = json["event"] as? String
         let payload = json["payload"] as? [String: Any]
 
-        print("📨 \(logPrefix) parsed: type=\(type) event=\(event ?? "-") ok=\(json["ok"] ?? "-")")
+        log("📨 parsed: type=\(type) event=\(event ?? "-") ok=\(json["ok"] ?? "-")")
 
         if type == "event" && event == "connect.challenge" {
             // Protocol: {type:"event", event:"connect.challenge", payload:{nonce, ts}}
@@ -428,7 +432,7 @@ final class GatewayConnection {
             ]
 
             let data = try JSONSerialization.data(withJSONObject: connectMessage)
-            print("📤 \(logPrefix) sending connect: role=\(role.name) token=\(authToken.isEmpty ? "empty" : "\(authToken.count)chars")")
+            log("📤 sending connect: role=\(role.name) token=\(authToken.isEmpty ? "empty" : "\(authToken.count)chars")")
             Task {
                 do {
                     try await webSocket?.send(.data(data))

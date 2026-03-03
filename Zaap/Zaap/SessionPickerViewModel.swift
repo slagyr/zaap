@@ -54,13 +54,13 @@ final class SessionPickerViewModel: ObservableObject {
                 includeDerivedTitles: true,
                 includeLastMessage: false
             )
-            print("📋 [SESSION_PICKER] sessions.list returned \(result.count) sessions")
+            AppLog.shared.log("📋 [SESSION_PICKER] sessions.list returned \(result.count) sessions")
             for session in result {
-                print("📋 [SESSION_PICKER]   key=\(session.key) title=\(session.title) channelType=\(session.channelType ?? "nil")")
+                AppLog.shared.log("📋 [SESSION_PICKER]   key=\(session.key) title=\(session.title) channelType=\(session.channelType ?? "nil")")
             }
             // Filter: only keep agent:main: sessions that are main or Discord
             let filtered = result.filter { $0.key.hasPrefix("agent:main:") && ($0.key == "agent:main:main" || $0.key.contains(":discord:")) }
-            print("📋 [SESSION_PICKER] after filter: \(filtered.count) sessions")
+            AppLog.shared.log("📋 [SESSION_PICKER] after filter: \(filtered.count) sessions")
             // Clean up titles, then drop discord sessions with no resolved channel name
             let cleaned = filtered.map { Self.cleanSessionTitle($0) }
                 .filter { !($0.key.contains(":discord:") && $0.title.hasPrefix("discord:")) }
@@ -78,7 +78,7 @@ final class SessionPickerViewModel: ObservableObject {
                 return a.title.localizedCaseInsensitiveCompare(b.title) == .orderedDescending
             }
         } catch {
-            print("⚠️ [SESSION_PICKER] loadSessions failed: \(error)")
+            AppLog.shared.log("⚠️ [SESSION_PICKER] loadSessions failed: \(error)")
             // Keep existing sessions (including static fallback) on failure
         }
         // Auto-select: keep current selection if still valid, otherwise prefer #general, fallback to Main, then first
