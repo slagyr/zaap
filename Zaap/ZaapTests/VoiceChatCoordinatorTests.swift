@@ -1242,3 +1242,134 @@ extension VoiceChatCoordinatorTests {
         _ = cancellable
     }
 }
+
+// MARK: - Session Switch While Mic Active (zaap-wiu)
+
+extension VoiceChatCoordinatorTests {
+
+    func testUpdateSessionKeyWhileActiveStopsVoiceEngine() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "session-a")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        voiceEngine.stopListeningCalled = false
+        coordinator.updateSessionKey("session-b")
+
+        XCTAssertTrue(voiceEngine.stopListeningCalled,
+                      "Voice engine should stop when switching sessions while active")
+    }
+
+    func testUpdateSessionKeyWhileActiveInterruptsSpeaker() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "session-a")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        speaker.state = .speaking
+        speaker.interruptCalled = false
+        coordinator.updateSessionKey("session-b")
+
+        XCTAssertTrue(speaker.interruptCalled,
+                      "Speaker should be interrupted when switching sessions while active")
+    }
+
+    func testUpdateSessionKeyWhileActiveRestartsMicAfterDelay() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "session-a")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        voiceEngine.startListeningCalled = false
+        coordinator.updateSessionKey("session-b")
+
+        XCTAssertFalse(voiceEngine.startListeningCalled,
+                       "Mic should not restart immediately after session switch")
+
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertTrue(voiceEngine.startListeningCalled,
+                      "Mic should restart after delay when conversation mode is on")
+    }
+
+    func testUpdateSessionKeyWhileActiveAndConversationModeOffDoesNotRestartMic() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "session-a")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        coordinator.toggleConversationMode()
+        voiceEngine.startListeningCalled = false
+
+        coordinator.updateSessionKey("session-b")
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertFalse(voiceEngine.startListeningCalled,
+                       "Mic should not restart after session switch when conversation mode is off")
+    }
+
+    func testUpdateSessionKeyWhileInactiveDoesNotStopVoiceEngine() {
+        voiceEngine.stopListeningCalled = false
+        coordinator.updateSessionKey("session-b")
+
+        XCTAssertFalse(voiceEngine.stopListeningCalled,
+                       "Voice engine should not be stopped when session is not active")
+    }
+
+    func testUpdateSessionKeyClearsViewModelPartialState() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "session-a")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.updatePartialTranscript("partial from old session")
+        viewModel.handleUtteranceComplete("test")
+        viewModel.handleResponseToken("response from old")
+
+        coordinator.updateSessionKey("session-b")
+
+        XCTAssertEqual(viewModel.partialTranscript, "",
+                       "Partial transcript should be cleared on session switch")
+        XCTAssertEqual(viewModel.responseText, "",
+                       "Response text should be cleared on session switch")
+    }
+
+    func testUpdateSessionKeyTransitionsViewModelToIdleBeforeRestart() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "session-a")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("test")
+        XCTAssertEqual(viewModel.state, .processing)
+
+        coordinator.updateSessionKey("session-b")
+
+        XCTAssertEqual(viewModel.state, .idle,
+                       "View model should be idle after session switch (before mic restarts)")
+    }
+
+    func testOldSessionResponseIgnoredAfterSessionSwitch() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "session-a")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        voiceEngine.onUtteranceComplete?("Hello")
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        coordinator.updateSessionKey("session-b")
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "session-a",
+            "state": "final",
+            "message": ["content": [["text": "Response to old session"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        let hasOldResponse = viewModel.conversationLog.contains { $0.text == "Response to old session" }
+        XCTAssertFalse(hasOldResponse,
+                       "Response from old session should be ignored after session switch")
+    }
+}

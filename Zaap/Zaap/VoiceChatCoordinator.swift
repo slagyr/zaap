@@ -139,7 +139,28 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     // MARK: - Session Management
 
     func updateSessionKey(_ key: String) {
+        let wasActive = isSessionActive
+        let wasConversationMode = isConversationModeOn
         sessionKey = key
+
+        // If session is active, cleanly reset voice state for the new session (zaap-wiu)
+        if wasActive {
+            voiceEngine.stopListening()
+            speaker.interrupt()
+            micRestartTask?.cancel()
+            micRestartTask = nil
+
+            // Clear in-flight partial/response text and reset VM to idle
+            viewModel.loadPreviewMessages(viewModel.conversationLog)
+            if viewModel.state != .idle {
+                viewModel.tapMic() // → idle
+            }
+
+            // Restart mic after delay if conversation mode was on
+            if wasConversationMode {
+                scheduleMicRestart()
+            }
+        }
     }
 
     func startSession(gatewayURL: URL, sessionKey: String? = nil) {
