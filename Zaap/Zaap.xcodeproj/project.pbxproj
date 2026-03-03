@@ -93,6 +93,8 @@
 		W10004 /* RetryDrainServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20004 /* RetryDrainServiceTests.swift */; };
 		W10005 /* RetryingWebhookClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20005 /* RetryingWebhookClient.swift */; };
 		W10006 /* RetryingWebhookClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20006 /* RetryingWebhookClientTests.swift */; };
+		W10007 /* ThinkingSoundPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20007 /* ThinkingSoundPlayer.swift */; };
+		W10008 /* ThinkingSoundPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20008 /* ThinkingSoundPlayerTests.swift */; };
 		X10001 /* STTDiagnosticsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = X20001 /* STTDiagnosticsViewModel.swift */; };
 		X10002 /* STTDiagnosticsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = X20002 /* STTDiagnosticsViewModelTests.swift */; };
 		X10003 /* STTDiagnosticsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = X20003 /* STTDiagnosticsCoordinator.swift */; };
@@ -209,6 +211,8 @@
 		W20004 /* RetryDrainServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryDrainServiceTests.swift; sourceTree = "<group>"; };
 		W20005 /* RetryingWebhookClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryingWebhookClient.swift; sourceTree = "<group>"; };
 		W20006 /* RetryingWebhookClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryingWebhookClientTests.swift; sourceTree = "<group>"; };
+		W20007 /* ThinkingSoundPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThinkingSoundPlayer.swift; sourceTree = "<group>"; };
+		W20008 /* ThinkingSoundPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThinkingSoundPlayerTests.swift; sourceTree = "<group>"; };
 		X20001 /* STTDiagnosticsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTDiagnosticsViewModel.swift; sourceTree = "<group>"; };
 		X20002 /* STTDiagnosticsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTDiagnosticsViewModelTests.swift; sourceTree = "<group>"; };
 		X20003 /* STTDiagnosticsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTDiagnosticsCoordinator.swift; sourceTree = "<group>"; };
@@ -264,6 +268,7 @@
 				W20001 /* WebhookRetryQueue.swift */,
 				W20003 /* RetryDrainService.swift */,
 				W20005 /* RetryingWebhookClient.swift */,
+				W20007 /* ThinkingSoundPlayer.swift */,
 				A20013 /* LocationDeliveryService.swift */,
 				B20001 /* HeartRateReader.swift */,
 				B20002 /* HeartRateDeliveryService.swift */,
@@ -374,6 +379,7 @@
 				W20002 /* WebhookRetryQueueTests.swift */,
 				W20004 /* RetryDrainServiceTests.swift */,
 				W20006 /* RetryingWebhookClientTests.swift */,
+				W20008 /* ThinkingSoundPlayerTests.swift */,
 				X20002 /* STTDiagnosticsViewModelTests.swift */,
 				X20004 /* STTDiagnosticsCoordinatorTests.swift */,
 				Y20002 /* TTSDiagnosticsViewModelTests.swift */,
@@ -486,6 +492,7 @@
 				W10001 /* WebhookRetryQueue.swift in Sources */,
 				W10003 /* RetryDrainService.swift in Sources */,
 				W10005 /* RetryingWebhookClient.swift in Sources */,
+				W10007 /* ThinkingSoundPlayer.swift in Sources */,
 				A10010 /* LocationDeliveryService.swift in Sources */,
 				A10011 /* SleepDeliveryService.swift in Sources */,
 				D10001 /* WorkoutReader.swift in Sources */,
@@ -575,6 +582,7 @@
 				W10002 /* WebhookRetryQueueTests.swift in Sources */,
 				W10004 /* RetryDrainServiceTests.swift in Sources */,
 				W10006 /* RetryingWebhookClientTests.swift in Sources */,
+				W10008 /* ThinkingSoundPlayerTests.swift in Sources */,
 				X10002 /* STTDiagnosticsViewModelTests.swift in Sources */,
 				X10004 /* STTDiagnosticsCoordinatorTests.swift in Sources */,
 				Y10002 /* TTSDiagnosticsViewModelTests.swift in Sources */,

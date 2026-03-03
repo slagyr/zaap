@@ -352,3 +352,22 @@ final class MockDeliveryAnchorStore: DeliveryAnchorStoring {
         anchors[dataType] = date
     }
 }
+
+
+// MARK: - Mock Thinking Sound Player
+
+final class MockThinkingSoundPlayer: ThinkingSoundPlaying {
+    var isPlaying = false
+    var startCount = 0
+    var stopCount = 0
+
+    func startPlaying() {
+        startCount += 1
+        isPlaying = true
+    }
+
+    func stopPlaying() {
+        stopCount += 1
+        isPlaying = false
+    }
+}
