@@ -273,6 +273,17 @@ struct VoicePairingView: View {
             if !viewModel.nodeId.isEmpty {
                 VStack(spacing: 12) {
                     VStack(spacing: 4) {
+                        Label("Device ID", systemImage: "iphone")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text(viewModel.nodeId)
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundColor(.secondary)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    VStack(spacing: 4) {
                         Label("Key Fingerprint", systemImage: "key")
                             .font(.caption)
                             .foregroundColor(.secondary)

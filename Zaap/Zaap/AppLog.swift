@@ -23,6 +23,7 @@ final class AppLog: @unchecked Sendable {
     func log(_ message: String) {
         let timestamp = formatter.string(from: Date())
         let entry = "[\(timestamp)] \(message)"
+        print(entry)
         lock.withLock {
             _entries.append(entry)
             if _entries.count > maxEntries {

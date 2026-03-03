@@ -776,6 +776,30 @@ extension GatewayConnectionTests {
         }
     }
 
+    func testAuthTokenMismatchReportsChallengeFailed() async throws {
+        let url = URL(string: "wss://192.168.1.100:18789")!
+        let mockTask = MockWebSocketTask()
+        mockTask.receivedMessages = [
+            makeMessage([
+                "type": "res", "id": "1", "ok": false,
+                "error": ["code": "INVALID_REQUEST",
+                          "message": "unauthorized: gateway token mismatch (provide gateway auth token)",
+                          "details": ["code": "AUTH_TOKEN_MISMATCH", "authReason": "token_mismatch"]]
+            ])
+        ]
+        mockWSFactory.taskToReturn = mockTask
+
+        connection.connect(to: url)
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(mockDelegate.errors.count, 1)
+        if case .challengeFailed = mockDelegate.errors.first! {
+            // Good — AUTH_TOKEN_MISMATCH should trigger re-pairing
+        } else {
+            XCTFail("AUTH_TOKEN_MISMATCH should report .challengeFailed, got: \(mockDelegate.errors.first!)")
+        }
+    }
+
     func testUnknownErrorCodeReportsRequestFailed() async throws {
         let url = URL(string: "wss://192.168.1.100:18789")!
         let mockTask = MockWebSocketTask()

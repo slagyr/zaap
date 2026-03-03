@@ -342,9 +342,12 @@ final class GatewayConnection {
             let code = error?["code"] as? String ?? ""
             let msg = error?["message"] as? String ?? "Connection failed"
             let details = error?["details"] as? [String: Any]
+            let detailCode = details?["code"] as? String ?? ""
             let requestId = details?["requestId"] as? String ?? ""
-            if code == "NOT_PAIRED" || code == "PAIRING_REQUIRED" {
-                // Surface requestId so UI can tell user what to approve
+            if code == "NOT_PAIRED" || code == "PAIRING_REQUIRED" || detailCode == "AUTH_TOKEN_MISMATCH" {
+                // Auth failure — stop reconnect loop and surface to UI for re-pairing
+                intentionalDisconnect = true
+                disconnect()
                 let payload = requestId.isEmpty ? "pairing_required" : "pairing_required:\(requestId)"
                 delegate?.gatewayDidFailWithError(.challengeFailed(payload))
             } else {
