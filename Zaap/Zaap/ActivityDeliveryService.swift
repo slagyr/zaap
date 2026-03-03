@@ -2,7 +2,6 @@ import Foundation
 import os
 
 /// Reads daily activity data from HealthKit via ActivityReader and POSTs it via WebhookClient.
-/// Mirrors SleepDeliveryService's pattern — query on demand and deliver via background session.
 final class ActivityDeliveryService {
 
     static let shared = ActivityDeliveryService()
@@ -13,17 +12,20 @@ final class ActivityDeliveryService {
     private var webhookClient: any WebhookPosting
     private let settings: SettingsManager
     private var deliveryLog: any DeliveryLogging
+    private let anchorStore: any DeliveryAnchorStoring
 
     init(
         activityReader: any ActivityReading = ActivityReader.shared,
         webhookClient: any WebhookPosting = WebhookClient.shared,
         settings: SettingsManager = .shared,
-        deliveryLog: any DeliveryLogging = NullDeliveryLog()
+        deliveryLog: any DeliveryLogging = NullDeliveryLog(),
+        anchorStore: any DeliveryAnchorStoring = NullDeliveryAnchorStore()
     ) {
         self.activityReader = activityReader
         self.webhookClient = webhookClient
         self.settings = settings
         self.deliveryLog = deliveryLog
+        self.anchorStore = anchorStore
     }
 
     func configure(deliveryLog: any DeliveryLogging) {
@@ -36,16 +38,14 @@ final class ActivityDeliveryService {
 
     // MARK: - Public
 
-    /// Start the service. Registers observers but does not trigger immediate delivery.
-    /// Call once at app launch.
     func start() {
         guard settings.activityTrackingEnabled && settings.isConfigured else {
-            logger.info("Activity delivery not started — disabled or not configured")
+            logger.info("Activity delivery not started \u{2014} disabled or not configured")
             return
         }
+        deliverLatest()
     }
 
-    /// Enable or disable activity tracking. Updates settings and triggers delivery if enabled.
     func setTracking(enabled: Bool) {
         settings.activityTrackingEnabled = enabled
         if enabled {
@@ -53,8 +53,6 @@ final class ActivityDeliveryService {
         }
     }
 
-
-    /// Immediately fetch and POST activity data. Does not require tracking to be enabled.
     func sendNow() async throws {
         guard settings.isConfigured else { throw SendNowError.notConfigured }
         try await activityReader.requestAuthorization()
@@ -63,10 +61,16 @@ final class ActivityDeliveryService {
         logger.info("Send Now: Activity data delivered")
         deliveryLog.record(dataType: .activity, timestamp: Date(), success: true, errorMessage: nil)
     }
-    /// Fetch the latest activity summary and POST it to the webhook.
+
     func deliverLatest() {
         guard settings.isConfigured && settings.activityTrackingEnabled else {
-            logger.info("Skipping activity delivery — not configured or tracking disabled")
+            logger.info("Skipping activity delivery \u{2014} not configured or tracking disabled")
+            return
+        }
+
+        if let anchor = anchorStore.lastDelivered(for: .activity),
+           Calendar.current.isDateInToday(anchor) {
+            logger.info("Skipping activity delivery \u{2014} already delivered today")
             return
         }
 
@@ -75,6 +79,7 @@ final class ActivityDeliveryService {
                 try await activityReader.requestAuthorization()
                 let summary = try await activityReader.fetchTodaySummary()
                 try await webhookClient.post(summary, to: "/activity")
+                anchorStore.setLastDelivered(Date(), for: .activity)
                 logger.info("Activity delivered: \(summary.steps) steps, \(String(format: "%.0f", summary.distanceMeters))m")
                 deliveryLog.record(dataType: .activity, timestamp: Date(), success: true, errorMessage: nil)
             } catch {

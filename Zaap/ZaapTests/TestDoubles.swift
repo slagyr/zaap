@@ -330,3 +330,18 @@ final class MockSpeechSynthesizer: SpeechSynthesizing {
         }
     }
 }
+
+
+// MARK: - Mock Delivery Anchor Store
+
+final class MockDeliveryAnchorStore: DeliveryAnchorStoring {
+    var anchors: [DeliveryDataType: Date] = [:]
+
+    func lastDelivered(for dataType: DeliveryDataType) -> Date? {
+        anchors[dataType]
+    }
+
+    func setLastDelivered(_ date: Date, for dataType: DeliveryDataType) {
+        anchors[dataType] = date
+    }
+}

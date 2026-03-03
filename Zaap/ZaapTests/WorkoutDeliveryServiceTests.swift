@@ -3,22 +3,22 @@ import XCTest
 
 final class WorkoutDeliveryServiceTests: XCTestCase {
 
-    private func makeService(webhook: MockWebhookClient = MockWebhookClient()) -> (WorkoutDeliveryService, MockWorkoutReader, MockWebhookClient, SettingsManager, MockDeliveryLogService) {
+    private func makeService(webhook: MockWebhookClient = MockWebhookClient(), anchorStore: MockDeliveryAnchorStore = MockDeliveryAnchorStore()) -> (WorkoutDeliveryService, MockWorkoutReader, MockWebhookClient, SettingsManager, MockDeliveryLogService, MockDeliveryAnchorStore) {
         let reader = MockWorkoutReader()
         let log = MockDeliveryLogService()
         let settings = SettingsManager(defaults: UserDefaults(suiteName: UUID().uuidString)!)
-        let service = WorkoutDeliveryService(workoutReader: reader, webhookClient: webhook, settings: settings, deliveryLog: log)
-        return (service, reader, webhook, settings, log)
+        let service = WorkoutDeliveryService(workoutReader: reader, webhookClient: webhook, settings: settings, deliveryLog: log, anchorStore: anchorStore)
+        return (service, reader, webhook, settings, log, anchorStore)
     }
 
     func testStartDoesNothingWhenDisabled() {
-        let (service, _, webhook, _, _) = makeService()
+        let (service, _, webhook, _, _, _) = makeService()
         service.start()
         XCTAssertEqual(webhook.postCallCount, 0)
     }
 
     func testStartDoesNotDeliverEagerly() {
-        let (service, _, webhook, settings, _) = makeService()
+        let (service, _, webhook, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.workoutTrackingEnabled = true
@@ -29,7 +29,7 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
     }
 
     func testSetTrackingUpdatesSettings() {
-        let (service, _, _, settings, _) = makeService()
+        let (service, _, _, settings, _, _) = makeService()
         service.setTracking(enabled: true)
         XCTAssertTrue(settings.workoutTrackingEnabled)
         service.setTracking(enabled: false)
@@ -37,7 +37,7 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
     }
 
     func testDeliverLatestSkipsWhenNotConfigured() {
-        let (service, _, webhook, _, _) = makeService()
+        let (service, _, webhook, _, _, _) = makeService()
         service.deliverLatest()
 
         let exp = expectation(description: "wait")
@@ -48,7 +48,7 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
     }
 
     func testWorkoutDeliveryLogsSuccessOnPost() {
-        let (service, reader, _, settings, log) = makeService()
+        let (service, reader, _, settings, log, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.workoutTrackingEnabled = true
@@ -75,7 +75,7 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
     func testWorkoutDeliveryLogsFailureOnPostError() {
         let webhook = MockWebhookClient()
         webhook.shouldThrow = NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "fail"])
-        let (service, reader, _, settings, log) = makeService(webhook: webhook)
+        let (service, reader, _, settings, log, _) = makeService(webhook: webhook)
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.workoutTrackingEnabled = true
@@ -103,7 +103,7 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
     // MARK: - Send Now
 
     func testSendNowDeliversWorkoutData() async throws {
-        let (service, reader, webhook, settings, _) = makeService()
+        let (service, reader, webhook, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         reader.sessionsToReturn = []
@@ -115,7 +115,7 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
     }
 
     func testSendNowThrowsWhenNotConfigured() async {
-        let (service, _, _, _, _) = makeService()
+        let (service, _, _, _, _, _) = makeService()
 
         do {
             try await service.sendNow()
@@ -126,7 +126,7 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
     }
 
     func testSendNowWorksWhenTrackingDisabled() async throws {
-        let (service, reader, webhook, settings, _) = makeService()
+        let (service, reader, webhook, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.workoutTrackingEnabled = false
@@ -140,7 +140,7 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
     // MARK: - sendNow failure paths
 
     func testSendNowThrowsWhenAuthorizationDenied() async {
-        let (service, reader, _, settings, _) = makeService()
+        let (service, reader, _, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         reader.shouldThrow = WorkoutReader.WorkoutError.authorizationDenied
@@ -154,7 +154,7 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
     }
 
     func testSendNowThrowsWhenReaderFetchFails() async {
-        let (service, reader, _, settings, _) = makeService()
+        let (service, reader, _, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         reader.shouldThrow = WorkoutReader.WorkoutError.noData
@@ -170,7 +170,7 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
     func testSendNowThrowsWhenNetworkRequestFails() async {
         let webhook = MockWebhookClient()
         webhook.shouldThrow = URLError(.notConnectedToInternet)
-        let (service, reader, _, settings, _) = makeService(webhook: webhook)
+        let (service, reader, _, settings, _, _) = makeService(webhook: webhook)
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         reader.sessionsToReturn = [
@@ -189,7 +189,7 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
     }
 
     func testSendNowLogsSuccessOnDelivery() async throws {
-        let (service, reader, _, settings, log) = makeService()
+        let (service, reader, _, settings, log, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         reader.sessionsToReturn = [
@@ -210,7 +210,7 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
     // MARK: - deliverLatest failure paths
 
     func testDeliverLatestLogsFailureWhenAuthorizationDenied() {
-        let (service, reader, _, settings, log) = makeService()
+        let (service, reader, _, settings, log, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.workoutTrackingEnabled = true
@@ -229,7 +229,7 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
     }
 
     func testDeliverLatestLogsFailureWhenReaderReturnsNoWorkoutData() {
-        let (service, reader, _, settings, log) = makeService()
+        let (service, reader, _, settings, log, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.workoutTrackingEnabled = true
@@ -246,4 +246,77 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
         XCTAssertFalse(log.records[0].success)
         XCTAssertNotNil(log.records[0].errorMessage)
     }
+
+    // MARK: - Deduplication
+
+    func testDeliverPassesAnchorAsFromDate() async {
+        let anchorStore = MockDeliveryAnchorStore()
+        let anchorDate = Date(timeIntervalSince1970: 1000000)
+        anchorStore.anchors[.workout] = anchorDate
+        let (service, reader, webhook, settings, _, _) = makeService(anchorStore: anchorStore)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.workoutTrackingEnabled = true
+        reader.sessionsToReturn = [WorkoutReader.WorkoutSession(
+            workoutType: "Running", startDate: Date(),
+            endDate: Date(), durationMinutes: 30,
+            totalCalories: 300, distanceMeters: 5000
+        )]
+
+        service.deliverLatest()
+        try? await Task.sleep(nanoseconds: 500_000_000)
+
+        XCTAssertEqual(webhook.postCallCount, 1)
+    }
+
+    func testDeliverSkipsWhenNoNewWorkouts() async {
+        let anchorStore = MockDeliveryAnchorStore()
+        anchorStore.anchors[.workout] = Date()
+        let (service, _, webhook, settings, _, _) = makeService(anchorStore: anchorStore)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.workoutTrackingEnabled = true
+        // sessionsToReturn is empty by default
+
+        service.deliverLatest()
+        try? await Task.sleep(nanoseconds: 500_000_000)
+
+        XCTAssertEqual(webhook.postCallCount, 0, "Should skip POST when no new workouts")
+    }
+
+    func testDeliverUpdatesAnchorOnSuccess() async {
+        let anchorStore = MockDeliveryAnchorStore()
+        let (service, reader, _, settings, _, _) = makeService(anchorStore: anchorStore)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.workoutTrackingEnabled = true
+        reader.sessionsToReturn = [WorkoutReader.WorkoutSession(
+            workoutType: "Running", startDate: Date(),
+            endDate: Date(), durationMinutes: 30,
+            totalCalories: 300, distanceMeters: 5000
+        )]
+
+        service.deliverLatest()
+        try? await Task.sleep(nanoseconds: 500_000_000)
+
+        XCTAssertNotNil(anchorStore.anchors[.workout], "Anchor should be set after successful delivery")
+    }
+
+    func testSendNowBypassesDeduplication() async throws {
+        let anchorStore = MockDeliveryAnchorStore()
+        anchorStore.anchors[.workout] = Date()
+        let (service, reader, webhook, settings, _, _) = makeService(anchorStore: anchorStore)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.sessionsToReturn = [WorkoutReader.WorkoutSession(
+            workoutType: "Running", startDate: Date(),
+            endDate: Date(), durationMinutes: 30,
+            totalCalories: 300, distanceMeters: 5000
+        )]
+
+        try await service.sendNow()
+
+        XCTAssertEqual(webhook.postCallCount, 1, "sendNow should bypass dedup")
+    }
+
 }

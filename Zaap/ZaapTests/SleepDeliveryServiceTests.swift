@@ -3,23 +3,23 @@ import XCTest
 
 final class SleepDeliveryServiceTests: XCTestCase {
 
-    private func makeService(webhook: MockWebhookClient = MockWebhookClient()) -> (SleepDeliveryService, MockSleepReader, MockWebhookClient, SettingsManager, MockDeliveryLogService) {
+    private func makeService(webhook: MockWebhookClient = MockWebhookClient(), anchorStore: MockDeliveryAnchorStore = MockDeliveryAnchorStore()) -> (SleepDeliveryService, MockSleepReader, MockWebhookClient, SettingsManager, MockDeliveryLogService, MockDeliveryAnchorStore) {
         let reader = MockSleepReader()
         let log = MockDeliveryLogService()
         let settings = SettingsManager(defaults: UserDefaults(suiteName: UUID().uuidString)!)
-        let service = SleepDeliveryService(sleepReader: reader, webhookClient: webhook, settings: settings, deliveryLog: log)
-        return (service, reader, webhook, settings, log)
+        let service = SleepDeliveryService(sleepReader: reader, webhookClient: webhook, settings: settings, deliveryLog: log, anchorStore: anchorStore)
+        return (service, reader, webhook, settings, log, anchorStore)
     }
 
     func testStartDoesNothingWhenDisabled() {
-        let (service, reader, webhook, _, _) = makeService()
+        let (service, reader, webhook, _, _, _) = makeService()
         service.start()
         XCTAssertFalse(reader.authorizationRequested)
         XCTAssertEqual(webhook.postCallCount, 0)
     }
 
     func testStartDoesNotDeliverEagerly() {
-        let (service, _, webhook, settings, _) = makeService()
+        let (service, _, webhook, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.sleepTrackingEnabled = true
@@ -30,7 +30,7 @@ final class SleepDeliveryServiceTests: XCTestCase {
     }
 
     func testSetTrackingEnabledTriggersDelivery() {
-        let (service, reader, webhook, settings, _) = makeService()
+        let (service, reader, webhook, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
 
@@ -52,7 +52,7 @@ final class SleepDeliveryServiceTests: XCTestCase {
     }
 
     func testSleepDeliveryLogsSuccessOnPost() {
-        let (service, reader, _, settings, log) = makeService()
+        let (service, reader, _, settings, log, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.sleepTrackingEnabled = true
@@ -78,7 +78,7 @@ final class SleepDeliveryServiceTests: XCTestCase {
     func testSleepDeliveryLogsFailureOnPostError() {
         let webhook = MockWebhookClient()
         webhook.shouldThrow = NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "fail"])
-        let (service, reader, _, settings, log) = makeService(webhook: webhook)
+        let (service, reader, _, settings, log, _) = makeService(webhook: webhook)
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.sleepTrackingEnabled = true
@@ -105,7 +105,7 @@ final class SleepDeliveryServiceTests: XCTestCase {
     // MARK: - Send Now
 
     func testSendNowDeliversSleepData() async throws {
-        let (service, reader, webhook, settings, _) = makeService()
+        let (service, reader, webhook, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         reader.summaryToReturn = SleepDataReader.SleepSummary(
@@ -122,7 +122,7 @@ final class SleepDeliveryServiceTests: XCTestCase {
     }
 
     func testSendNowThrowsWhenNotConfigured() async {
-        let (service, _, _, _, _) = makeService()
+        let (service, _, _, _, _, _) = makeService()
 
         do {
             try await service.sendNow()
@@ -133,7 +133,7 @@ final class SleepDeliveryServiceTests: XCTestCase {
     }
 
     func testSendNowWorksWhenTrackingDisabled() async throws {
-        let (service, reader, webhook, settings, _) = makeService()
+        let (service, reader, webhook, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.sleepTrackingEnabled = false
@@ -152,7 +152,7 @@ final class SleepDeliveryServiceTests: XCTestCase {
     // MARK: - sendNow failure paths
 
     func testSendNowThrowsWhenAuthorizationDenied() async {
-        let (service, reader, _, settings, _) = makeService()
+        let (service, reader, _, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         reader.shouldThrow = SleepDataReader.SleepError.authorizationDenied
@@ -166,7 +166,7 @@ final class SleepDeliveryServiceTests: XCTestCase {
     }
 
     func testSendNowThrowsWhenNoSleepDataAvailable() async {
-        let (service, _, _, settings, _) = makeService()
+        let (service, _, _, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         // summaryToReturn is nil by default → fetchLastNightSummary throws noData after auth succeeds
@@ -182,7 +182,7 @@ final class SleepDeliveryServiceTests: XCTestCase {
     func testSendNowThrowsWhenNetworkRequestFails() async {
         let webhook = MockWebhookClient()
         webhook.shouldThrow = URLError(.notConnectedToInternet)
-        let (service, reader, _, settings, _) = makeService(webhook: webhook)
+        let (service, reader, _, settings, _, _) = makeService(webhook: webhook)
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         reader.summaryToReturn = SleepDataReader.SleepSummary(
@@ -201,7 +201,7 @@ final class SleepDeliveryServiceTests: XCTestCase {
     }
 
     func testSendNowLogsSuccessOnDelivery() async throws {
-        let (service, reader, _, settings, log) = makeService()
+        let (service, reader, _, settings, log, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         reader.summaryToReturn = SleepDataReader.SleepSummary(
@@ -222,7 +222,7 @@ final class SleepDeliveryServiceTests: XCTestCase {
     // MARK: - deliverLatest failure paths
 
     func testDeliverLatestLogsFailureWhenNoSleepDataAvailable() {
-        let (service, _, _, settings, log) = makeService()
+        let (service, _, _, settings, log, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.sleepTrackingEnabled = true
@@ -241,7 +241,7 @@ final class SleepDeliveryServiceTests: XCTestCase {
     }
 
     func testDeliverLatestLogsFailureWhenAuthorizationDenied() {
-        let (service, reader, _, settings, log) = makeService()
+        let (service, reader, _, settings, log, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.sleepTrackingEnabled = true
@@ -258,4 +258,105 @@ final class SleepDeliveryServiceTests: XCTestCase {
         XCTAssertFalse(log.records[0].success)
         XCTAssertNotNil(log.records[0].errorMessage)
     }
+
+    // MARK: - Deduplication
+
+    func testDeliverSkipsWhenAlreadyDeliveredToday() async {
+        let anchorStore = MockDeliveryAnchorStore()
+        anchorStore.anchors[.sleep] = Date()
+        let (service, reader, webhook, settings, _, _) = makeService(anchorStore: anchorStore)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.sleepTrackingEnabled = true
+        reader.summaryToReturn = SleepDataReader.SleepSummary(
+            date: "2026-03-03", bedtime: nil, wakeTime: nil,
+            totalInBedMinutes: 480, totalAsleepMinutes: 420,
+            deepSleepMinutes: 90, remSleepMinutes: 120,
+            coreSleepMinutes: 210, awakeMinutes: 60, sessions: []
+        )
+
+        service.deliverLatest()
+        try? await Task.sleep(nanoseconds: 500_000_000)
+
+        XCTAssertEqual(webhook.postCallCount, 0, "Should skip delivery when already delivered today")
+    }
+
+    func testDeliverProceedsWhenAnchorIsYesterday() async {
+        let anchorStore = MockDeliveryAnchorStore()
+        anchorStore.anchors[.sleep] = Calendar.current.date(byAdding: .day, value: -1, to: Date())!
+        let (service, reader, webhook, settings, _, _) = makeService(anchorStore: anchorStore)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.sleepTrackingEnabled = true
+        reader.summaryToReturn = SleepDataReader.SleepSummary(
+            date: "2026-03-03", bedtime: nil, wakeTime: nil,
+            totalInBedMinutes: 480, totalAsleepMinutes: 420,
+            deepSleepMinutes: 90, remSleepMinutes: 120,
+            coreSleepMinutes: 210, awakeMinutes: 60, sessions: []
+        )
+
+        service.deliverLatest()
+        try? await Task.sleep(nanoseconds: 500_000_000)
+
+        XCTAssertEqual(webhook.postCallCount, 1, "Should deliver when anchor is from yesterday")
+    }
+
+    func testDeliverUpdatesAnchorOnSuccess() async {
+        let anchorStore = MockDeliveryAnchorStore()
+        let (service, reader, _, settings, _, _) = makeService(anchorStore: anchorStore)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.sleepTrackingEnabled = true
+        reader.summaryToReturn = SleepDataReader.SleepSummary(
+            date: "2026-03-03", bedtime: nil, wakeTime: nil,
+            totalInBedMinutes: 480, totalAsleepMinutes: 420,
+            deepSleepMinutes: 90, remSleepMinutes: 120,
+            coreSleepMinutes: 210, awakeMinutes: 60, sessions: []
+        )
+
+        service.deliverLatest()
+        try? await Task.sleep(nanoseconds: 500_000_000)
+
+        XCTAssertNotNil(anchorStore.anchors[.sleep], "Anchor should be set after successful delivery")
+    }
+
+    func testDeliverDoesNotUpdateAnchorOnFailure() async {
+        let webhook = MockWebhookClient()
+        webhook.shouldThrow = NSError(domain: "test", code: 1)
+        let anchorStore = MockDeliveryAnchorStore()
+        let (service, reader, _, settings, _, _) = makeService(webhook: webhook, anchorStore: anchorStore)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.sleepTrackingEnabled = true
+        reader.summaryToReturn = SleepDataReader.SleepSummary(
+            date: "2026-03-03", bedtime: nil, wakeTime: nil,
+            totalInBedMinutes: 480, totalAsleepMinutes: 420,
+            deepSleepMinutes: 90, remSleepMinutes: 120,
+            coreSleepMinutes: 210, awakeMinutes: 60, sessions: []
+        )
+
+        service.deliverLatest()
+        try? await Task.sleep(nanoseconds: 500_000_000)
+
+        XCTAssertNil(anchorStore.anchors[.sleep], "Anchor should not be set on failed delivery")
+    }
+
+    func testSendNowBypassesDeduplication() async throws {
+        let anchorStore = MockDeliveryAnchorStore()
+        anchorStore.anchors[.sleep] = Date()
+        let (service, reader, webhook, settings, _, _) = makeService(anchorStore: anchorStore)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.summaryToReturn = SleepDataReader.SleepSummary(
+            date: "2026-03-03", bedtime: nil, wakeTime: nil,
+            totalInBedMinutes: 480, totalAsleepMinutes: 420,
+            deepSleepMinutes: 90, remSleepMinutes: 120,
+            coreSleepMinutes: 210, awakeMinutes: 60, sessions: []
+        )
+
+        try await service.sendNow()
+
+        XCTAssertEqual(webhook.postCallCount, 1, "sendNow should bypass dedup")
+    }
+
 }

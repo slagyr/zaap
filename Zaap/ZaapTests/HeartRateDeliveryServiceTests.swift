@@ -3,22 +3,22 @@ import XCTest
 
 final class HeartRateDeliveryServiceTests: XCTestCase {
 
-    private func makeService(webhook: MockWebhookClient = MockWebhookClient()) -> (HeartRateDeliveryService, MockHeartRateReader, MockWebhookClient, SettingsManager, MockDeliveryLogService) {
+    private func makeService(webhook: MockWebhookClient = MockWebhookClient(), anchorStore: MockDeliveryAnchorStore = MockDeliveryAnchorStore()) -> (HeartRateDeliveryService, MockHeartRateReader, MockWebhookClient, SettingsManager, MockDeliveryLogService, MockDeliveryAnchorStore) {
         let reader = MockHeartRateReader()
         let log = MockDeliveryLogService()
         let settings = SettingsManager(defaults: UserDefaults(suiteName: UUID().uuidString)!)
-        let service = HeartRateDeliveryService(heartRateReader: reader, webhookClient: webhook, settings: settings, deliveryLog: log)
-        return (service, reader, webhook, settings, log)
+        let service = HeartRateDeliveryService(heartRateReader: reader, webhookClient: webhook, settings: settings, deliveryLog: log, anchorStore: anchorStore)
+        return (service, reader, webhook, settings, log, anchorStore)
     }
 
     func testStartDoesNothingWhenDisabled() {
-        let (service, _, webhook, _, _) = makeService()
+        let (service, _, webhook, _, _, _) = makeService()
         service.start()
         XCTAssertEqual(webhook.postCallCount, 0)
     }
 
     func testStartDoesNotDeliverEagerly() {
-        let (service, _, webhook, settings, _) = makeService()
+        let (service, _, webhook, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.heartRateTrackingEnabled = true
@@ -29,13 +29,13 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
     }
 
     func testReaderPropertyReturnsInjectedReader() {
-        let (service, reader, _, _, _) = makeService()
+        let (service, reader, _, _, _, _) = makeService()
         // reader property should be accessible
         XCTAssertNotNil(service.reader)
     }
 
     func testDeliverDailySummaryPostsToHeartRatePath() async {
-        let (service, reader, webhook, settings, _) = makeService()
+        let (service, reader, webhook, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.heartRateTrackingEnabled = true
@@ -52,13 +52,13 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
     }
 
     func testDeliverSkipsWhenNotConfigured() async {
-        let (service, _, webhook, _, _) = makeService()
+        let (service, _, webhook, _, _, _) = makeService()
         await service.deliverDailySummary()
         XCTAssertEqual(webhook.postCallCount, 0)
     }
 
     func testSetTrackingUpdatesSettings() {
-        let (service, _, _, settings, _) = makeService()
+        let (service, _, _, settings, _, _) = makeService()
         service.setTracking(enabled: true)
         XCTAssertTrue(settings.heartRateTrackingEnabled)
         service.setTracking(enabled: false)
@@ -66,7 +66,7 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
     }
 
     func testHeartRateDeliveryLogsSuccessOnPost() async {
-        let (service, reader, _, settings, log) = makeService()
+        let (service, reader, _, settings, log, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.heartRateTrackingEnabled = true
@@ -86,7 +86,7 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
     func testHeartRateDeliveryLogsFailureOnPostError() async {
         let webhook = MockWebhookClient()
         webhook.shouldThrow = NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "fail"])
-        let (service, reader, _, settings, log) = makeService(webhook: webhook)
+        let (service, reader, _, settings, log, _) = makeService(webhook: webhook)
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.heartRateTrackingEnabled = true
@@ -107,7 +107,7 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
     // MARK: - Send Now
 
     func testSendNowDeliversHeartRateData() async throws {
-        let (service, reader, webhook, settings, _) = makeService()
+        let (service, reader, webhook, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
@@ -122,7 +122,7 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
     }
 
     func testSendNowThrowsWhenNotConfigured() async {
-        let (service, reader, _, _, _) = makeService()
+        let (service, reader, _, _, _, _) = makeService()
         reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
             date: "2026-02-16", minBPM: 55, maxBPM: 120, avgBPM: 72,
             restingBPM: 60, sampleCount: 10, samples: []
@@ -137,7 +137,7 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
     }
 
     func testSendNowWorksWhenTrackingDisabled() async throws {
-        let (service, reader, webhook, settings, _) = makeService()
+        let (service, reader, webhook, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.heartRateTrackingEnabled = false
@@ -154,7 +154,7 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
     // MARK: - sendNow failure paths
 
     func testSendNowThrowsWhenAuthorizationDenied() async {
-        let (service, reader, _, settings, _) = makeService()
+        let (service, reader, _, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         reader.shouldThrow = HeartRateReader.HeartRateError.authorizationDenied
@@ -168,7 +168,7 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
     }
 
     func testSendNowThrowsWhenNoHeartRateDataAvailable() async {
-        let (service, _, _, settings, _) = makeService()
+        let (service, _, _, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         // summaryToReturn is nil by default → fetchDailySummary throws noData after auth succeeds
@@ -184,7 +184,7 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
     func testSendNowThrowsWhenNetworkRequestFails() async {
         let webhook = MockWebhookClient()
         webhook.shouldThrow = URLError(.notConnectedToInternet)
-        let (service, reader, _, settings, _) = makeService(webhook: webhook)
+        let (service, reader, _, settings, _, _) = makeService(webhook: webhook)
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
@@ -201,7 +201,7 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
     }
 
     func testSendNowLogsSuccessOnDelivery() async throws {
-        let (service, reader, _, settings, log) = makeService()
+        let (service, reader, _, settings, log, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
@@ -220,7 +220,7 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
     // MARK: - deliverDailySummary failure paths
 
     func testDeliverDailySummaryLogsFailureWhenNoHeartRateDataAvailable() async {
-        let (service, _, _, settings, log) = makeService()
+        let (service, _, _, settings, log, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.heartRateTrackingEnabled = true
@@ -235,7 +235,7 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
     }
 
     func testDeliverDailySummaryLogsFailureWhenAuthorizationDenied() async {
-        let (service, reader, _, settings, log) = makeService()
+        let (service, reader, _, settings, log, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.heartRateTrackingEnabled = true
@@ -248,4 +248,91 @@ final class HeartRateDeliveryServiceTests: XCTestCase {
         XCTAssertFalse(log.records[0].success)
         XCTAssertNotNil(log.records[0].errorMessage)
     }
+
+    // MARK: - Deduplication
+
+    func testDeliverSkipsWhenAlreadyDeliveredToday() async {
+        let anchorStore = MockDeliveryAnchorStore()
+        anchorStore.anchors[.heartRate] = Date()
+        let (service, reader, webhook, settings, _, _) = makeService(anchorStore: anchorStore)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.heartRateTrackingEnabled = true
+        reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
+            date: "2026-03-03", minBPM: 55, maxBPM: 150, avgBPM: 72,
+            restingBPM: 58, sampleCount: 10, samples: []
+        )
+
+        await service.deliverDailySummary()
+
+        XCTAssertEqual(webhook.postCallCount, 0, "Should skip delivery when already delivered today")
+    }
+
+    func testDeliverProceedsWhenAnchorIsYesterday() async {
+        let anchorStore = MockDeliveryAnchorStore()
+        anchorStore.anchors[.heartRate] = Calendar.current.date(byAdding: .day, value: -1, to: Date())!
+        let (service, reader, webhook, settings, _, _) = makeService(anchorStore: anchorStore)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.heartRateTrackingEnabled = true
+        reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
+            date: "2026-03-03", minBPM: 55, maxBPM: 150, avgBPM: 72,
+            restingBPM: 58, sampleCount: 10, samples: []
+        )
+
+        await service.deliverDailySummary()
+
+        XCTAssertEqual(webhook.postCallCount, 1, "Should deliver when anchor is from yesterday")
+    }
+
+    func testDeliverUpdatesAnchorOnSuccess() async {
+        let anchorStore = MockDeliveryAnchorStore()
+        let (service, reader, _, settings, _, _) = makeService(anchorStore: anchorStore)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.heartRateTrackingEnabled = true
+        reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
+            date: "2026-03-03", minBPM: 55, maxBPM: 150, avgBPM: 72,
+            restingBPM: 58, sampleCount: 10, samples: []
+        )
+
+        await service.deliverDailySummary()
+
+        XCTAssertNotNil(anchorStore.anchors[.heartRate], "Anchor should be set after successful delivery")
+    }
+
+    func testDeliverDoesNotUpdateAnchorOnFailure() async {
+        let webhook = MockWebhookClient()
+        webhook.shouldThrow = NSError(domain: "test", code: 1)
+        let anchorStore = MockDeliveryAnchorStore()
+        let (service, reader, _, settings, _, _) = makeService(webhook: webhook, anchorStore: anchorStore)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.heartRateTrackingEnabled = true
+        reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
+            date: "2026-03-03", minBPM: 55, maxBPM: 150, avgBPM: 72,
+            restingBPM: 58, sampleCount: 10, samples: []
+        )
+
+        await service.deliverDailySummary()
+
+        XCTAssertNil(anchorStore.anchors[.heartRate], "Anchor should not be set on failed delivery")
+    }
+
+    func testSendNowBypassesDeduplication() async throws {
+        let anchorStore = MockDeliveryAnchorStore()
+        anchorStore.anchors[.heartRate] = Date()
+        let (service, reader, webhook, settings, _, _) = makeService(anchorStore: anchorStore)
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.summaryToReturn = HeartRateReader.DailyHeartRateSummary(
+            date: "2026-03-03", minBPM: 55, maxBPM: 150, avgBPM: 72,
+            restingBPM: 58, sampleCount: 10, samples: []
+        )
+
+        try await service.sendNow()
+
+        XCTAssertEqual(webhook.postCallCount, 1, "sendNow should bypass dedup")
+    }
+
 }

@@ -2,7 +2,6 @@ import Foundation
 import os
 
 /// Fetches recent workouts and POSTs them via WebhookClient.
-/// Mirrors SleepDeliveryService's pattern — query on demand and deliver via background session.
 final class WorkoutDeliveryService {
 
     static let shared = WorkoutDeliveryService()
@@ -13,17 +12,20 @@ final class WorkoutDeliveryService {
     private var webhookClient: any WebhookPosting
     private let settings: SettingsManager
     private var deliveryLog: any DeliveryLogging
+    private let anchorStore: any DeliveryAnchorStoring
 
     init(
         workoutReader: any WorkoutReading = WorkoutReader.shared,
         webhookClient: any WebhookPosting = WebhookClient.shared,
         settings: SettingsManager = .shared,
-        deliveryLog: any DeliveryLogging = NullDeliveryLog()
+        deliveryLog: any DeliveryLogging = NullDeliveryLog(),
+        anchorStore: any DeliveryAnchorStoring = NullDeliveryAnchorStore()
     ) {
         self.workoutReader = workoutReader
         self.webhookClient = webhookClient
         self.settings = settings
         self.deliveryLog = deliveryLog
+        self.anchorStore = anchorStore
     }
 
     func configure(deliveryLog: any DeliveryLogging) {
@@ -36,16 +38,14 @@ final class WorkoutDeliveryService {
 
     // MARK: - Public
 
-    /// Start the service. Registers observers but does not trigger immediate delivery.
-    /// Call once at app launch.
     func start() {
         guard settings.workoutTrackingEnabled && settings.isConfigured else {
-            logger.info("Workout delivery not started — disabled or not configured")
+            logger.info("Workout delivery not started \u{2014} disabled or not configured")
             return
         }
+        deliverLatest()
     }
 
-    /// Enable or disable workout tracking. Updates settings and triggers delivery if enabled.
     func setTracking(enabled: Bool) {
         settings.workoutTrackingEnabled = enabled
         if enabled {
@@ -53,8 +53,6 @@ final class WorkoutDeliveryService {
         }
     }
 
-
-    /// Immediately fetch and POST workout data. Does not require tracking to be enabled.
     func sendNow() async throws {
         guard settings.isConfigured else { throw SendNowError.notConfigured }
         try await workoutReader.requestAuthorization()
@@ -63,18 +61,25 @@ final class WorkoutDeliveryService {
         logger.info("Send Now: Workout data delivered")
         deliveryLog.record(dataType: .workout, timestamp: Date(), success: true, errorMessage: nil)
     }
-    /// Fetch the latest workouts and POST them to the webhook.
+
     func deliverLatest() {
         guard settings.isConfigured && settings.workoutTrackingEnabled else {
-            logger.info("Skipping workout delivery — not configured or tracking disabled")
+            logger.info("Skipping workout delivery \u{2014} not configured or tracking disabled")
             return
         }
+
+        let anchor = anchorStore.lastDelivered(for: .workout)
 
         Task {
             do {
                 try await workoutReader.requestAuthorization()
-                let sessions = try await workoutReader.fetchRecentSessions(from: nil, to: nil)
+                let sessions = try await workoutReader.fetchRecentSessions(from: anchor, to: nil)
+                guard !sessions.isEmpty else {
+                    logger.info("Skipping workout delivery \u{2014} no new workouts since last delivery")
+                    return
+                }
                 try await webhookClient.post(sessions, to: "/workout")
+                anchorStore.setLastDelivered(Date(), for: .workout)
                 logger.info("Delivered \(sessions.count) workout(s)")
                 deliveryLog.record(dataType: .workout, timestamp: Date(), success: true, errorMessage: nil)
             } catch {

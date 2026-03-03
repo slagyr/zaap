@@ -13,17 +13,20 @@ final class HeartRateDeliveryService {
     private var webhookClient: any WebhookPosting
     private let settings: SettingsManager
     private var deliveryLog: any DeliveryLogging
+    private let anchorStore: any DeliveryAnchorStoring
 
     init(
         heartRateReader: any HeartRateReading = HeartRateReader.shared,
         webhookClient: any WebhookPosting = WebhookClient.shared,
         settings: SettingsManager = .shared,
-        deliveryLog: any DeliveryLogging = NullDeliveryLog()
+        deliveryLog: any DeliveryLogging = NullDeliveryLog(),
+        anchorStore: any DeliveryAnchorStoring = NullDeliveryAnchorStore()
     ) {
         self.heartRateReader = heartRateReader
         self.webhookClient = webhookClient
         self.settings = settings
         self.deliveryLog = deliveryLog
+        self.anchorStore = anchorStore
     }
 
     func configure(deliveryLog: any DeliveryLogging) {
@@ -40,24 +43,30 @@ final class HeartRateDeliveryService {
     var reader: any HeartRateReading { heartRateReader }
 
     /// Start the heart rate delivery service.
-    /// Registers observers but does not trigger immediate delivery.
     func start() {
         guard settings.heartRateTrackingEnabled && settings.isConfigured else {
-            logger.info("Heart rate delivery not started — not configured or tracking disabled")
+            logger.info("Heart rate delivery not started \u{2014} not configured or tracking disabled")
             return
         }
 
-        logger.info("Heart rate delivery started")
+        Task {
+            do {
+                try await heartRateReader.requestAuthorization()
+                await deliverDailySummary()
+                logger.info("Heart rate delivery started")
+            } catch {
+                logger.error("Heart rate delivery start failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
     }
 
-    /// Enable or disable heart rate tracking. Updates settings and triggers delivery if enabled.
+    /// Enable or disable heart rate tracking.
     func setTracking(enabled: Bool) {
         settings.heartRateTrackingEnabled = enabled
         if enabled {
             start()
         }
     }
-
 
     /// Immediately fetch and POST heart rate data. Does not require tracking to be enabled.
     func sendNow() async throws {
@@ -68,16 +77,24 @@ final class HeartRateDeliveryService {
         logger.info("Send Now: Heart rate summary delivered")
         deliveryLog.record(dataType: .heartRate, timestamp: Date(), success: true, errorMessage: nil)
     }
+
     /// Fetch and deliver the daily heart rate summary.
     func deliverDailySummary() async {
         guard settings.isConfigured && settings.heartRateTrackingEnabled else {
-            logger.info("Skipping HR delivery — not configured or tracking disabled")
+            logger.info("Skipping HR delivery \u{2014} not configured or tracking disabled")
+            return
+        }
+
+        if let anchor = anchorStore.lastDelivered(for: .heartRate),
+           Calendar.current.isDateInToday(anchor) {
+            logger.info("Skipping HR delivery \u{2014} already delivered today")
             return
         }
 
         do {
             let summary = try await heartRateReader.fetchDailySummary(for: Date())
             try await webhookClient.post(summary, to: "/heartrate")
+            anchorStore.setLastDelivered(Date(), for: .heartRate)
             logger.info("Heart rate summary delivered: \(summary.sampleCount) samples, avg=\(summary.avgBPM)")
             deliveryLog.record(dataType: .heartRate, timestamp: Date(), success: true, errorMessage: nil)
         } catch {

@@ -2,7 +2,6 @@ import Foundation
 import os
 
 /// Subscribes to sleep data changes and POSTs summaries via WebhookClient.
-/// Mirrors LocationDeliveryService's pattern — query on demand and deliver via background session.
 final class SleepDeliveryService {
 
     static let shared = SleepDeliveryService()
@@ -13,17 +12,20 @@ final class SleepDeliveryService {
     private var webhookClient: any WebhookPosting
     private let settings: SettingsManager
     private var deliveryLog: any DeliveryLogging
+    private let anchorStore: any DeliveryAnchorStoring
 
     init(
         sleepReader: any SleepReading = SleepDataReader.shared,
         webhookClient: any WebhookPosting = WebhookClient.shared,
         settings: SettingsManager = .shared,
-        deliveryLog: any DeliveryLogging = NullDeliveryLog()
+        deliveryLog: any DeliveryLogging = NullDeliveryLog(),
+        anchorStore: any DeliveryAnchorStoring = NullDeliveryAnchorStore()
     ) {
         self.sleepReader = sleepReader
         self.webhookClient = webhookClient
         self.settings = settings
         self.deliveryLog = deliveryLog
+        self.anchorStore = anchorStore
     }
 
     func configure(deliveryLog: any DeliveryLogging) {
@@ -36,16 +38,14 @@ final class SleepDeliveryService {
 
     // MARK: - Public
 
-    /// Start the service. Registers observers but does not trigger immediate delivery.
-    /// Call once at app launch.
     func start() {
         guard settings.sleepTrackingEnabled && settings.isConfigured else {
-            logger.info("Sleep delivery not started — disabled or not configured")
+            logger.info("Sleep delivery not started \u{2014} disabled or not configured")
             return
         }
+        deliverLatest()
     }
 
-    /// Enable or disable sleep tracking. Updates settings and triggers delivery if enabled.
     func setTracking(enabled: Bool) {
         settings.sleepTrackingEnabled = enabled
         if enabled {
@@ -53,9 +53,6 @@ final class SleepDeliveryService {
         }
     }
 
-    /// Fetch the latest sleep summary and POST it to the webhook.
-
-    /// Immediately fetch and POST sleep data. Does not require tracking to be enabled.
     func sendNow() async throws {
         guard settings.isConfigured else { throw SendNowError.notConfigured }
         try await sleepReader.requestAuthorization()
@@ -64,9 +61,16 @@ final class SleepDeliveryService {
         logger.info("Send Now: Sleep summary delivered")
         deliveryLog.record(dataType: .sleep, timestamp: Date(), success: true, errorMessage: nil)
     }
+
     func deliverLatest() {
         guard settings.isConfigured && settings.sleepTrackingEnabled else {
-            logger.info("Skipping sleep delivery — not configured or tracking disabled")
+            logger.info("Skipping sleep delivery \u{2014} not configured or tracking disabled")
+            return
+        }
+
+        if let anchor = anchorStore.lastDelivered(for: .sleep),
+           Calendar.current.isDateInToday(anchor) {
+            logger.info("Skipping sleep delivery \u{2014} already delivered today")
             return
         }
 
@@ -75,6 +79,7 @@ final class SleepDeliveryService {
                 try await sleepReader.requestAuthorization()
                 let summary = try await sleepReader.fetchLastNightSummary()
                 try await webhookClient.post(summary, to: "/sleep")
+                anchorStore.setLastDelivered(Date(), for: .sleep)
                 logger.info("Sleep summary delivered for \(summary.date, privacy: .public)")
                 deliveryLog.record(dataType: .sleep, timestamp: Date(), success: true, errorMessage: nil)
             } catch {
