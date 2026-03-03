@@ -316,6 +316,32 @@ struct SettingsView: View {
                 )
 
                 dataSourceRow(
+                    label: "HRV Tracking",
+                    isOn: $settings.hrvTrackingEnabled,
+                    status: $hrvSendStatus,
+                    onToggle: { enabled in HRVDeliveryService.shared.setTracking(enabled: enabled) },
+                    onSendNow: { try await HRVDeliveryService.shared.sendNow() }
+                )
+
+                dataSourceRow(
+                    label: "SpO2 Tracking",
+                    isOn: $settings.spo2TrackingEnabled,
+                    status: $spo2SendStatus,
+                    onToggle: { enabled in SpO2DeliveryService.shared.setTracking(enabled: enabled) },
+                    onSendNow: { try await SpO2DeliveryService.shared.sendNow() }
+                )
+
+                dataSourceRow(
+                    label: "Respiratory Rate Tracking",
+                    isOn: $settings.respiratoryRateTrackingEnabled,
+                )
+
+                dataSourceRow(
+                    label: "Resting Heart Rate Tracking",
+                    isOn: $settings.restingHeartRateTrackingEnabled,
+                    status: $restingHeartRateSendStatus,
+                    onToggle: { enabled in RestingHeartRateDeliveryService.shared.setTracking(enabled: enabled) },
+                    onSendNow: { try await RestingHeartRateDeliveryService.shared.sendNow() }
                 )
             } header: {
                 Text("Data Sources")

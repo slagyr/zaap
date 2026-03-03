@@ -24,6 +24,10 @@
 		B10002 /* HeartRateDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20002 /* HeartRateDeliveryService.swift */; };
 		B10003 /* HRVReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20003 /* HRVReader.swift */; };
 		B10004 /* HRVDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20004 /* HRVDeliveryService.swift */; };
+		RR0101 /* RespiratoryRateReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = RR0102 /* RespiratoryRateReader.swift */; };
+		RR0201 /* RespiratoryRateDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = RR0202 /* RespiratoryRateDeliveryService.swift */; };
+		RH0101 /* RestingHeartRateReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = RH0102 /* RestingHeartRateReader.swift */; };
+		RH0201 /* RestingHeartRateDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = RH0202 /* RestingHeartRateDeliveryService.swift */; };
 		SP0101 /* SpO2Reader.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP0102 /* SpO2Reader.swift */; };
 		SP0201 /* SpO2DeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP0202 /* SpO2DeliveryService.swift */; };
 		F10016 /* HRVReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20016 /* HRVReaderTests.swift */; };
@@ -151,6 +155,10 @@
 		B20002 /* HeartRateDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateDeliveryService.swift; sourceTree = "<group>"; };
 		B20003 /* HRVReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HRVReader.swift; sourceTree = "<group>"; };
 		B20004 /* HRVDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HRVDeliveryService.swift; sourceTree = "<group>"; };
+		RR0102 /* RespiratoryRateReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RespiratoryRateReader.swift; sourceTree = "<group>"; };
+		RR0202 /* RespiratoryRateDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RespiratoryRateDeliveryService.swift; sourceTree = "<group>"; };
+		RH0102 /* RestingHeartRateReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestingHeartRateReader.swift; sourceTree = "<group>"; };
+		RH0202 /* RestingHeartRateDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestingHeartRateDeliveryService.swift; sourceTree = "<group>"; };
 		SP0102 /* SpO2Reader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpO2Reader.swift; sourceTree = "<group>"; };
 		SP0202 /* SpO2DeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpO2DeliveryService.swift; sourceTree = "<group>"; };
 		F20016 /* HRVReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HRVReaderTests.swift; sourceTree = "<group>"; };
@@ -294,6 +302,10 @@
 				B20002 /* HeartRateDeliveryService.swift */,
 				B20003 /* HRVReader.swift */,
 				B20004 /* HRVDeliveryService.swift */,
+				RR0102 /* RespiratoryRateReader.swift */,
+				RR0202 /* RespiratoryRateDeliveryService.swift */,
+				RH0102 /* RestingHeartRateReader.swift */,
+				RH0202 /* RestingHeartRateDeliveryService.swift */,
 				SP0102 /* SpO2Reader.swift */,
 				SP0202 /* SpO2DeliveryService.swift */,
 				SP0102 /* SpO2Reader.swift */,
@@ -533,6 +545,10 @@
 				B10002 /* HeartRateDeliveryService.swift in Sources */,
 				B10003 /* HRVReader.swift in Sources */,
 				B10004 /* HRVDeliveryService.swift in Sources */,
+				RR0101 /* RespiratoryRateReader.swift in Sources */,
+				RR0201 /* RespiratoryRateDeliveryService.swift in Sources */,
+				RH0101 /* RestingHeartRateReader.swift in Sources */,
+				RH0201 /* RestingHeartRateDeliveryService.swift in Sources */,
 				SP0101 /* SpO2Reader.swift in Sources */,
 				SP0201 /* SpO2DeliveryService.swift in Sources */,
 				SP0101 /* SpO2Reader.swift in Sources */,

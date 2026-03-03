@@ -98,3 +98,18 @@ protocol SpO2Reading {
 }
 
 extension SpO2Reader: SpO2Reading {}
+
+
+/// Protocol for reading resting heart rate data.
+protocol RestingHeartRateReading {
+    func requestAuthorization() async throws
+    func fetchDailySummary(for date: Date) async throws -> RestingHeartRateReader.DailyRestingHRSummary
+}
+
+extension RestingHeartRateReading {
+    func fetchDailySummary() async throws -> RestingHeartRateReader.DailyRestingHRSummary {
+        try await fetchDailySummary(for: Date())
+    }
+}
+
+extension RestingHeartRateReader: RestingHeartRateReading {}
