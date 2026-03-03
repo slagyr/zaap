@@ -16,6 +16,9 @@ final class SettingsManager {
         case workoutTrackingEnabled = "settings.workoutTrackingEnabled"
         case activityTrackingEnabled = "settings.activityTrackingEnabled"
         case heartRateTrackingEnabled = "settings.heartRateTrackingEnabled"
+        case hrvTrackingEnabled = "settings.hrvTrackingEnabled"
+        case spo2TrackingEnabled = "settings.spo2TrackingEnabled"
+        case hrvTrackingEnabled = "settings.hrvTrackingEnabled"
         case ttsVoiceIdentifier = "settings.ttsVoiceIdentifier"
         case gatewayToken = "settings.gatewayToken"
         case useDevConfig = "settings.useDevConfig"
@@ -53,6 +56,18 @@ final class SettingsManager {
         didSet { defaults.set(heartRateTrackingEnabled, forKey: Key.heartRateTrackingEnabled.rawValue) }
     }
 
+    var hrvTrackingEnabled: Bool {
+        didSet { defaults.set(hrvTrackingEnabled, forKey: Key.hrvTrackingEnabled.rawValue) }
+    }
+
+    var spo2TrackingEnabled: Bool {
+        didSet { defaults.set(spo2TrackingEnabled, forKey: Key.spo2TrackingEnabled.rawValue) }
+    }
+
+    var hrvTrackingEnabled: Bool {
+        didSet { defaults.set(hrvTrackingEnabled, forKey: Key.hrvTrackingEnabled.rawValue) }
+    }
+
     /// AVSpeechSynthesisVoice identifier for TTS responses. Empty string = system default.
     var ttsVoiceIdentifier: String {
         didSet { defaults.set(ttsVoiceIdentifier, forKey: Key.ttsVoiceIdentifier.rawValue) }
@@ -82,6 +97,9 @@ final class SettingsManager {
         self.workoutTrackingEnabled = defaults.bool(forKey: Key.workoutTrackingEnabled.rawValue)
         self.activityTrackingEnabled = defaults.bool(forKey: Key.activityTrackingEnabled.rawValue)
         self.heartRateTrackingEnabled = defaults.bool(forKey: Key.heartRateTrackingEnabled.rawValue)
+        self.hrvTrackingEnabled = defaults.bool(forKey: Key.hrvTrackingEnabled.rawValue)
+        self.spo2TrackingEnabled = defaults.bool(forKey: Key.spo2TrackingEnabled.rawValue)
+        self.hrvTrackingEnabled = defaults.bool(forKey: Key.hrvTrackingEnabled.rawValue)
         self.ttsVoiceIdentifier = defaults.string(forKey: Key.ttsVoiceIdentifier.rawValue) ?? ""
         self.gatewayToken = defaults.string(forKey: Key.gatewayToken.rawValue) ?? ""
         

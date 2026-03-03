@@ -76,3 +76,34 @@ protocol WorkoutReading {
 }
 
 extension WorkoutReader: WorkoutReading {}
+
+/// Protocol for reading HRV data.
+protocol HRVReading {
+    func requestAuthorization() async throws
+    func fetchDailySummary(for date: Date) async throws -> HRVReader.DailyHRVSummary
+}
+
+extension HRVReading {
+    func fetchDailySummary() async throws -> HRVReader.DailyHRVSummary {
+        try await fetchDailySummary(for: Date())
+    }
+}
+
+extension HRVReader: HRVReading {}
+
+
+/// Protocol for reading HRV data.
+protocol HRVReading {
+    func requestAuthorization() async throws
+    func fetchDailySummary(for date: Date) async throws -> HRVReader.DailyHRVSummary
+}
+
+extension HRVReader: HRVReading {}
+
+/// Protocol for reading SpO2 (blood oxygen) data.
+protocol SpO2Reading {
+    func requestAuthorization() async throws
+    func fetchDailySummary(for date: Date) async throws -> SpO2Reader.DailySpO2Summary
+}
+
+extension SpO2Reader: SpO2Reading {}

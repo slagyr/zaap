@@ -22,6 +22,10 @@
 		A10018 /* AppLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20021 /* AppLog.swift */; };
 		B10001 /* HeartRateReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20001 /* HeartRateReader.swift */; };
 		B10002 /* HeartRateDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20002 /* HeartRateDeliveryService.swift */; };
+		B10003 /* HRVReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20003 /* HRVReader.swift */; };
+		B10004 /* HRVDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20004 /* HRVDeliveryService.swift */; };
+		F10016 /* HRVReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20016 /* HRVReaderTests.swift */; };
+		F10017 /* HRVDeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20017 /* HRVDeliveryServiceTests.swift */; };
 		C10001 /* ActivityReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20001 /* ActivityReader.swift */; };
 		C10002 /* ActivityDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20002 /* ActivityDeliveryService.swift */; };
 		D10001 /* WorkoutReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20001 /* WorkoutReader.swift */; };
@@ -139,6 +143,10 @@
 		A20021 /* AppLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLog.swift; sourceTree = "<group>"; };
 		B20001 /* HeartRateReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateReader.swift; sourceTree = "<group>"; };
 		B20002 /* HeartRateDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateDeliveryService.swift; sourceTree = "<group>"; };
+		B20003 /* HRVReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HRVReader.swift; sourceTree = "<group>"; };
+		B20004 /* HRVDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HRVDeliveryService.swift; sourceTree = "<group>"; };
+		F20016 /* HRVReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HRVReaderTests.swift; sourceTree = "<group>"; };
+		F20017 /* HRVDeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HRVDeliveryServiceTests.swift; sourceTree = "<group>"; };
 		C20001 /* ActivityReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityReader.swift; sourceTree = "<group>"; };
 		C20002 /* ActivityDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityDeliveryService.swift; sourceTree = "<group>"; };
 		D20001 /* WorkoutReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutReader.swift; sourceTree = "<group>"; };
@@ -272,6 +280,8 @@
 				A20013 /* LocationDeliveryService.swift */,
 				B20001 /* HeartRateReader.swift */,
 				B20002 /* HeartRateDeliveryService.swift */,
+				B20003 /* HRVReader.swift */,
+				B20004 /* HRVDeliveryService.swift */,
 				A20014 /* SleepDeliveryService.swift */,
 				D20001 /* WorkoutReader.swift */,
 				D20002 /* WorkoutDeliveryService.swift */,
@@ -352,6 +362,8 @@
 				F20007 /* SleepDeliveryServiceTests.swift */,
 				F20008 /* HeartRateReaderTests.swift */,
 				F20009 /* HeartRateDeliveryServiceTests.swift */,
+				F20016 /* HRVReaderTests.swift */,
+				F20017 /* HRVDeliveryServiceTests.swift */,
 				F20010 /* ActivityReaderTests.swift */,
 				F20011 /* ActivityDeliveryServiceTests.swift */,
 				F20012 /* WorkoutReaderTests.swift */,
@@ -501,6 +513,8 @@
 				C10002 /* ActivityDeliveryService.swift in Sources */,
 				B10001 /* HeartRateReader.swift in Sources */,
 				B10002 /* HeartRateDeliveryService.swift in Sources */,
+				B10003 /* HRVReader.swift in Sources */,
+				B10004 /* HRVDeliveryService.swift in Sources */,
 				A10017 /* Protocols.swift in Sources */,
 				A10018 /* AppLog.swift in Sources */,
 				G10001 /* DeliveryRecord.swift in Sources */,
@@ -555,6 +569,8 @@
 				F10007 /* SleepDeliveryServiceTests.swift in Sources */,
 				F10008 /* HeartRateReaderTests.swift in Sources */,
 				F10009 /* HeartRateDeliveryServiceTests.swift in Sources */,
+				F10016 /* HRVReaderTests.swift in Sources */,
+				F10017 /* HRVDeliveryServiceTests.swift in Sources */,
 				F10010 /* ActivityReaderTests.swift in Sources */,
 				F10011 /* ActivityDeliveryServiceTests.swift in Sources */,
 				F10012 /* WorkoutReaderTests.swift in Sources */,

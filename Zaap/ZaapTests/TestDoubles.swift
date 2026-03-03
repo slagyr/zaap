@@ -371,3 +371,54 @@ final class MockThinkingSoundPlayer: ThinkingSoundPlaying {
         isPlaying = false
     }
 }
+
+// MARK: - Mock HRV Reader
+
+final class MockHRVReader: HRVReading {
+    var authorizationRequested = false
+    var summaryToReturn: HRVReader.DailyHRVSummary?
+    var shouldThrow: Error?
+
+    func requestAuthorization() async throws {
+        authorizationRequested = true
+        if let error = shouldThrow {
+            throw error
+        }
+    }
+
+    func fetchDailySummary(for date: Date) async throws -> HRVReader.DailyHRVSummary {
+        if let error = shouldThrow {
+            throw error
+        }
+        guard let summary = summaryToReturn else {
+            throw HRVReader.HRVError.noData
+        }
+        return summary
+    }
+}
+
+
+// MARK: - Mock SpO2 Reader
+
+final class MockSpO2Reader: SpO2Reading {
+    var authorizationRequested = false
+    var summaryToReturn: SpO2Reader.DailySpO2Summary?
+    var shouldThrow: Error?
+
+    func requestAuthorization() async throws {
+        authorizationRequested = true
+        if let error = shouldThrow {
+            throw error
+        }
+    }
+
+    func fetchDailySummary(for date: Date) async throws -> SpO2Reader.DailySpO2Summary {
+        if let error = shouldThrow {
+            throw error
+        }
+        guard let summary = summaryToReturn else {
+            throw SpO2Reader.SpO2Error.noData
+        }
+        return summary
+    }
+}

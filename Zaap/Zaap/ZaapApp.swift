@@ -82,7 +82,9 @@ struct ZaapApp: App {
         ActivityDeliveryService.shared.configure(deliveryLog: deliveryLog)
         ActivityDeliveryService.shared.configure(webhookClient: retryingClient)
         WorkoutDeliveryService.shared.configure(deliveryLog: deliveryLog)
+        HRVDeliveryService.shared.configure(deliveryLog: deliveryLog)
         WorkoutDeliveryService.shared.configure(webhookClient: retryingClient)
+        HRVDeliveryService.shared.configure(webhookClient: retryingClient)
         #if !targetEnvironment(simulator)
         // On real devices, auto-deliver on launch and start background observers.
         // In the simulator, all delivery is manual-only (Developer section) to avoid
@@ -92,6 +94,7 @@ struct ZaapApp: App {
         HeartRateDeliveryService.shared.start()
         ActivityDeliveryService.shared.start()
         WorkoutDeliveryService.shared.start()
+        HRVDeliveryService.shared.start()
 
         let deliveryAdapter = ObserverDeliveryAdapter()
         HealthKitObserverService.shared.configure(deliveryDelegate: deliveryAdapter)
