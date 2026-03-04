@@ -1218,4 +1218,56 @@ final class VoiceEngineTests: XCTestCase {
         XCTAssertNil(reportedError,
                      "Recognition errors after silence-timer restart should be suppressed during grace period")
     }
+
+    // MARK: - Bug Fix: isFinal debounce uses longer interval (zaap-aql)
+
+    @MainActor
+    func testFinalDebounceIntervalDefaultsTo3Seconds() {
+        XCTAssertEqual(engine.finalDebounceInterval, 3.0,
+                       "isFinal debounce should default to 3.0s to tolerate natural speech pauses")
+    }
+
+    @MainActor
+    func testFinalDebounceUsesLongerIntervalThanSilenceThreshold() async {
+        // Create engine with explicit values to verify they're independent
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5,
+            watchdogInterval: 3.0,
+            finalDebounceInterval: 4.0
+        )
+        engine.onUtteranceComplete = { _ in }
+
+        engine.startListening()
+        await simulateResultAndWait("I was thinking about", isFinal: true)
+
+        // The debounce timer after isFinal should use finalDebounceInterval (4.0s),
+        // NOT silenceThreshold (1.5s)
+        XCTAssertEqual(timerFactory.lastInterval, 4.0,
+                       "isFinal debounce should use finalDebounceInterval, not silenceThreshold")
+    }
+
+    @MainActor
+    func testNormalSilenceTimerStillUsesSilenceThreshold() async {
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5,
+            watchdogInterval: 3.0,
+            finalDebounceInterval: 4.0
+        )
+        engine.onUtteranceComplete = { _ in }
+
+        engine.startListening()
+        await simulateResultAndWait("Hello world", isFinal: false)
+
+        // Normal partial results should use the standard silenceThreshold
+        XCTAssertEqual(timerFactory.lastInterval, 1.5,
+                       "Normal silence timer should still use silenceThreshold")
+    }
 }
