@@ -227,6 +227,20 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         }
     }
 
+    /// Interrupt TTS and immediately restart the mic so the user can speak.
+    /// Called when the user taps during TTS playback (barge-in).
+    func bargeIn() {
+        guard isSessionActive, speaker.state == .speaking else { return }
+        logHandler("🎙️ [COORD] bargeIn: interrupting TTS and restarting mic")
+        micRestartTask?.cancel()
+        micRestartTask = nil
+        speaker.interrupt()
+        voiceEngine.startListening()
+        if viewModel.state != .listening {
+            viewModel.tapMic()
+        }
+    }
+
     func stopSession() {
         let hasPending = flushPendingTranscript()
 
@@ -444,10 +458,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             }
             if isSessionActive, isConversationModeOn, let t = text, !t.isEmpty {
                 trackSpokenText(t)
-                speaker.bufferToken(t)
-            }
-            if isSessionActive, isConversationModeOn {
-                speaker.flush()
+                speaker.speakImmediate(t)
             }
             viewModel.handleResponseComplete()
         case "error":

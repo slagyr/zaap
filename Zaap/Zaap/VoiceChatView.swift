@@ -169,9 +169,17 @@ struct VoiceChatView: View {
                                 .padding(.horizontal)
                         }
 
-                        // Response text while speaking
+                        // Response text while speaking — tap to interrupt (barge-in)
                         if !viewModel.responseText.isEmpty {
-                            ConversationBubble(entry: ConversationEntry(role: .agent, text: viewModel.responseText))
+                            VStack(spacing: 4) {
+                                ConversationBubble(entry: ConversationEntry(role: .agent, text: viewModel.responseText))
+                                if viewModel.state == .speaking {
+                                    Text("Tap to interrupt")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            .onTapGesture { coordinator.bargeIn() }
                         }
 
                         // Invisible anchor for auto-scroll

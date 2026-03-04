@@ -264,8 +264,8 @@ final class VoiceChatCoordinatorTests: XCTestCase {
         try await Task.sleep(nanoseconds: 50_000_000)
         coordinator.stopSession()
 
-        speaker.bufferedTokens = []
-        speaker.flushCalled = false
+        speaker.speakImmediateCalled = false
+        speaker.spokenTexts = []
 
         gateway.simulateEvent("chat", payload: [
             "sessionKey": "agent:main:main:test",
@@ -274,8 +274,8 @@ final class VoiceChatCoordinatorTests: XCTestCase {
         ])
         try await Task.sleep(nanoseconds: 50_000_000)
 
-        XCTAssertTrue(speaker.bufferedTokens.isEmpty, "Speaker should not buffer tokens after session stopped")
-        XCTAssertFalse(speaker.flushCalled, "Speaker should not flush after session stopped")
+        XCTAssertFalse(speaker.speakImmediateCalled, "Speaker should not speak after session stopped")
+        XCTAssertTrue(speaker.spokenTexts.isEmpty, "No text should be spoken after session stopped")
     }
 
     func testStopSessionPreventsLegacyTokensFromSpeaking() async throws {
@@ -371,8 +371,8 @@ final class VoiceChatCoordinatorTests: XCTestCase {
         gateway.simulateConnect()
         try await Task.sleep(nanoseconds: 50_000_000)
 
-        speaker.bufferedTokens = []
-        speaker.flushCalled = false
+        speaker.speakImmediateCalled = false
+        speaker.spokenTexts = []
 
         gateway.simulateEvent("chat", payload: [
             "sessionKey": "agent:main:discord:xyz",
@@ -381,8 +381,8 @@ final class VoiceChatCoordinatorTests: XCTestCase {
         ])
         try await Task.sleep(nanoseconds: 50_000_000)
 
-        XCTAssertTrue(speaker.bufferedTokens.isEmpty)
-        XCTAssertFalse(speaker.flushCalled)
+        XCTAssertFalse(speaker.speakImmediateCalled)
+        XCTAssertTrue(speaker.spokenTexts.isEmpty)
     }
 
     func testLegacyTokenEventWithDifferentSessionKeyIsIgnored() async throws {
@@ -715,8 +715,8 @@ extension VoiceChatCoordinatorTests {
 
         // Turn off conversation mode (mic off)
         coordinator.toggleConversationMode()
-        speaker.bufferedTokens.removeAll()
-        speaker.flushCalled = false
+        speaker.speakImmediateCalled = false
+        speaker.spokenTexts.removeAll()
 
         // A chat final arrives from the gateway
         gateway.simulateEvent("chat", payload: [
@@ -726,10 +726,10 @@ extension VoiceChatCoordinatorTests {
         ])
         try await Task.sleep(nanoseconds: 50_000_000)
 
-        XCTAssertTrue(speaker.bufferedTokens.isEmpty,
-                      "Chat final should NOT buffer tokens when conversation mode is off")
-        XCTAssertFalse(speaker.flushCalled,
-                       "Chat final should NOT flush speaker when conversation mode is off")
+        XCTAssertFalse(speaker.speakImmediateCalled,
+                       "Chat final should NOT speak when conversation mode is off")
+        XCTAssertTrue(speaker.spokenTexts.isEmpty,
+                      "No text should be spoken when conversation mode is off")
     }
 
     func testConversationModeOnAfterToggleReenablesAutoRestart() async throws {
@@ -1078,13 +1078,13 @@ extension VoiceChatCoordinatorTests {
         XCTAssertEqual(gateway.sentTranscripts[0].text, "What is the weather")
     }
 
-    func testSpokenTextTrackedFromSpeakerBufferToken() async throws {
+    func testSpokenTextTrackedFromChatFinal() async throws {
         let url = URL(string: "wss://gateway.local:18789")!
         coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:echo2")
         gateway.simulateConnect()
         try await Task.sleep(nanoseconds: 50_000_000)
 
-        // Simulate receiving a chat final that triggers speaker
+        // Simulate receiving a chat final that triggers speakImmediate
         gateway.simulateEvent("chat", payload: [
             "sessionKey": "agent:main:main:echo2",
             "state": "final",
@@ -1625,5 +1625,155 @@ extension VoiceChatCoordinatorTests {
 
         XCTAssertTrue(voiceEngine.startListeningCalled,
                       "Mic SHOULD restart on gateway reconnect when conversation mode is on")
+    }
+}
+
+// MARK: - Chat Final Speaks as Single Utterance (zaap-ce1)
+
+extension VoiceChatCoordinatorTests {
+
+    func testChatFinalSpeaksEntireResponseAsSingleUtterance() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:ce1")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("Tell me about the weather")
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:ce1",
+            "state": "final",
+            "message": ["content": [["text": "The weather is sunny. It will be warm today. Enjoy your day!"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Should speak the entire text as one call to speakImmediate, not bufferToken + flush
+        XCTAssertTrue(speaker.speakImmediateCalled,
+                      "Chat final should use speakImmediate for single-utterance playback")
+        XCTAssertEqual(speaker.spokenTexts.count, 1,
+                       "Entire response should be spoken as a single utterance, not split into sentences")
+        XCTAssertEqual(speaker.spokenTexts.first, "The weather is sunny. It will be warm today. Enjoy your day!",
+                       "Full response text should be spoken")
+    }
+
+    func testChatFinalDoesNotUseBufferTokenForSpeaking() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:ce1b")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("Hello")
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:ce1b",
+            "state": "final",
+            "message": ["content": [["text": "Hello! How are you doing today?"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(speaker.bufferedTokens.isEmpty,
+                       "Chat final should NOT use bufferToken — it causes sentence splitting and stutter")
+    }
+}
+
+// MARK: - Barge-In: Tap to interrupt TTS (zaap-ogv)
+
+extension VoiceChatCoordinatorTests {
+
+    func testBargeInInterruptsSpeaker() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:barge")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Simulate TTS speaking
+        speaker.simulateStateChange(.speaking)
+        speaker.interruptCalled = false
+
+        coordinator.bargeIn()
+
+        XCTAssertTrue(speaker.interruptCalled,
+                      "bargeIn should interrupt the speaker")
+    }
+
+    func testBargeInRestartsMicImmediately() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:barge")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Simulate TTS speaking (which stops the mic)
+        speaker.simulateStateChange(.speaking)
+        voiceEngine.startListeningCalled = false
+
+        coordinator.bargeIn()
+
+        // Mic should restart immediately — no delay
+        XCTAssertTrue(voiceEngine.startListeningCalled,
+                      "bargeIn should restart mic immediately (no delay)")
+    }
+
+    func testBargeInTransitionsViewModelToListening() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:barge")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Simulate TTS speaking
+        speaker.simulateStateChange(.speaking)
+
+        coordinator.bargeIn()
+
+        XCTAssertEqual(viewModel.state, .listening,
+                       "bargeIn should transition VM to listening")
+    }
+
+    func testBargeInDoesNothingWhenSessionInactive() async throws {
+        // No session started
+        coordinator.bargeIn()
+
+        XCTAssertFalse(speaker.interruptCalled,
+                       "bargeIn should do nothing when session is not active")
+        XCTAssertFalse(voiceEngine.startListeningCalled,
+                       "bargeIn should not start mic when session is not active")
+    }
+
+    func testBargeInDoesNothingWhenNotSpeaking() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:barge")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Speaker is idle, not speaking
+        speaker.interruptCalled = false
+        voiceEngine.startListeningCalled = false
+
+        coordinator.bargeIn()
+
+        XCTAssertFalse(speaker.interruptCalled,
+                       "bargeIn should not interrupt when speaker is not speaking")
+    }
+
+    func testBargeInCancelsPendingMicRestart() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:barge")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Simulate TTS finishing normally — mic restart is scheduled
+        speaker.simulateStateChange(.speaking)
+        speaker.simulateStateChange(.idle)
+
+        // Before the scheduled restart fires, user barges in
+        voiceEngine.startListeningCalled = false
+        speaker.state = .speaking
+        speaker.interruptCalled = false
+
+        coordinator.bargeIn()
+
+        XCTAssertTrue(speaker.interruptCalled,
+                      "bargeIn should work even when a mic restart is pending")
+        XCTAssertTrue(voiceEngine.startListeningCalled,
+                      "bargeIn should restart mic immediately, replacing the pending restart")
     }
 }
