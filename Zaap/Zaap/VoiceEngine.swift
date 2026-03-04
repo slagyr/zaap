@@ -336,6 +336,7 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         let combined = buildFullTranscript()
         guard combined.count >= minimumTranscriptLength else {
             logHandler("🎙️ [STT] utterance too short (\(combined.count) chars): \"\(combined)\"")
+            resetSilenceTimer()
             return
         }
         logHandler("🎙️ [STT] emitting utterance: \"\(combined.prefix(80))\"")
@@ -349,6 +350,10 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         logHandler("🎙️ [STT] restartRecognition: creating new recognition task")
         // Reset transcript state — new task starts fresh.
         currentTranscript = ""
+        // Reset cold-start grace period so the new task's errors are suppressed
+        // until it produces its first partial result. Re-arm watchdog for recovery.
+        hasReceivedPartial = false
+        startWatchdog()
 
         // Tear down the current recognition task so the next callback does not
         // restore the old accumulated transcript into currentTranscript.

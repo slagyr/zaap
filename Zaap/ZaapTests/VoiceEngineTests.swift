@@ -1071,4 +1071,151 @@ final class VoiceEngineTests: XCTestCase {
         XCTAssertEqual(speechRecognizer.prepareRecognizerCallCount, countBeforeStart,
                        "startListening should not call prepareRecognizer again — init already did it")
     }
+
+    // MARK: - Bug Fix: Silence timer dies after empty emission (zaap-6k2)
+
+    @MainActor
+    func testSilenceTimerRearmsAfterShortUtteranceRejection() async {
+        // Reproduce: speak → emit → restart → silence timer fires on empty transcript
+        // The timer should re-arm itself so the engine doesn't go dead.
+        engine.onUtteranceComplete = { _ in }
+
+        engine.startListening()
+        await simulateResultAndWait("Hello world test", isFinal: false)
+
+        // Emit first utterance via silence timer
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        // restartRecognition arms a silence timer. It fires with no new speech
+        // (currentTranscript is "" after restart, pendingTranscript is "").
+        let timerCountBeforeSecondFire = timerFactory.allTokens.count
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        // After rejecting the empty transcript, a new silence timer must be scheduled
+        // so the engine doesn't go dead.
+        XCTAssertGreaterThan(timerFactory.allTokens.count, timerCountBeforeSecondFire,
+                             "Silence timer must re-arm after rejecting a too-short utterance, or the engine goes dead")
+    }
+
+    @MainActor
+    func testWatchdogCanRearmAfterRecognitionRestart() async {
+        // After first partial arrives, hasReceivedPartial = true and watchdog is cancelled.
+        // After restartRecognition(), hasReceivedPartial should reset so the watchdog
+        // can protect against the new recognition task producing no results.
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5,
+            watchdogInterval: 3.0
+        )
+        engine.onUtteranceComplete = { _ in }
+
+        engine.startListening()
+        XCTAssertEqual(speechRecognizer.taskCreationCount, 1)
+
+        // First partial arrives — watchdog gets cancelled
+        await simulateResultAndWait("Hello world test", isFinal: false)
+
+        // Emit via silence timer → restartRecognition
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(speechRecognizer.taskCreationCount, 2)
+
+        // The restart silence timer fires with empty text → rejected.
+        // Now fire what should be a watchdog-style recovery:
+        // simulate the silence timer firing again (no partials on new task)
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        // Fire again — the watchdog or silence timer should keep the engine alive.
+        // The engine should NOT be in a dead state with no timers.
+        let lastHandler = timerFactory.lastFireHandler
+        XCTAssertNotNil(lastHandler,
+                        "Engine must always have an active timer handler after recognition restart")
+    }
+
+    // MARK: - Bug Fix: 'No speech detected' after restart (zaap-w8d)
+
+    @MainActor
+    func testRecognitionErrorSuppressedAfterIsFinalRestart() async {
+        // Scenario: user speaks, partials arrive (hasReceivedPartial=true),
+        // isFinal fires, recognition restarts. The NEW task fires a 'No speech
+        // detected' error before any partial arrives on it. This error should
+        // be suppressed (it's a cold-start for the new task).
+        var reportedError: VoiceEngineError?
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5,
+            watchdogInterval: 3.0
+        )
+        engine.onError = { reportedError = $0 }
+        engine.onUtteranceComplete = { _ in }
+
+        engine.startListening()
+
+        // Partial arrives — grace period ends for first task
+        await simulateResultAndWait("Hello world test", isFinal: false)
+
+        // isFinal fires → handleIsFinal → restartRecognition
+        await simulateResultAndWait("Hello world test", isFinal: true)
+
+        // Now on the NEW recognition task, a 'No speech detected' error fires
+        // before any partial arrives on the new task.
+        let newTask = speechRecognizer.allCreatedTasks.last!
+        let err = NSError(domain: "kAFAssistantErrorDomain", code: 1110,
+                          userInfo: [NSLocalizedDescriptionKey: "No speech detected"])
+        newTask.simulateError(err)
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertNil(reportedError,
+                     "Recognition errors on a restarted task should be suppressed during its cold-start grace period")
+    }
+
+    @MainActor
+    func testRecognitionErrorSuppressedAfterSilenceEmitRestart() async {
+        // Same scenario but triggered by silence timer emission instead of isFinal
+        var reportedError: VoiceEngineError?
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5,
+            watchdogInterval: 3.0
+        )
+        engine.onError = { reportedError = $0 }
+        engine.onUtteranceComplete = { _ in }
+
+        engine.startListening()
+        await simulateResultAndWait("Hello world test", isFinal: false)
+
+        // Silence timer fires → emitUtteranceIfValid → restartRecognition
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        // Error on the new task before any partial
+        let newTask = speechRecognizer.allCreatedTasks.last!
+        let err = NSError(domain: "kAFAssistantErrorDomain", code: 1110,
+                          userInfo: [NSLocalizedDescriptionKey: "No speech detected"])
+        newTask.simulateError(err)
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertNil(reportedError,
+                     "Recognition errors after silence-timer restart should be suppressed during grace period")
+    }
 }
