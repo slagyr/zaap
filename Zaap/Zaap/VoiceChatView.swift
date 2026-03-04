@@ -189,6 +189,19 @@ struct VoiceChatView: View {
                             .font(.subheadline)
                     }
                 }
+                .overlay(alignment: .top) {
+                    if viewModel.showSessionSwitchNotice {
+                        Text("Session switched")
+                            .font(.caption)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(Color.secondary))
+                            .padding(.top, 8)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                            .animation(.easeInOut(duration: 0.3), value: viewModel.showSessionSwitchNotice)
+                    }
+                }
                 .onChange(of: viewModel.conversationLog.count) { _, _ in
                     withAnimation {
                         proxy.scrollTo("bottom-anchor", anchor: .bottom)

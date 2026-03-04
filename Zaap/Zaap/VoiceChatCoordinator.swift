@@ -182,12 +182,15 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         }
     }
 
-    /// Send any in-flight partial transcript to the current (old) session before switching.
-    private func flushPendingTranscript() {
+    /// Send any in-flight partial transcript to the current session before switching/stopping.
+    /// Returns true if a transcript was flushed.
+    @discardableResult
+    private func flushPendingTranscript() -> Bool {
         let pending = voiceEngine.currentTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard pending.count >= 3 else { return }
+        guard pending.count >= 3 else { return false }
         logHandler("🎙️ [COORD] flushing pending transcript to session \(sessionKey): \"\(pending.prefix(50))\"")
         handleUtteranceComplete(pending)
+        return true
     }
 
     func startSession(gatewayURL: URL, sessionKey: String? = nil) {
@@ -225,12 +228,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     }
 
     func stopSession() {
-        // Flush any partial transcript before stopping, so in-flight speech isn't lost
-        let pending = voiceEngine.currentTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
-        let hasPending = pending.count >= 3
-        if hasPending {
-            handleUtteranceComplete(pending) // sends transcript; sets state → .processing
-        }
+        let hasPending = flushPendingTranscript()
 
         voiceEngine.stopListening()
         speaker.interrupt()
