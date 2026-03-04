@@ -334,7 +334,11 @@ struct SettingsView: View {
                 Text("Data Sources") }
             }
 
-            RequestLogView(log: requestLog)
+            Section {
+
+                RequestLogView(log: requestLog)
+
+            }
 
             Section {
                 Button(action: {
