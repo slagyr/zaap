@@ -83,17 +83,6 @@ struct SettingsView: View {
                 #endif
             } header: {
                 Text("Configuration")
-            } footer: {
-                #if targetEnvironment(simulator)
-                Text(settings.useDevConfig
-                     ? "Development: localhost:8788 (for testing)"
-                     : "Production: REDACTED_HOSTNAME")
-                    .font(.caption)
-                #else
-                Text("Production: REDACTED_HOSTNAME")
-                    .font(.caption)
-                #endif
-            }
 
             if let pairingVM = pairingViewModel {
                 PairingSectionView(viewModel: pairingVM)
@@ -192,12 +181,6 @@ struct SettingsView: View {
 
             } header: {
                 Text("Server")
-            } footer: {
-                if settings.hostname.isEmpty {
-                    Text("Enter your OpenClaw gateway hostname (e.g. myhost.ts.net)")
-                } else {
-                    Text("Webhooks: https://\(settings.hostname)/hooks/…\nVoice: \(settings.isLocalHostname ? "ws" : "wss")://\(settings.hostname)")
-                }
             }
 
             Section {
@@ -274,9 +257,6 @@ struct SettingsView: View {
                 }
             } header: {
                 Text("Voice")
-            } footer: {
-                Text("Tap Preview to hear the selected voice. Enhanced ✦ and Premium ⭐️ voices sound more natural and must be downloaded in iOS Settings → Accessibility → Spoken Content → Voices.")
-            }
 
             Section {
                 dataSourceRow(
@@ -352,11 +332,6 @@ struct SettingsView: View {
                 )
             } header: {
                 Text("Data Sources")
-            } footer: {
-                if !settings.isConfigured && (settings.locationTrackingEnabled || settings.sleepTrackingEnabled || settings.workoutTrackingEnabled) {
-                    Text("⚠️ Configure a valid webhook URL and token above to start sending data.")
-                        .foregroundStyle(.orange)
-                }
             }
 
             RequestLogView(log: requestLog)
@@ -382,9 +357,6 @@ struct SettingsView: View {
                 }
             } header: {
                 Text("Diagnostics")
-            } footer: {
-                Text("Copies recent app logs to the clipboard for debugging.")
-            }
 
         }
         .toolbar(.hidden, for: .navigationBar)
