@@ -47,6 +47,10 @@ struct DashboardView: View {
                     .position(by: .value("Type", DashboardViewModel.displayName(for: point.dataType)))
                 }
                 .chartForegroundStyleScale([
+                    "HRV": Color.purple,
+                    "SpO2": Color.cyan,
+                    "Respiratory Rate": Color.teal,
+                    "Resting HR": Color.pink,
                     "Location": Color.blue,
                     "Sleep": Color.indigo,
                     "Heart Rate": Color.red,
