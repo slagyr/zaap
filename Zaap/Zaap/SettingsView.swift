@@ -257,6 +257,7 @@ struct SettingsView: View {
                 }
             } header: {
                 Text("Voice")
+            }
 
             Section {
                 dataSourceRow(
@@ -331,7 +332,7 @@ struct SettingsView: View {
                     onSendNow: { try await RestingHeartRateDeliveryService.shared.sendNow() }
                 )
             } header: {
-                Text("Data Sources") }
+                Text("Data Sources")
             }
 
             Section {
