@@ -370,7 +370,8 @@ struct SettingsView: View {
     // MARK: - Data Source Row
 
     @ViewBuilder
-    private func dataSourceRow(
+    @ViewBuilder
+    func dataSourceRow(
         label: String,
         isOn: Binding<Bool>,
         status: Binding<SendNowStatus>,
