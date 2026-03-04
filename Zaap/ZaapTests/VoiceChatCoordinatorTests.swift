@@ -1488,3 +1488,142 @@ extension VoiceChatCoordinatorTests {
         XCTAssertFalse(thinkingSound.isPlaying, "Thinking sound should stop on final response")
     }
 }
+
+// MARK: - Session Switch UX Improvements (zaap-cxe)
+
+extension VoiceChatCoordinatorTests {
+
+    // MARK: - Flush Pending Transcript to Old Session
+
+    func testUpdateSessionKeyFlushesPartialTranscriptToOldSession() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "session-old")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // User is mid-sentence when they switch sessions
+        voiceEngine.currentTranscript = "I was in the middle of"
+
+        coordinator.updateSessionKey("session-new")
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // The partial transcript should have been sent to the OLD session key
+        XCTAssertEqual(gateway.sentTranscripts.count, 1,
+                       "Pending transcript should be flushed on session switch")
+        XCTAssertEqual(gateway.sentTranscripts[0].text, "I was in the middle of")
+        XCTAssertEqual(gateway.sentTranscripts[0].sessionKey, "session-old",
+                       "Flushed transcript should be sent with the OLD session key")
+    }
+
+    func testUpdateSessionKeyDoesNotFlushShortTranscript() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "session-old")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Only "Hi" — too short to flush (< 3 chars)
+        voiceEngine.currentTranscript = "Hi"
+
+        coordinator.updateSessionKey("session-new")
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(gateway.sentTranscripts.isEmpty,
+                      "Short transcript should not be flushed on session switch")
+    }
+
+    func testUpdateSessionKeyDoesNotFlushWhenNoTranscript() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "session-old")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        voiceEngine.currentTranscript = ""
+
+        coordinator.updateSessionKey("session-new")
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(gateway.sentTranscripts.isEmpty,
+                      "Empty transcript should not be flushed on session switch")
+    }
+
+    // MARK: - Session Switch Toast Notification
+
+    func testUpdateSessionKeyShowsSessionSwitchNotice() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "session-old")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        coordinator.updateSessionKey("session-new")
+
+        XCTAssertTrue(viewModel.showSessionSwitchNotice,
+                      "Session switch should show a notice to the user")
+    }
+
+    func testSessionSwitchNoticeAutoClears() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "session-old")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        coordinator.updateSessionKey("session-new")
+        XCTAssertTrue(viewModel.showSessionSwitchNotice)
+
+        // Wait for the notice to auto-clear
+        try await Task.sleep(nanoseconds: 2_500_000_000)
+
+        XCTAssertFalse(viewModel.showSessionSwitchNotice,
+                       "Session switch notice should auto-clear after a delay")
+    }
+
+    func testUpdateSessionKeyWhileInactiveDoesNotShowNotice() {
+        coordinator.updateSessionKey("session-new")
+
+        XCTAssertFalse(viewModel.showSessionSwitchNotice,
+                       "Should not show notice when session is not active")
+    }
+
+    // MARK: - Gateway Reconnect + Conversation Mode Off
+
+    func testGatewayReconnectDoesNotRestartMicWhenConversationModeOff() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(voiceEngine.startListeningCalled, "Mic should start on initial connect")
+
+        // Turn off conversation mode
+        coordinator.toggleConversationMode()
+        XCTAssertTrue(voiceEngine.stopListeningCalled, "Mic should stop when conversation mode toggled off")
+
+        // Reset tracking flags
+        voiceEngine.startListeningCalled = false
+
+        // Simulate gateway reconnect (network blip)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertFalse(voiceEngine.startListeningCalled,
+                       "Mic should NOT restart on gateway reconnect when conversation mode is off")
+    }
+
+    func testGatewayReconnectRestartsMicWhenConversationModeOn() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(voiceEngine.startListeningCalled)
+
+        // Reset tracking flags
+        voiceEngine.startListeningCalled = false
+
+        // Simulate gateway reconnect — conversation mode is still on
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(voiceEngine.startListeningCalled,
+                      "Mic SHOULD restart on gateway reconnect when conversation mode is on")
+    }
+}

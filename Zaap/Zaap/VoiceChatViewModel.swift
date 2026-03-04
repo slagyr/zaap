@@ -34,6 +34,7 @@ final class VoiceChatViewModel: ObservableObject {
     @Published private(set) var conversationLog: [ConversationEntry] = []
     @Published private(set) var partialTranscript: String = ""
     @Published private(set) var responseText: String = ""
+    @Published var showSessionSwitchNotice: Bool = false
 
     func tapMic() {
         switch state {

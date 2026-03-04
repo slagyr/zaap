@@ -146,6 +146,13 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     func updateSessionKey(_ key: String) {
         let wasActive = isSessionActive
         let wasConversationMode = isConversationModeOn
+
+        // If session is active, flush any in-flight transcript to the OLD session
+        // before switching keys, so mid-sentence speech isn't silently discarded. (zaap-cxe)
+        if wasActive {
+            flushPendingTranscript()
+        }
+
         sessionKey = key
 
         // If session is active, cleanly reset voice state for the new session (zaap-wiu)
@@ -161,11 +168,26 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
                 viewModel.tapMic() // → idle
             }
 
+            // Show brief session-switch notification (zaap-cxe)
+            viewModel.showSessionSwitchNotice = true
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                viewModel.showSessionSwitchNotice = false
+            }
+
             // Restart mic after delay if conversation mode was on
             if wasConversationMode {
                 scheduleMicRestart()
             }
         }
+    }
+
+    /// Send any in-flight partial transcript to the current (old) session before switching.
+    private func flushPendingTranscript() {
+        let pending = voiceEngine.currentTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard pending.count >= 3 else { return }
+        logHandler("🎙️ [COORD] flushing pending transcript to session \(sessionKey): \"\(pending.prefix(50))\"")
+        handleUtteranceComplete(pending)
     }
 
     func startSession(gatewayURL: URL, sessionKey: String? = nil) {
@@ -316,7 +338,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             if operatorGateway == nil {
                 await sessionPicker?.loadSessions()
             }
-            guard isSessionActive else { return }
+            guard isSessionActive, isConversationModeOn else { return }
             // Gateway is ready — transition UI to listening and start capturing voice
             viewModel.tapMic() // idle → listening
             voiceEngine.startListening()
