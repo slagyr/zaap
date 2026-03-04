@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This project is managed by the **projects** skill. Read `.project/PROJECT.md` for goals, guardrails, and settings.
+This project is managed by the **projects** skill. Read `.braids/PROJECT.md` for goals, guardrails, and settings.
 
 ## Development Practice
 
