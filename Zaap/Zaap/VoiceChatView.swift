@@ -39,7 +39,8 @@ struct VoiceChatView: View {
             voiceEngine: engine,
             gateway: nodeGateway,
             speaker: speaker,
-            operatorGateway: operatorGateway
+            operatorGateway: operatorGateway,
+            thinkingSoundPlayer: SystemThinkingSoundPlayer()
         )
         _viewModel = StateObject(wrappedValue: vm)
         _coordinator = StateObject(wrappedValue: coord)

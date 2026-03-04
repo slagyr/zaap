@@ -19,6 +19,7 @@ final class SettingsManager {
         case hrvTrackingEnabled = "settings.hrvTrackingEnabled"
         case spo2TrackingEnabled = "settings.spo2TrackingEnabled"
         case respiratoryRateTrackingEnabled = "settings.respiratoryRateTrackingEnabled"
+        case restingHeartRateTrackingEnabled = "settings.restingHeartRateTrackingEnabled"
         case ttsVoiceIdentifier = "settings.ttsVoiceIdentifier"
         case gatewayToken = "settings.gatewayToken"
         case useDevConfig = "settings.useDevConfig"
@@ -106,6 +107,7 @@ final class SettingsManager {
         self.hrvTrackingEnabled = defaults.bool(forKey: Key.hrvTrackingEnabled.rawValue)
         self.spo2TrackingEnabled = defaults.bool(forKey: Key.spo2TrackingEnabled.rawValue)
         self.respiratoryRateTrackingEnabled = defaults.bool(forKey: Key.respiratoryRateTrackingEnabled.rawValue)
+        self.restingHeartRateTrackingEnabled = defaults.bool(forKey: Key.restingHeartRateTrackingEnabled.rawValue)
         self.ttsVoiceIdentifier = defaults.string(forKey: Key.ttsVoiceIdentifier.rawValue) ?? ""
         self.gatewayToken = defaults.string(forKey: Key.gatewayToken.rawValue) ?? ""
         

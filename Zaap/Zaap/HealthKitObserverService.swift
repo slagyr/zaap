@@ -10,6 +10,7 @@ enum ObservedHealthDataType: String, CaseIterable {
     case workout
     case hrv
     case spo2
+    case respiratoryRate
 }
 
 /// Background delivery frequency for observer queries.
@@ -76,6 +77,7 @@ final class HealthKitObserverService {
         case .activity: return .hourly
         case .hrv: return .hourly
         case .spo2: return .hourly
+        case .respiratoryRate: return .hourly
         }
     }
 
@@ -89,6 +91,7 @@ final class HealthKitObserverService {
         if settings.workoutTrackingEnabled { types.append(.workout) }
         if settings.hrvTrackingEnabled { types.append(.hrv) }
         if settings.spo2TrackingEnabled { types.append(.spo2) }
+        if settings.respiratoryRateTrackingEnabled { types.append(.respiratoryRate) }
         return types
     }
 
@@ -176,6 +179,8 @@ final class HKObserverBackend: HealthKitObserverBackend {
             return HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN)
         case .spo2:
             return HKQuantityType.quantityType(forIdentifier: .oxygenSaturation)
+        case .respiratoryRate:
+            return HKQuantityType.quantityType(forIdentifier: .respiratoryRate)
         }
     }
 

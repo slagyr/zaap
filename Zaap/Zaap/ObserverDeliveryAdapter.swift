@@ -14,6 +14,7 @@ final class ObserverDeliveryAdapter: ObserverDeliveryDelegate {
     private let workoutService: WorkoutDeliveryService
     private let hrvService: HRVDeliveryService
     private let spo2Service: SpO2DeliveryService
+    private let respiratoryRateService: RespiratoryRateDeliveryService
 
     init(
         heartRateService: HeartRateDeliveryService = .shared,
@@ -22,6 +23,7 @@ final class ObserverDeliveryAdapter: ObserverDeliveryDelegate {
         workoutService: WorkoutDeliveryService = .shared,
         hrvService: HRVDeliveryService = .shared,
         spo2Service: SpO2DeliveryService = .shared,
+        respiratoryRateService: RespiratoryRateDeliveryService = .shared,
     ) {
         self.heartRateService = heartRateService
         self.sleepService = sleepService
@@ -29,6 +31,7 @@ final class ObserverDeliveryAdapter: ObserverDeliveryDelegate {
         self.workoutService = workoutService
         self.hrvService = hrvService
         self.spo2Service = spo2Service
+        self.respiratoryRateService = respiratoryRateService
     }
 
     func deliverData(for dataType: ObservedHealthDataType) async {
@@ -47,6 +50,8 @@ final class ObserverDeliveryAdapter: ObserverDeliveryDelegate {
             await hrvService.deliverDailySummary()
         case .spo2:
             await spo2Service.deliverDailySummary()
+        case .respiratoryRate:
+            await respiratoryRateService.deliverDailySummary()
         }
     }
 }

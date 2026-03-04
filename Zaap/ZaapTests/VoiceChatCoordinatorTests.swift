@@ -1372,4 +1372,119 @@ extension VoiceChatCoordinatorTests {
         XCTAssertFalse(hasOldResponse,
                        "Response from old session should be ignored after session switch")
     }
+
+    // MARK: - Thinking Sound
+
+    func testThinkingSoundStartsOnUtteranceComplete() async throws {
+        let thinkingSound = MockThinkingSoundPlayer()
+        let coord = VoiceChatCoordinator(
+            viewModel: viewModel,
+            voiceEngine: voiceEngine,
+            gateway: gateway,
+            speaker: speaker,
+            thinkingSoundPlayer: thinkingSound
+        )
+        coord.startSession(gatewayURL: URL(string: "wss://gw.local:18789")!)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        voiceEngine.onUtteranceComplete?("Hello")
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(thinkingSound.isPlaying, "Thinking sound should start after utterance complete")
+        XCTAssertEqual(thinkingSound.startCount, 1)
+    }
+
+    func testThinkingSoundStopsWhenSpeakerStartsSpeaking() async throws {
+        let thinkingSound = MockThinkingSoundPlayer()
+        let coord = VoiceChatCoordinator(
+            viewModel: viewModel,
+            voiceEngine: voiceEngine,
+            gateway: gateway,
+            speaker: speaker,
+            thinkingSoundPlayer: thinkingSound
+        )
+        coord.startSession(gatewayURL: URL(string: "wss://gw.local:18789")!)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        voiceEngine.onUtteranceComplete?("Hello")
+        try await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertTrue(thinkingSound.isPlaying)
+
+        // Speaker starts speaking - thinking sound should stop
+        speaker.simulateStateChange(.speaking)
+        XCTAssertFalse(thinkingSound.isPlaying, "Thinking sound should stop when speaker starts")
+        XCTAssertEqual(thinkingSound.stopCount, 1)
+    }
+
+    func testThinkingSoundStopsOnChatError() async throws {
+        let thinkingSound = MockThinkingSoundPlayer()
+        let coord = VoiceChatCoordinator(
+            viewModel: viewModel,
+            voiceEngine: voiceEngine,
+            gateway: gateway,
+            speaker: speaker,
+            thinkingSoundPlayer: thinkingSound
+        )
+        coord.startSession(gatewayURL: URL(string: "wss://gw.local:18789")!, sessionKey: "test-key")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        voiceEngine.onUtteranceComplete?("Hello")
+        try await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertTrue(thinkingSound.isPlaying)
+
+        gateway.simulateEvent("chat", payload: ["sessionKey": "test-key", "state": "error"])
+        try await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertFalse(thinkingSound.isPlaying, "Thinking sound should stop on error")
+    }
+
+    func testThinkingSoundStopsOnSessionStop() async throws {
+        let thinkingSound = MockThinkingSoundPlayer()
+        let coord = VoiceChatCoordinator(
+            viewModel: viewModel,
+            voiceEngine: voiceEngine,
+            gateway: gateway,
+            speaker: speaker,
+            thinkingSoundPlayer: thinkingSound
+        )
+        coord.startSession(gatewayURL: URL(string: "wss://gw.local:18789")!)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        voiceEngine.onUtteranceComplete?("Hello")
+        try await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertTrue(thinkingSound.isPlaying)
+
+        coord.stopSession()
+        XCTAssertFalse(thinkingSound.isPlaying, "Thinking sound should stop when session ends")
+    }
+
+    func testThinkingSoundStopsOnChatFinal() async throws {
+        let thinkingSound = MockThinkingSoundPlayer()
+        let coord = VoiceChatCoordinator(
+            viewModel: viewModel,
+            voiceEngine: voiceEngine,
+            gateway: gateway,
+            speaker: speaker,
+            thinkingSoundPlayer: thinkingSound
+        )
+        coord.micRestartDelay = 0.05
+        coord.startSession(gatewayURL: URL(string: "wss://gw.local:18789")!, sessionKey: "test-key")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        voiceEngine.onUtteranceComplete?("Hello")
+        try await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertTrue(thinkingSound.isPlaying)
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "test-key",
+            "state": "final",
+            "message": ["content": [["text": "Hi there"]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+        XCTAssertFalse(thinkingSound.isPlaying, "Thinking sound should stop on final response")
+    }
 }

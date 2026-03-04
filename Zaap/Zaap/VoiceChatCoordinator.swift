@@ -56,6 +56,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     private var sessionKey: String = ""
     @Published private(set) var isSessionActive = false
     @Published private(set) var isConversationModeOn = false
+    private let thinkingSoundPlayer: ThinkingSoundPlaying?
     weak var sessionPicker: SessionPickerViewModel? {
         didSet { operatorDelegate?.sessionPicker = sessionPicker }
     }
@@ -71,12 +72,14 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
          voiceEngine: VoiceEngineProtocol,
          gateway: GatewayConnecting,
          speaker: ResponseSpeaking,
-         operatorGateway: GatewayConnecting? = nil) {
+         operatorGateway: GatewayConnecting? = nil,
+         thinkingSoundPlayer: ThinkingSoundPlaying? = nil) {
         self.viewModel = viewModel
         self.voiceEngine = voiceEngine
         self.gateway = gateway
         self.operatorGateway = operatorGateway
         self.speaker = speaker
+        self.thinkingSoundPlayer = thinkingSoundPlayer
 
         gateway.delegate = self
 
@@ -92,6 +95,8 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             self.logHandler("🔊 [SPEAKER] state → \(newState) sessionActive=\(self.isSessionActive) conversationMode=\(self.isConversationModeOn)")
             guard self.isSessionActive else { return }
             if newState == .speaking {
+                // Stop thinking sound — response is arriving
+                self.thinkingSoundPlayer?.stopPlaying()
                 // Stop mic during TTS to prevent echo pickup (hardware AEC insufficient on device)
                 self.logHandler("🔊 [SPEAKER] stopping mic for TTS playback")
                 self.voiceEngine.stopListening()
@@ -207,6 +212,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
         voiceEngine.stopListening()
         speaker.interrupt()
+        thinkingSoundPlayer?.stopPlaying()
         micRestartTask?.cancel()
         micRestartTask = nil
         isSessionActive = false
@@ -294,6 +300,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         }
 
         viewModel.handleUtteranceComplete(text)
+        thinkingSoundPlayer?.startPlaying()
 
         let key = sessionKey
         Task {
@@ -409,6 +416,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
                 viewModel.setResponseText(t)
             }
         case "final":
+            thinkingSoundPlayer?.stopPlaying()
             logHandler("📥 [VOICE] chat final: text=\(text?.prefix(50) ?? "nil") sessionActive=\(isSessionActive) conversationMode=\(isConversationModeOn)")
             // Set authoritative final text before completing (zaap-9nl)
             if let t = text, !t.isEmpty {
@@ -424,6 +432,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             viewModel.handleResponseComplete()
         case "error":
             logHandler("❌ [VOICE] chat error event received")
+            thinkingSoundPlayer?.stopPlaying()
             viewModel.handleResponseComplete()
         default:
             logHandler("⚠️ [VOICE] unhandled chat state=\(state)")

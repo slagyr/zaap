@@ -145,6 +145,22 @@ final class HealthKitObserverServiceTests: XCTestCase {
         XCTAssertEqual(backend.stopQueryCalls, 2)
     }
 
+    // MARK: - Respiratory Rate
+
+    func testStartRegistersRespiratoryRateWhenEnabled() {
+        let (service, backend, _, settings) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.respiratoryRateTrackingEnabled = true
+
+        service.start()
+
+        XCTAssertEqual(backend.enableBackgroundDeliveryCalls.count, 1)
+        XCTAssertEqual(backend.enableBackgroundDeliveryCalls[0].dataType, .respiratoryRate)
+        XCTAssertEqual(backend.enableBackgroundDeliveryCalls[0].frequency, .hourly)
+    }
+
+
     // MARK: - Idempotency
 
     func testStartIsIdempotent() {

@@ -27,6 +27,10 @@ struct SettingsView: View {
     @State private var workoutSendStatus: SendNowStatus = .idle
     @State private var heartRateSendStatus: SendNowStatus = .idle
     @State private var activitySendStatus: SendNowStatus = .idle
+    @State private var hrvSendStatus: SendNowStatus = .idle
+    @State private var spo2SendStatus: SendNowStatus = .idle
+    @State private var restingHeartRateSendStatus: SendNowStatus = .idle
+    @State private var respiratoryRateSendStatus: SendNowStatus = .idle
     @State private var logsCopied = false
 
     // TTS voice picker
@@ -334,6 +338,9 @@ struct SettingsView: View {
                 dataSourceRow(
                     label: "Respiratory Rate Tracking",
                     isOn: $settings.respiratoryRateTrackingEnabled,
+                    status: $respiratoryRateSendStatus,
+                    onToggle: { enabled in RespiratoryRateDeliveryService.shared.setTracking(enabled: enabled) },
+                    onSendNow: { try await RespiratoryRateDeliveryService.shared.sendNow() }
                 )
 
                 dataSourceRow(
