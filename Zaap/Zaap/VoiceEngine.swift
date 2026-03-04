@@ -372,6 +372,11 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
                 guard let self = self else { return }
                 if let error = error {
                     guard self.isListening, !self.isCancellationError(error) else { return }
+                    // During cold-start grace period, suppress errors — watchdog handles recovery
+                    guard self.hasReceivedPartial else {
+                        self.logHandler("🎙️ [STT] suppressing cold-start recognition error: \(error.localizedDescription)")
+                        return
+                    }
                     self.onError?(.recognitionFailed(error.localizedDescription))
                     return
                 }
