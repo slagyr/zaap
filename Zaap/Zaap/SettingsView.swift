@@ -82,7 +82,7 @@ struct SettingsView: View {
                 }
                 #endif
             } header: {
-                Text("Configuration")
+                Text("Configuration") }
 
             if let pairingVM = pairingViewModel {
                 PairingSectionView(viewModel: pairingVM)
@@ -331,7 +331,7 @@ struct SettingsView: View {
                     onSendNow: { try await RestingHeartRateDeliveryService.shared.sendNow() }
                 )
             } header: {
-                Text("Data Sources")
+                Text("Data Sources") }
             }
 
             RequestLogView(log: requestLog)
@@ -356,7 +356,7 @@ struct SettingsView: View {
                     }
                 }
             } header: {
-                Text("Diagnostics")
+                Text("Diagnostics") }
 
         }
         .toolbar(.hidden, for: .navigationBar)
