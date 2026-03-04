@@ -8,8 +8,19 @@ protocol ThinkingSoundPlaying: AnyObject {
 }
 
 /// Plays a subtle looping tone using AVAudioEngine to indicate processing.
-/// Generates a soft sine-wave chime programmatically — no bundled asset needed.
+/// Generates a warm chord with gentle breathing pulsation — no bundled asset needed.
 final class SystemThinkingSoundPlayer: ThinkingSoundPlaying {
+
+    // MARK: - Sound characteristics (internal for testability)
+
+    /// C major triad frequencies for warm, consonant timbre
+    let frequencies: [Float] = [261.63, 329.63, 392.00]  // C4, E4, G4
+    /// Overall amplitude — subtle background presence
+    let amplitude: Float = 0.04
+    /// Slow breathing-like pulsation rate in Hz (~6.7 second cycle)
+    let pulseRate: Float = 0.15
+    /// Loop duration in seconds
+    let loopDuration: Double = 4.0
 
     private(set) var isPlaying = false
     private var audioEngine: AVAudioEngine?
@@ -25,8 +36,7 @@ final class SystemThinkingSoundPlayer: ThinkingSoundPlaying {
         engine.attach(player)
 
         let sampleRate: Double = 44100
-        let duration: Double = 2.0
-        let frameCount = AVAudioFrameCount(sampleRate * duration)
+        let frameCount = AVAudioFrameCount(sampleRate * loopDuration)
         guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1),
               let pcmBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
             isPlaying = false
@@ -39,22 +49,25 @@ final class SystemThinkingSoundPlayer: ThinkingSoundPlaying {
             return
         }
 
-        // Generate a soft pulsing tone (gentle sine wave with amplitude envelope)
-        let baseFreq: Float = 440.0  // A4
-        let amplitude: Float = 0.08  // Very subtle
+        // Generate warm chord with breathing envelope
+        let perToneAmp = amplitude / Float(frequencies.count)
         for i in 0..<Int(frameCount) {
             let t = Float(i) / Float(sampleRate)
-            // Gentle sine with slow amplitude modulation
-            let envelope = (1.0 + sin(2.0 * .pi * 0.5 * t)) / 2.0 // Pulse at 0.5 Hz
-            let sample = amplitude * envelope * sin(2.0 * .pi * baseFreq * t)
-            channelData[i] = sample
+            // Smooth breathing envelope: sine-based, never fully silent
+            let envelope = 0.4 + 0.6 * (1.0 + sin(2.0 * .pi * pulseRate * t)) / 2.0
+            // Sum chord tones with decreasing amplitude for higher partials
+            var sample: Float = 0
+            for (index, freq) in frequencies.enumerated() {
+                let weight: Float = 1.0 - Float(index) * 0.15  // root loudest
+                sample += weight * sin(2.0 * .pi * freq * t)
+            }
+            channelData[i] = perToneAmp * envelope * sample
         }
 
         engine.connect(player, to: engine.mainMixerNode, format: format)
 
         do {
             try engine.start()
-            // Loop the buffer
             player.scheduleBuffer(pcmBuffer, at: nil, options: .loops)
             player.play()
             self.audioEngine = engine
