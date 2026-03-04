@@ -16,7 +16,7 @@ final class RestingHeartRateDeliveryService {
     private let anchorStore: any DeliveryAnchorStoring
 
     init(
-        restingHRReader: any RestingHeartRateReading = RestingHeartRateReader.shared,
+        restingHRReader: any RestingHeartRateReading = RestingHeartRateReader.shared as any RestingHeartRateReading,
         webhookClient: any WebhookPosting = WebhookClient.shared,
         settings: SettingsManager = .shared,
         deliveryLog: any DeliveryLogging = NullDeliveryLog(),

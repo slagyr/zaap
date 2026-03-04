@@ -16,7 +16,7 @@ final class RespiratoryRateDeliveryService {
     private let anchorStore: any DeliveryAnchorStoring
 
     init(
-        respiratoryRateReader: any RespiratoryRateReading = RespiratoryRateReader.shared,
+        respiratoryRateReader: any RespiratoryRateReading = RespiratoryRateReader.shared as any RespiratoryRateReading,
         webhookClient: any WebhookPosting = WebhookClient.shared,
         settings: SettingsManager = .shared,
         deliveryLog: any DeliveryLogging = NullDeliveryLog(),

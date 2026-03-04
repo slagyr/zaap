@@ -112,4 +112,18 @@ extension RestingHeartRateReading {
     }
 }
 
+/// Protocol for reading respiratory rate data.
+protocol RespiratoryRateReading {
+    func requestAuthorization() async throws
+    func fetchDailySummary(for date: Date) async throws -> RespiratoryRateReader.DailyRespiratoryRateSummary
+}
+
+extension RespiratoryRateReading {
+    func fetchDailySummary() async throws -> RespiratoryRateReader.DailyRespiratoryRateSummary {
+        try await fetchDailySummary(for: Date())
+    }
+}
+
+extension RespiratoryRateReader: RespiratoryRateReading {}
+
 extension RestingHeartRateReader: RestingHeartRateReading {}

@@ -19,6 +19,8 @@ struct DashboardViewModel {
         case .workout: return .orange
         case .hrv: return .purple
         case .spo2: return .cyan
+        case .respiratoryRate: return .teal
+        case .restingHeartRate: return .pink
         }
     }
 
@@ -31,6 +33,8 @@ struct DashboardViewModel {
         case .workout: return "Workouts"
         case .hrv: return "HRV"
         case .spo2: return "SpO2"
+        case .respiratoryRate: return "Respiratory Rate"
+        case .restingHeartRate: return "Resting HR"
         }
     }
 
