@@ -2,24 +2,26 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleVersion</key>
+	<string>36</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Zaap reads your health data (sleep, heart rate, steps, workouts) to relay summaries to your configured webhook endpoint.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Zaap requests write access to HealthKit as required by the framework. No health data is written by this app.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Zaap uses your location in the background to relay position updates to your configured webhook endpoint.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Zaap uses your location to relay position updates to your configured webhook endpoint.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Zaap uses the microphone to capture your voice for the voice chat feature.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Zaap uses speech recognition to transcribe your voice so you can talk to your AI assistant.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
 		<string>fetch</string>
 	</array>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Zaap uses your location to relay position updates to your configured webhook endpoint.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Zaap uses your location in the background to relay position updates to your configured webhook endpoint.</string>
-	<key>NSHealthShareUsageDescription</key>
-	<string>Zaap reads your health data (sleep, heart rate, steps, workouts) to relay summaries to your configured webhook endpoint.</string>
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>Zaap requests write access to HealthKit as required by the framework. No health data is written by this app.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Zaap uses speech recognition to transcribe your voice so you can talk to your AI assistant.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Zaap uses the microphone to capture your voice for the voice chat feature.</string>
 </dict>
 </plist>
