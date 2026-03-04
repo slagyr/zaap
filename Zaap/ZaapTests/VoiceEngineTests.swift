@@ -10,6 +10,11 @@ final class MockSpeechRecognizer: SpeechRecognizing {
     var lastRequest: (any SpeechRecognitionRequesting)?
     var taskCreationCount = 0
     var allCreatedTasks: [MockRecognitionTask] = []
+    var prepareRecognizerCallCount = 0
+
+    func prepareRecognizer() {
+        prepareRecognizerCallCount += 1
+    }
 
     func recognitionTask(with request: any SpeechRecognitionRequesting,
                          resultHandler: @escaping (SpeechRecognitionResultProtocol?, Error?) -> Void) -> SpeechRecognitionTaskProtocol {
@@ -1046,5 +1051,24 @@ final class VoiceEngineTests: XCTestCase {
 
         let hasWatchdogLog = logMessages.contains { $0.contains("watchdog") }
         XCTAssertTrue(hasWatchdogLog, "Watchdog restart should log. Got: \(logMessages)")
+    }
+
+    // MARK: - Speech Recognizer Pre-warm
+
+    @MainActor
+    func testInitPrewarmsSpeechRecognizer() {
+        // VoiceEngine should call prepareRecognizer() during init to pre-load
+        // the on-device speech model, avoiding cold-start delays on first mic tap
+        XCTAssertEqual(speechRecognizer.prepareRecognizerCallCount, 1,
+                       "VoiceEngine should pre-warm speech recognizer during init")
+    }
+
+    @MainActor
+    func testStartListeningDoesNotPrewarmAgain() {
+        // prepareRecognizer was already called in init; startListening should not call it again
+        let countBeforeStart = speechRecognizer.prepareRecognizerCallCount
+        engine.startListening()
+        XCTAssertEqual(speechRecognizer.prepareRecognizerCallCount, countBeforeStart,
+                       "startListening should not call prepareRecognizer again — init already did it")
     }
 }

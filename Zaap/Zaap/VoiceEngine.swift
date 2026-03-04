@@ -25,6 +25,7 @@ protocol SpeechRecognitionRequesting: AnyObject {}
 protocol SpeechRecognizing {
     var isAvailable: Bool { get }
     var authorizationStatus: SpeechAuthorizationStatus { get }
+    func prepareRecognizer()
     func recognitionTask(with request: any SpeechRecognitionRequesting,
                          resultHandler: @escaping (SpeechRecognitionResultProtocol?, Error?) -> Void) -> SpeechRecognitionTaskProtocol
 }
@@ -113,6 +114,8 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         self.timerFactory = timerFactory
         self.silenceThreshold = silenceThreshold
         self.watchdogInterval = watchdogInterval
+
+        speechRecognizer.prepareRecognizer()
 
         audioSession.registerInterruptionHandler { [weak self] began in
             Task { @MainActor in

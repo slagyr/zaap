@@ -24,6 +24,18 @@ final class RealSpeechRecognizer: SpeechRecognizing {
         self.recognizer = SFSpeechRecognizer(locale: locale) ?? SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
     }
 
+    /// Pre-warm the on-device speech model by creating and immediately cancelling
+    /// a dummy recognition task. This forces the model to load so the first real
+    /// recognition task produces partials without a multi-second cold-start delay.
+    func prepareRecognizer() {
+        guard let recognizer = recognizer else { return }
+        let request = SFSpeechAudioBufferRecognitionRequest()
+        request.shouldReportPartialResults = false
+        let task = recognizer.recognitionTask(with: request) { _, _ in }
+        request.endAudio()
+        task.cancel()
+    }
+
     static func requestAuthorization(_ handler: @escaping (SpeechAuthorizationStatus) -> Void) {
         SFSpeechRecognizer.requestAuthorization { status in
             switch status {
