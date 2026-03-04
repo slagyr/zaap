@@ -307,17 +307,80 @@ final class VoiceEngineTests: XCTestCase {
         XCTAssertEqual(emitted, "Hello world there")
     }
 
-    // MARK: - Final Results
+    // MARK: - Final Results (Debounced)
 
     @MainActor
-    func testFinalResultEmitsUtterance() async {
+    func testFinalResultDoesNotEmitImmediately() async {
         var emittedTranscript: String?
         engine.onUtteranceComplete = { emittedTranscript = $0 }
 
         engine.startListening()
         await simulateResultAndWait("Hello world test", isFinal: true)
 
+        XCTAssertNil(emittedTranscript, "isFinal should NOT emit immediately — it should debounce")
+    }
+
+    @MainActor
+    func testFinalResultEmitsAfterDebounceTimer() async {
+        var emittedTranscript: String?
+        engine.onUtteranceComplete = { emittedTranscript = $0 }
+
+        engine.startListening()
+        await simulateResultAndWait("Hello world test", isFinal: true)
+
+        // Fire the debounce timer that isFinal should have started
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
         XCTAssertEqual(emittedTranscript, "Hello world test")
+    }
+
+    @MainActor
+    func testFinalResultCarriesForwardTranscriptWhenNewSpeechArrives() async {
+        var emittedTranscripts: [String] = []
+        engine.onUtteranceComplete = { text in emittedTranscripts.append(text) }
+
+        engine.startListening()
+        await simulateResultAndWait("I was saying", isFinal: true)
+
+        // isFinal fired, but user is still talking. A new recognition task starts.
+        // Simulate new speech arriving on the new task — this should carry forward
+        // the old transcript and cancel the debounce.
+        let newTask = speechRecognizer.allCreatedTasks.last!
+        newTask.simulateResult("something important", isFinal: false)
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        // Should NOT have emitted yet — the debounce was cancelled by new speech
+        XCTAssertTrue(emittedTranscripts.isEmpty, "Should not emit when new speech cancels the debounce")
+
+        // The current transcript should include both old + new text
+        XCTAssertEqual(engine.currentTranscript, "I was saying something important",
+                       "Transcript from before isFinal should be carried forward")
+    }
+
+    @MainActor
+    func testFinalResultCarriedTranscriptEmitsAsOneSentence() async {
+        var emittedTranscripts: [String] = []
+        engine.onUtteranceComplete = { text in emittedTranscripts.append(text) }
+
+        engine.startListening()
+        await simulateResultAndWait("I was saying", isFinal: true)
+
+        // New speech arrives on the new task — carries forward
+        let newTask = speechRecognizer.allCreatedTasks.last!
+        newTask.simulateResult("something important", isFinal: false)
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        // Now silence timer fires — should emit the FULL combined transcript
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(emittedTranscripts, ["I was saying something important"],
+                       "Carried-forward transcript + new speech should emit as one complete message")
     }
 
     // MARK: - Stop Listening
@@ -366,6 +429,8 @@ final class VoiceEngineTests: XCTestCase {
         engine.onError = { reportedError = $0 }
 
         engine.startListening()
+        // Send a partial first so cold-start grace period ends
+        await simulateResultAndWait("Hello", isFinal: false)
         let err = NSError(domain: "SFSpeech", code: 1, userInfo: nil)
         await simulateErrorAndWait(err)
 
@@ -872,6 +937,92 @@ final class VoiceEngineTests: XCTestCase {
         XCTAssertEqual(timerFactory.allTokens.count, 1)
         XCTAssertEqual(timerFactory.lastInterval, 3.0,
                        "Watchdog should default to 3 seconds")
+    }
+
+    // MARK: - Cold Start Error Suppression
+
+    @MainActor
+    func testRecognitionErrorSuppressedDuringColdStartGracePeriod() async {
+        var reportedError: VoiceEngineError?
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5,
+            watchdogInterval: 3.0
+        )
+        engine.onError = { reportedError = $0 }
+
+        engine.startListening()
+
+        // Simulate a recognition error before any partial result arrives
+        // (this is the cold-start "No speech detected" scenario)
+        let err = NSError(domain: "kAFAssistantErrorDomain", code: 1110,
+                          userInfo: [NSLocalizedDescriptionKey: "No speech detected"])
+        mockTask.simulateError(err)
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertNil(reportedError,
+                     "Recognition errors should be suppressed during cold-start grace period (before any partial arrives)")
+        XCTAssertTrue(engine.isListening,
+                      "Engine should remain listening after suppressed cold-start error")
+    }
+
+    @MainActor
+    func testRecognitionErrorForwardedAfterFirstPartialArrives() async {
+        var reportedError: VoiceEngineError?
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5,
+            watchdogInterval: 3.0
+        )
+        engine.onError = { reportedError = $0 }
+
+        engine.startListening()
+
+        // First, a partial result arrives (grace period ends)
+        await simulateResultAndWait("Hello", isFinal: false)
+
+        // Now simulate a recognition error — should be forwarded normally
+        let err = NSError(domain: "SFSpeech", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "Recognition failed"])
+        mockTask.simulateError(err)
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(reportedError, .recognitionFailed("Recognition failed"),
+                       "Recognition errors should be forwarded after grace period ends (partial received)")
+    }
+
+    @MainActor
+    func testColdStartErrorSuppressionLogs() async {
+        var logMessages: [String] = []
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5,
+            watchdogInterval: 3.0
+        )
+        engine.logHandler = { logMessages.append($0) }
+
+        engine.startListening()
+
+        let err = NSError(domain: "kAFAssistantErrorDomain", code: 1110,
+                          userInfo: [NSLocalizedDescriptionKey: "No speech detected"])
+        mockTask.simulateError(err)
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        let hasSuppressLog = logMessages.contains { $0.contains("cold-start") || $0.contains("suppressing") }
+        XCTAssertTrue(hasSuppressLog,
+                      "Suppressed cold-start errors should be logged. Got: \(logMessages)")
     }
 
     @MainActor

@@ -96,8 +96,10 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
     private var recognitionRequest: (any SpeechRecognitionRequesting)?
     private var silenceTimer: TimerToken?
     private var watchdogTimer: TimerToken?
+    private var finalDebounceTimer: TimerToken?
     private var hasReceivedPartial = false
     private var lastEmittedLength = 0
+    private var pendingTranscript = ""
 
     init(speechRecognizer: any SpeechRecognizing,
          audioEngine: AudioEngine,
@@ -167,15 +169,13 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
             Task { @MainActor in
                 guard let self = self else { return }
                 if let error = error {
-                    // Ignore errors that fire after we intentionally stopped listening
-                    // (e.g. kAFAssistantErrorDomain 216 from cancelling the recognition task)
-                    guard self.isListening else { return }
-                    // Swallow "canceled" errors — these fire when we intentionally
-                    // cancel the recognition task (stopListening / restartRecognition).
-                    let desc = error.localizedDescription.lowercased()
-                    let nsErr = error as NSError
-                    let isCanceled = desc.contains("cancel") || nsErr.code == 301 || nsErr.code == 216
-                    guard !isCanceled else { return }
+                    guard self.isListening, !self.isCancellationError(error) else { return }
+                    // During cold-start grace period (before any partial result arrives),
+                    // suppress recognition errors — the watchdog will restart recognition.
+                    guard self.hasReceivedPartial else {
+                        self.logHandler("🎙️ [STT] suppressing cold-start recognition error: \(error.localizedDescription)")
+                        return
+                    }
                     self.logHandler("🎙️ [STT] recognition error: \(error.localizedDescription)")
                     self.onError?(.recognitionFailed(error.localizedDescription))
                     return
@@ -193,7 +193,7 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
 
                 if result.isFinal {
                     self.logHandler("🎙️ [STT] final result: \"\(result.bestTranscriptionString.prefix(80))\"")
-                    self.emitUtteranceIfValid()
+                    self.handleIsFinal()
                 }
             }
         }
@@ -219,6 +219,8 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         watchdogTimer = nil
         silenceTimer?.invalidate()
         silenceTimer = nil
+        finalDebounceTimer?.invalidate()
+        finalDebounceTimer = nil
         recognitionTask?.cancel()
         recognitionTask = nil
         recognitionRequest = nil
@@ -227,9 +229,17 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         isListening = false
         currentTranscript = ""
         lastEmittedLength = 0
+        pendingTranscript = ""
     }
 
     // MARK: - Private
+
+    /// Returns true if this error should be silently ignored (e.g. cancellation errors).
+    private func isCancellationError(_ error: Error) -> Bool {
+        let desc = error.localizedDescription.lowercased()
+        let nsErr = error as NSError
+        return desc.contains("cancel") || nsErr.code == 301 || nsErr.code == 216
+    }
 
     private func resetSilenceTimer() {
         silenceTimer?.invalidate()
@@ -257,18 +267,77 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         }
     }
 
+    /// Handle Apple's isFinal by debouncing: save the transcript, restart recognition,
+    /// and start a short timer. If new speech arrives quickly, it cancels the debounce
+    /// and carries the old transcript forward. If not, the debounce timer emits.
+    private func handleIsFinal() {
+        silenceTimer?.invalidate()
+        silenceTimer = nil
+
+        let transcript = currentTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard transcript.count >= minimumTranscriptLength else {
+            logHandler("🎙️ [STT] isFinal transcript too short, ignoring: \"\(transcript)\"")
+            restartRecognition()
+            return
+        }
+
+        // Save the transcript so it can be carried forward if new speech arrives
+        pendingTranscript = transcript
+        logHandler("🎙️ [STT] isFinal debounce: holding \"\(transcript.prefix(80))\" pending new speech")
+
+        restartRecognition()
+
+        // Start a debounce timer — if no new speech arrives, emit
+        finalDebounceTimer?.invalidate()
+        finalDebounceTimer = timerFactory.scheduleTimer(interval: silenceThreshold) { [weak self] in
+            Task { @MainActor in
+                self?.emitPendingTranscript()
+            }
+        }
+    }
+
+    /// Emit whatever is in pendingTranscript + currentTranscript (if the debounce timer fires
+    /// without new speech cancelling it).
+    private func emitPendingTranscript() {
+        finalDebounceTimer?.invalidate()
+        finalDebounceTimer = nil
+
+        let combined = buildFullTranscript()
+        guard combined.count >= minimumTranscriptLength else {
+            logHandler("🎙️ [STT] debounce expired but combined transcript too short (\(combined.count) chars)")
+            pendingTranscript = ""
+            return
+        }
+
+        logHandler("🎙️ [STT] debounce expired, emitting: \"\(combined.prefix(80))\"")
+        onUtteranceComplete?(combined)
+        pendingTranscript = ""
+        lastEmittedLength = 0
+        currentTranscript = ""
+        restartRecognition()
+    }
+
+    /// Combine pendingTranscript and currentTranscript into a single string.
+    private func buildFullTranscript() -> String {
+        let pending = pendingTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+        let current = currentTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+        if pending.isEmpty { return current }
+        if current.isEmpty { return pending }
+        return pending + " " + current
+    }
+
     private func emitUtteranceIfValid() {
         silenceTimer?.invalidate()
         silenceTimer = nil
 
-        let full = currentTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
-        let newPortion = String(full.dropFirst(lastEmittedLength)).trimmingCharacters(in: .whitespacesAndNewlines)
-        guard newPortion.count >= minimumTranscriptLength else {
-            logHandler("🎙️ [STT] utterance too short (\(newPortion.count) chars): \"\(newPortion)\"")
+        let combined = buildFullTranscript()
+        guard combined.count >= minimumTranscriptLength else {
+            logHandler("🎙️ [STT] utterance too short (\(combined.count) chars): \"\(combined)\"")
             return
         }
-        logHandler("🎙️ [STT] emitting utterance: \"\(newPortion.prefix(80))\"")
-        onUtteranceComplete?(newPortion)
+        logHandler("🎙️ [STT] emitting utterance: \"\(combined.prefix(80))\"")
+        onUtteranceComplete?(combined)
+        pendingTranscript = ""
         lastEmittedLength = 0
         restartRecognition()
     }
@@ -302,21 +371,33 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
             Task { @MainActor in
                 guard let self = self else { return }
                 if let error = error {
-                    guard self.isListening else { return }
-                    let desc2 = error.localizedDescription.lowercased()
-                    let nsErr2 = error as NSError
-                    guard !desc2.contains("cancel"), nsErr2.code != 301, nsErr2.code != 216 else { return }
+                    guard self.isListening, !self.isCancellationError(error) else { return }
                     self.onError?(.recognitionFailed(error.localizedDescription))
                     return
                 }
                 guard let result = result else { return }
 
-                self.currentTranscript = result.bestTranscriptionString
+                // New speech arrived — if we were debouncing after isFinal,
+                // cancel the debounce and let the pending transcript carry forward.
+                if self.finalDebounceTimer != nil {
+                    self.finalDebounceTimer?.invalidate()
+                    self.finalDebounceTimer = nil
+                    self.logHandler("🎙️ [STT] new speech after isFinal, carrying forward pending transcript")
+                }
+
+                // If carrying forward a pending transcript from a debounced isFinal,
+                // merge it into currentTranscript and clear the pending state.
+                if !self.pendingTranscript.isEmpty {
+                    self.currentTranscript = self.pendingTranscript + " " + result.bestTranscriptionString
+                    self.pendingTranscript = ""
+                } else {
+                    self.currentTranscript = result.bestTranscriptionString
+                }
                 self.onPartialTranscript?(self.currentTranscript)
                 self.resetSilenceTimer()
 
                 if result.isFinal {
-                    self.emitUtteranceIfValid()
+                    self.handleIsFinal()
                 }
             }
         }
