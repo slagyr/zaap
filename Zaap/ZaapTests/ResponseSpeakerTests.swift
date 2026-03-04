@@ -109,13 +109,37 @@ final class ResponseSpeakerTests: XCTestCase {
         XCTAssertEqual(speaker.state, .idle)
     }
 
-    func testInterruptWhenIdleIsNoOp() {
+    func testInterruptWhenIdleStillStopsSynthesizer() {
         let mock = MockSpeechSynthesizer()
         let speaker = ResponseSpeaker(synthesizer: mock)
 
         speaker.interrupt()
 
-        XCTAssertFalse(mock.stopCalled)
+        XCTAssertTrue(mock.stopCalled)
+        XCTAssertEqual(speaker.state, .idle)
+    }
+
+    func testInterruptStopsSynthesizerWhenStateIdleButQueuedUtterancesRemain() {
+        let mock = MockSpeechSynthesizer()
+        mock.isSpeakingValue = true
+        let speaker = ResponseSpeaker(synthesizer: mock)
+
+        // Speak two sentences — synthesizer has queued utterances
+        speaker.speakImmediate("First sentence.")
+        speaker.speakImmediate("Second sentence.")
+        XCTAssertEqual(speaker.state, .speaking)
+
+        // Simulate didFinish for first utterance while second is queued.
+        // isSpeaking is briefly false between utterances, causing state -> .idle
+        mock.isSpeakingValue = false
+        mock.simulateDidFinish()
+        XCTAssertEqual(speaker.state, .idle)
+
+        // Now interrupt — must still call stopSpeaking even though state is .idle
+        mock.stopCalled = false
+        speaker.interrupt()
+
+        XCTAssertTrue(mock.stopCalled)
         XCTAssertEqual(speaker.state, .idle)
     }
 

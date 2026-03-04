@@ -132,7 +132,6 @@ final class ResponseSpeaker: NSObject, AVSpeechSynthesizerDelegate {
     func interrupt() {
         logHandler("🔈 [TTS] interrupt: state=\(state)")
         buffer = ""
-        guard state == .speaking else { return }
         _ = synthesizer.stopSpeaking(at: .immediate)
         state = .idle
     }
