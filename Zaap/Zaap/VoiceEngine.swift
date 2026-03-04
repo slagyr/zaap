@@ -78,6 +78,7 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
     // Configuration
     let silenceThreshold: TimeInterval
     let watchdogInterval: TimeInterval
+    let finalDebounceInterval: TimeInterval
     let minimumTranscriptLength = 3
 
     // Callbacks
@@ -107,13 +108,15 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
          audioSession: any AudioSessionConfiguring,
          timerFactory: any TimerScheduling,
          silenceThreshold: TimeInterval = 1.5,
-         watchdogInterval: TimeInterval = 3.0) {
+         watchdogInterval: TimeInterval = 3.0,
+         finalDebounceInterval: TimeInterval = 3.0) {
         self.speechRecognizer = speechRecognizer
         self.audioEngine = audioEngine
         self.audioSession = audioSession
         self.timerFactory = timerFactory
         self.silenceThreshold = silenceThreshold
         self.watchdogInterval = watchdogInterval
+        self.finalDebounceInterval = finalDebounceInterval
 
         speechRecognizer.prepareRecognizer()
 
@@ -290,9 +293,11 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
 
         restartRecognition()
 
-        // Start a debounce timer — if no new speech arrives, emit
+        // Start a debounce timer — if no new speech arrives, emit.
+        // Uses finalDebounceInterval (longer than silenceThreshold) to tolerate
+        // natural pauses mid-sentence that Apple's recognizer interprets as isFinal.
         finalDebounceTimer?.invalidate()
-        finalDebounceTimer = timerFactory.scheduleTimer(interval: silenceThreshold) { [weak self] in
+        finalDebounceTimer = timerFactory.scheduleTimer(interval: finalDebounceInterval) { [weak self] in
             Task { @MainActor in
                 self?.emitPendingTranscript()
             }
