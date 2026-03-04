@@ -1,5 +1,5 @@
 {:number "011"
- :status :active
+ :status :complete
  :stories [{:id "zaap-26w" :title "App crash on real device during voice chat"}
            {:id "zaap-bgg" :title "Pairing prompt appears every launch despite being already paired"}
            {:id "zaap-3bz" :title "Voice transcripts cut off — only last word or partial sentence sent"}
