@@ -20,22 +20,14 @@
 		A10011 /* SleepDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20014 /* SleepDeliveryService.swift */; };
 		A10017 /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20020 /* Protocols.swift */; };
 		A10018 /* AppLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20021 /* AppLog.swift */; };
+		AA10001 /* TTSAudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20001 /* TTSAudioPlayer.swift */; };
+		AB10001 /* TTSAudioPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB20001 /* TTSAudioPlayerTests.swift */; };
+		ANCH01 /* DeliveryAnchorStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = ANCH02 /* DeliveryAnchorStore.swift */; };
+		ANCH03 /* DeliveryAnchorStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ANCH04 /* DeliveryAnchorStoreTests.swift */; };
 		B10001 /* HeartRateReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20001 /* HeartRateReader.swift */; };
 		B10002 /* HeartRateDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20002 /* HeartRateDeliveryService.swift */; };
 		B10003 /* HRVReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20003 /* HRVReader.swift */; };
 		B10004 /* HRVDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20004 /* HRVDeliveryService.swift */; };
-		RR0101 /* RespiratoryRateReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = RR0102 /* RespiratoryRateReader.swift */; };
-		RR0201 /* RespiratoryRateDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = RR0202 /* RespiratoryRateDeliveryService.swift */; };
-		RH0101 /* RestingHeartRateReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = RH0102 /* RestingHeartRateReader.swift */; };
-		RH0201 /* RestingHeartRateDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = RH0202 /* RestingHeartRateDeliveryService.swift */; };
-		SP0101 /* SpO2Reader.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP0102 /* SpO2Reader.swift */; };
-		SP0201 /* SpO2DeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP0202 /* SpO2DeliveryService.swift */; };
-		F10016 /* HRVReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20016 /* HRVReaderTests.swift */; };
-		F10017 /* HRVDeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20017 /* HRVDeliveryServiceTests.swift */; };
-		SP0301 /* SpO2DeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP0302 /* SpO2DeliveryServiceTests.swift */; };
-		SP0101 /* SpO2Reader.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP0102 /* SpO2Reader.swift */; };
-		SP0201 /* SpO2DeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP0202 /* SpO2DeliveryService.swift */; };
-		SP0301 /* SpO2DeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP0302 /* SpO2DeliveryServiceTests.swift */; };
 		C10001 /* ActivityReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20001 /* ActivityReader.swift */; };
 		C10002 /* ActivityDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20002 /* ActivityDeliveryService.swift */; };
 		D10001 /* WorkoutReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20001 /* WorkoutReader.swift */; };
@@ -52,12 +44,12 @@
 		F10010 /* ActivityReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20010 /* ActivityReaderTests.swift */; };
 		F10011 /* ActivityDeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20011 /* ActivityDeliveryServiceTests.swift */; };
 		F10012 /* WorkoutReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20012 /* WorkoutReaderTests.swift */; };
+		F10013 /* WorkoutDeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20013 /* WorkoutDeliveryServiceTests.swift */; };
 		F10014 /* ProtocolsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20014 /* ProtocolsTests.swift */; };
 		F10015 /* AppLogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20015 /* AppLogTests.swift */; };
-		F10013 /* WorkoutDeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20013 /* WorkoutDeliveryServiceTests.swift */; };
+		F10016 /* HRVReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20016 /* HRVReaderTests.swift */; };
+		F10017 /* HRVDeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20017 /* HRVDeliveryServiceTests.swift */; };
 		G10001 /* DeliveryRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = G20001 /* DeliveryRecord.swift */; };
-		ANCH01 /* DeliveryAnchorStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = ANCH02 /* DeliveryAnchorStore.swift */; };
-		ANCH03 /* DeliveryAnchorStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ANCH04 /* DeliveryAnchorStoreTests.swift */; };
 		G10002 /* DeliveryLogService.swift in Sources */ = {isa = PBXBuildFile; fileRef = G20002 /* DeliveryLogService.swift */; };
 		G10003 /* DeliveryLogServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = G20003 /* DeliveryLogServiceTests.swift */; };
 		I10001 /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = I20001 /* DashboardViewModel.swift */; };
@@ -87,10 +79,17 @@
 		R10001 /* VoiceChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20001 /* VoiceChatViewModel.swift */; };
 		R10002 /* VoiceChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20002 /* VoiceChatView.swift */; };
 		R10003 /* VoiceChatViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = R20003 /* VoiceChatViewModelTests.swift */; };
+		RH0101 /* RestingHeartRateReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = RH0102 /* RestingHeartRateReader.swift */; };
+		RH0201 /* RestingHeartRateDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = RH0202 /* RestingHeartRateDeliveryService.swift */; };
+		RR0101 /* RespiratoryRateReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = RR0102 /* RespiratoryRateReader.swift */; };
+		RR0201 /* RespiratoryRateDeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = RR0202 /* RespiratoryRateDeliveryService.swift */; };
 		S10001 /* HealthKitObserverService.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20001 /* HealthKitObserverService.swift */; };
 		S10002 /* ObserverDeliveryAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20002 /* ObserverDeliveryAdapter.swift */; };
-		S10004 /* HealthDataSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20004 /* HealthDataSeeder.swift */; };
 		S10003 /* HealthKitObserverServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20003 /* HealthKitObserverServiceTests.swift */; };
+		S10004 /* HealthDataSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = S20004 /* HealthDataSeeder.swift */; };
+		SP0101 /* SpO2Reader.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP0102 /* SpO2Reader.swift */; };
+		SP0201 /* SpO2DeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP0202 /* SpO2DeliveryService.swift */; };
+		SP0301 /* SpO2DeliveryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP0302 /* SpO2DeliveryServiceTests.swift */; };
 		T10001 /* VoiceChatCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20001 /* VoiceChatCoordinator.swift */; };
 		T10002 /* VoiceChatCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = T20002 /* VoiceChatCoordinatorTests.swift */; };
 		U10001 /* PairingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = U20001 /* PairingViewModel.swift */; };
@@ -100,7 +99,6 @@
 		V10001 /* SessionPickerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = V20001 /* SessionPickerViewModel.swift */; };
 		V10002 /* SessionPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = V20002 /* SessionPickerView.swift */; };
 		V10003 /* SessionPickerViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = V20003 /* SessionPickerViewModelTests.swift */; };
-		V10001 /* SessionPickerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = V20001 /* SessionPickerViewModel.swift */; };
 		W10001 /* WebhookRetryQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20001 /* WebhookRetryQueue.swift */; };
 		W10002 /* WebhookRetryQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20002 /* WebhookRetryQueueTests.swift */; };
 		W10003 /* RetryDrainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20003 /* RetryDrainService.swift */; };
@@ -120,8 +118,6 @@
 		Y10004 /* TTSDiagnosticsCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = Y20004 /* TTSDiagnosticsCoordinatorTests.swift */; };
 		Y10005 /* TTSDiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = Y20005 /* TTSDiagnosticsView.swift */; };
 		Z10001 /* DualDiagnosticsPanelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = Z20001 /* DualDiagnosticsPanelTests.swift */; };
-		AA10001 /* TTSAudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA20001 /* TTSAudioPlayer.swift */; };
-		AB10001 /* TTSAudioPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB20001 /* TTSAudioPlayerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -151,22 +147,14 @@
 		A20014 /* SleepDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepDeliveryService.swift; sourceTree = "<group>"; };
 		A20020 /* Protocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
 		A20021 /* AppLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLog.swift; sourceTree = "<group>"; };
+		AA20001 /* TTSAudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSAudioPlayer.swift; sourceTree = "<group>"; };
+		AB20001 /* TTSAudioPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSAudioPlayerTests.swift; sourceTree = "<group>"; };
+		ANCH02 /* DeliveryAnchorStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryAnchorStore.swift; sourceTree = "<group>"; };
+		ANCH04 /* DeliveryAnchorStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryAnchorStoreTests.swift; sourceTree = "<group>"; };
 		B20001 /* HeartRateReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateReader.swift; sourceTree = "<group>"; };
 		B20002 /* HeartRateDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateDeliveryService.swift; sourceTree = "<group>"; };
 		B20003 /* HRVReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HRVReader.swift; sourceTree = "<group>"; };
 		B20004 /* HRVDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HRVDeliveryService.swift; sourceTree = "<group>"; };
-		RR0102 /* RespiratoryRateReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RespiratoryRateReader.swift; sourceTree = "<group>"; };
-		RR0202 /* RespiratoryRateDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RespiratoryRateDeliveryService.swift; sourceTree = "<group>"; };
-		RH0102 /* RestingHeartRateReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestingHeartRateReader.swift; sourceTree = "<group>"; };
-		RH0202 /* RestingHeartRateDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestingHeartRateDeliveryService.swift; sourceTree = "<group>"; };
-		SP0102 /* SpO2Reader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpO2Reader.swift; sourceTree = "<group>"; };
-		SP0202 /* SpO2DeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpO2DeliveryService.swift; sourceTree = "<group>"; };
-		F20016 /* HRVReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HRVReaderTests.swift; sourceTree = "<group>"; };
-		F20017 /* HRVDeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HRVDeliveryServiceTests.swift; sourceTree = "<group>"; };
-		SP0302 /* SpO2DeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpO2DeliveryServiceTests.swift; sourceTree = "<group>"; };
-		SP0102 /* SpO2Reader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpO2Reader.swift; sourceTree = "<group>"; };
-		SP0202 /* SpO2DeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpO2DeliveryService.swift; sourceTree = "<group>"; };
-		SP0302 /* SpO2DeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpO2DeliveryServiceTests.swift; sourceTree = "<group>"; };
 		C20001 /* ActivityReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityReader.swift; sourceTree = "<group>"; };
 		C20002 /* ActivityDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityDeliveryService.swift; sourceTree = "<group>"; };
 		D20001 /* WorkoutReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutReader.swift; sourceTree = "<group>"; };
@@ -184,12 +172,12 @@
 		F20010 /* ActivityReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityReaderTests.swift; sourceTree = "<group>"; };
 		F20011 /* ActivityDeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityDeliveryServiceTests.swift; sourceTree = "<group>"; };
 		F20012 /* WorkoutReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutReaderTests.swift; sourceTree = "<group>"; };
+		F20013 /* WorkoutDeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDeliveryServiceTests.swift; sourceTree = "<group>"; };
 		F20014 /* ProtocolsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolsTests.swift; sourceTree = "<group>"; };
 		F20015 /* AppLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogTests.swift; sourceTree = "<group>"; };
-		F20013 /* WorkoutDeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDeliveryServiceTests.swift; sourceTree = "<group>"; };
+		F20016 /* HRVReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HRVReaderTests.swift; sourceTree = "<group>"; };
+		F20017 /* HRVDeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HRVDeliveryServiceTests.swift; sourceTree = "<group>"; };
 		G20001 /* DeliveryRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryRecord.swift; sourceTree = "<group>"; };
-		ANCH02 /* DeliveryAnchorStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryAnchorStore.swift; sourceTree = "<group>"; };
-		ANCH04 /* DeliveryAnchorStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryAnchorStoreTests.swift; sourceTree = "<group>"; };
 		G20002 /* DeliveryLogService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryLogService.swift; sourceTree = "<group>"; };
 		G20003 /* DeliveryLogServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryLogServiceTests.swift; sourceTree = "<group>"; };
 		I20001 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
@@ -219,10 +207,17 @@
 		R20001 /* VoiceChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChatViewModel.swift; sourceTree = "<group>"; };
 		R20002 /* VoiceChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChatView.swift; sourceTree = "<group>"; };
 		R20003 /* VoiceChatViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChatViewModelTests.swift; sourceTree = "<group>"; };
+		RH0102 /* RestingHeartRateReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestingHeartRateReader.swift; sourceTree = "<group>"; };
+		RH0202 /* RestingHeartRateDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestingHeartRateDeliveryService.swift; sourceTree = "<group>"; };
+		RR0102 /* RespiratoryRateReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RespiratoryRateReader.swift; sourceTree = "<group>"; };
+		RR0202 /* RespiratoryRateDeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RespiratoryRateDeliveryService.swift; sourceTree = "<group>"; };
 		S20001 /* HealthKitObserverService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitObserverService.swift; sourceTree = "<group>"; };
 		S20002 /* ObserverDeliveryAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObserverDeliveryAdapter.swift; sourceTree = "<group>"; };
-		S20004 /* HealthDataSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthDataSeeder.swift; sourceTree = "<group>"; };
 		S20003 /* HealthKitObserverServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitObserverServiceTests.swift; sourceTree = "<group>"; };
+		S20004 /* HealthDataSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthDataSeeder.swift; sourceTree = "<group>"; };
+		SP0102 /* SpO2Reader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpO2Reader.swift; sourceTree = "<group>"; };
+		SP0202 /* SpO2DeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpO2DeliveryService.swift; sourceTree = "<group>"; };
+		SP0302 /* SpO2DeliveryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpO2DeliveryServiceTests.swift; sourceTree = "<group>"; };
 		T20001 /* VoiceChatCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChatCoordinator.swift; sourceTree = "<group>"; };
 		T20002 /* VoiceChatCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceChatCoordinatorTests.swift; sourceTree = "<group>"; };
 		U20001 /* PairingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingViewModel.swift; sourceTree = "<group>"; };
@@ -232,7 +227,6 @@
 		V20001 /* SessionPickerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerViewModel.swift; sourceTree = "<group>"; };
 		V20002 /* SessionPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerView.swift; sourceTree = "<group>"; };
 		V20003 /* SessionPickerViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerViewModelTests.swift; sourceTree = "<group>"; };
-		V20001 /* SessionPickerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPickerViewModel.swift; sourceTree = "<group>"; };
 		W20001 /* WebhookRetryQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebhookRetryQueue.swift; sourceTree = "<group>"; };
 		W20002 /* WebhookRetryQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebhookRetryQueueTests.swift; sourceTree = "<group>"; };
 		W20003 /* RetryDrainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryDrainService.swift; sourceTree = "<group>"; };
@@ -252,8 +246,6 @@
 		Y20004 /* TTSDiagnosticsCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSDiagnosticsCoordinatorTests.swift; sourceTree = "<group>"; };
 		Y20005 /* TTSDiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSDiagnosticsView.swift; sourceTree = "<group>"; };
 		Z20001 /* DualDiagnosticsPanelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualDiagnosticsPanelTests.swift; sourceTree = "<group>"; };
-		AA20001 /* TTSAudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSAudioPlayer.swift; sourceTree = "<group>"; };
-		AB20001 /* TTSAudioPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSAudioPlayerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -308,8 +300,6 @@
 				RH0202 /* RestingHeartRateDeliveryService.swift */,
 				SP0102 /* SpO2Reader.swift */,
 				SP0202 /* SpO2DeliveryService.swift */,
-				SP0102 /* SpO2Reader.swift */,
-				SP0202 /* SpO2DeliveryService.swift */,
 				A20014 /* SleepDeliveryService.swift */,
 				D20001 /* WorkoutReader.swift */,
 				D20002 /* WorkoutDeliveryService.swift */,
@@ -342,7 +332,6 @@
 				U20001 /* PairingViewModel.swift */,
 				U20003 /* PairingSectionView.swift */,
 				U20004 /* PairingView.swift */,
-				V20001 /* SessionPickerViewModel.swift */,
 				V20002 /* SessionPickerView.swift */,
 				V20001 /* SessionPickerViewModel.swift */,
 				X20001 /* STTDiagnosticsViewModel.swift */,
@@ -356,7 +345,6 @@
 				A20009 /* Zaap.entitlements */,
 				A20005 /* Info.plist */,
 				A40003 /* Preview Content */,
-				3624365445114D269D36F93A /* SessionPickerViewModel.swift */,
 			);
 			path = Zaap;
 			sourceTree = "<group>";
@@ -392,7 +380,6 @@
 				F20009 /* HeartRateDeliveryServiceTests.swift */,
 				F20016 /* HRVReaderTests.swift */,
 				F20017 /* HRVDeliveryServiceTests.swift */,
-				SP0302 /* SpO2DeliveryServiceTests.swift */,
 				SP0302 /* SpO2DeliveryServiceTests.swift */,
 				F20010 /* ActivityReaderTests.swift */,
 				F20011 /* ActivityDeliveryServiceTests.swift */,
@@ -583,7 +570,6 @@
 				V10001 /* SessionPickerViewModel.swift in Sources */,
 				V10002 /* SessionPickerView.swift in Sources */,
 				V10001 /* SessionPickerViewModel.swift in Sources */,
-				E6606BBF48384523A4EAF3E7 /* SessionPickerViewModel.swift in Sources */,
 				X10001 /* STTDiagnosticsViewModel.swift in Sources */,
 				X10003 /* STTDiagnosticsCoordinator.swift in Sources */,
 				X10005 /* STTDiagnosticsView.swift in Sources */,
@@ -783,7 +769,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Zaap/Zaap.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 39;
 				DEVELOPMENT_ASSET_PATHS = "\"Zaap/Preview Content\"";
 				DEVELOPMENT_TEAM = PJTG44YLX5;
 				ENABLE_PREVIEWS = YES;
@@ -818,7 +804,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Zaap/Zaap.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 39;
 				DEVELOPMENT_ASSET_PATHS = "\"Zaap/Preview Content\"";
 				DEVELOPMENT_TEAM = PJTG44YLX5;
 				ENABLE_PREVIEWS = YES;
