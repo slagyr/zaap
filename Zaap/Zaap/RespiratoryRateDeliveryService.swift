@@ -13,7 +13,7 @@ final class RespiratoryRateDeliveryService {
     private var webhookClient: any WebhookPosting
     private let settings: SettingsManager
     private var deliveryLog: any DeliveryLogging
-    private let anchorStore: any DeliveryAnchorStoring
+    private var anchorStore: any DeliveryAnchorStoring
 
     init(
         respiratoryRateReader: any RespiratoryRateReading = RespiratoryRateReader.shared as any RespiratoryRateReading,
@@ -35,6 +35,10 @@ final class RespiratoryRateDeliveryService {
 
     func configure(webhookClient: any WebhookPosting) {
         self.webhookClient = webhookClient
+    }
+
+    func configure(anchorStore: any DeliveryAnchorStoring) {
+        self.anchorStore = anchorStore
     }
 
     // MARK: - Public
