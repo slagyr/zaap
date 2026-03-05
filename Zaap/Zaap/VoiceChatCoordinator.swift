@@ -67,6 +67,9 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     private var recentSpokenTexts: [String] = []
     private let maxSpokenTextHistory = 10
     private var operatorDelegate: OperatorGatewayDelegate?
+    /// When true, viewModel.handleResponseComplete() is deferred until TTS finishes
+    /// so the response bubble stays visible and tappable for barge-in (zaap-s5u).
+    private var pendingResponseCompletion = false
 
     init(viewModel: VoiceChatViewModel,
          voiceEngine: VoiceEngineProtocol,
@@ -100,9 +103,13 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
                 // Stop mic during TTS to prevent echo pickup (hardware AEC insufficient on device)
                 self.logHandler("🔊 [SPEAKER] stopping mic for TTS playback")
                 self.voiceEngine.stopListening()
-            } else if newState == .idle, self.isConversationModeOn {
-                self.logHandler("🔊 [SPEAKER] TTS finished, scheduling mic restart")
-                self.scheduleMicRestart()
+            } else if newState == .idle {
+                // Complete deferred response now that TTS finished (zaap-s5u)
+                self.completePendingResponse()
+                if self.isConversationModeOn {
+                    self.logHandler("🔊 [SPEAKER] TTS finished, scheduling mic restart")
+                    self.scheduleMicRestart()
+                }
             }
         }
 
@@ -161,6 +168,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             speaker.interrupt()
             micRestartTask?.cancel()
             micRestartTask = nil
+            completePendingResponse()
 
             // Clear in-flight partial/response text and reset VM to idle
             viewModel.loadPreviewMessages(viewModel.conversationLog)
@@ -215,6 +223,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             micRestartTask = nil
             voiceEngine.stopListening()
             speaker.interrupt()
+            completePendingResponse()
             if viewModel.state == .listening {
                 viewModel.tapMic() // listening → idle
             }
@@ -232,13 +241,24 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     func bargeIn() {
         guard isSessionActive, speaker.state == .speaking else { return }
         logHandler("🎙️ [COORD] bargeIn: interrupting TTS and restarting mic")
+        speaker.interrupt()
+        // Cancel any mic restart scheduled by the onStateChange callback during interrupt
         micRestartTask?.cancel()
         micRestartTask = nil
-        speaker.interrupt()
+        // Complete pending response so the text is committed to the conversation log
+        completePendingResponse()
         voiceEngine.startListening()
         if viewModel.state != .listening {
             viewModel.tapMic()
         }
+    }
+
+    /// Complete a deferred response if one is pending.
+    /// Called when TTS finishes, user barges in, session stops, or conversation mode toggles off.
+    private func completePendingResponse() {
+        guard pendingResponseCompletion else { return }
+        pendingResponseCompletion = false
+        viewModel.handleResponseComplete()
     }
 
     func stopSession() {
@@ -249,6 +269,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         thinkingSoundPlayer?.stopPlaying()
         micRestartTask?.cancel()
         micRestartTask = nil
+        completePendingResponse()
         isSessionActive = false
         isConversationModeOn = false
 
@@ -332,6 +353,8 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         if speaker.state == .speaking {
             speaker.interrupt()
         }
+        // Complete any pending response before starting the new utterance
+        completePendingResponse()
 
         viewModel.handleUtteranceComplete(text)
         thinkingSoundPlayer?.startPlaying()
@@ -416,7 +439,12 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             if isSessionActive {
                 speaker.flush()
             }
-            viewModel.handleResponseComplete()
+            // Defer response completion while TTS is playing (zaap-s5u)
+            if speaker.state == .speaking {
+                pendingResponseCompletion = true
+            } else {
+                viewModel.handleResponseComplete()
+            }
         default:
             logHandler("⚠️ [VOICE] unhandled legacy event type=\(type)")
         }
@@ -460,7 +488,13 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
                 trackSpokenText(t)
                 speaker.speakImmediate(t)
             }
-            viewModel.handleResponseComplete()
+            // Defer response completion while TTS is playing to keep the response
+            // bubble visible and tappable for barge-in (zaap-s5u)
+            if speaker.state == .speaking {
+                pendingResponseCompletion = true
+            } else {
+                viewModel.handleResponseComplete()
+            }
         case "error":
             logHandler("❌ [VOICE] chat error event received")
             thinkingSoundPlayer?.stopPlaying()

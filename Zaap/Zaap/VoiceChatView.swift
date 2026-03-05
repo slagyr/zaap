@@ -311,7 +311,12 @@ struct VoiceChatView: View {
     private var micButton: some View {
         Button(action: {
             if coordinator.isSessionActive {
-                coordinator.toggleConversationMode()
+                if viewModel.state == .speaking {
+                    // Barge-in: interrupt TTS and let the user speak (zaap-s5u)
+                    coordinator.bargeIn()
+                } else {
+                    coordinator.toggleConversationMode()
+                }
             } else {
                 if let url = SettingsManager.shared.voiceWebSocketURL {
                     coordinator.startSession(gatewayURL: url, sessionKey: sessionPicker.activeSessionKey)

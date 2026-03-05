@@ -1128,6 +1128,10 @@ extension VoiceChatCoordinatorTests {
         ])
         try await Task.sleep(nanoseconds: 50_000_000)
 
+        // Response completion is deferred during TTS (zaap-s5u) — simulate TTS finishing
+        speaker.simulateStateChange(.idle)
+        try await Task.sleep(nanoseconds: 50_000_000)
+
         XCTAssertEqual(viewModel.conversationLog.last?.text, "The weather is sunny and warm today with a high of 75F.")
         XCTAssertEqual(viewModel.conversationLog.last?.role, .agent)
     }
@@ -1145,6 +1149,10 @@ extension VoiceChatCoordinatorTests {
             "state": "final",
             "message": ["content": [["text": "Hello! How can I help you today?"]]]
         ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Response completion is deferred during TTS (zaap-s5u) — simulate TTS finishing
+        speaker.simulateStateChange(.idle)
         try await Task.sleep(nanoseconds: 50_000_000)
 
         XCTAssertEqual(viewModel.conversationLog.last?.text, "Hello! How can I help you today?")
@@ -1775,5 +1783,178 @@ extension VoiceChatCoordinatorTests {
                       "bargeIn should work even when a mic restart is pending")
         XCTAssertTrue(voiceEngine.startListeningCalled,
                       "bargeIn should restart mic immediately, replacing the pending restart")
+    }
+}
+
+// MARK: - Barge-In: Deferred Response Completion During TTS (zaap-s5u)
+
+extension VoiceChatCoordinatorTests {
+
+    func testChatFinalKeepsResponseBubbleVisibleDuringTTS() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:s5u")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("Tell me a story")
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:s5u",
+            "state": "final",
+            "message": ["content": [["text": "Once upon a time, there was a fox who lived in the forest."]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Response bubble should remain visible during TTS playback
+        XCTAssertEqual(viewModel.responseText, "Once upon a time, there was a fox who lived in the forest.",
+                       "Response text should remain visible while TTS is playing")
+        XCTAssertEqual(viewModel.state, .speaking,
+                       "View model should stay in speaking state during TTS")
+    }
+
+    func testChatFinalCompletesResponseWhenTTSFinishes() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:s5u")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("Tell me a story")
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:s5u",
+            "state": "final",
+            "message": ["content": [["text": "A short story."]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // TTS finishes
+        speaker.simulateStateChange(.idle)
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertEqual(viewModel.conversationLog.last?.text, "A short story.",
+                       "Response should move to conversation log when TTS finishes")
+        XCTAssertEqual(viewModel.responseText, "",
+                       "Response text should be cleared after TTS finishes")
+    }
+
+    func testBargeInDuringTTSMovesResponseToLog() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:s5u")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("Tell me a story")
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:s5u",
+            "state": "final",
+            "message": ["content": [["text": "Once upon a time in a land far away."]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // User barges in during TTS
+        coordinator.bargeIn()
+
+        // Response text should have been committed to the conversation log
+        XCTAssertEqual(viewModel.conversationLog.last?.text, "Once upon a time in a land far away.",
+                       "Barge-in should commit response text to conversation log")
+        XCTAssertEqual(viewModel.responseText, "",
+                       "Response text should be cleared after barge-in")
+        XCTAssertEqual(viewModel.state, .listening,
+                       "Should transition to listening after barge-in")
+    }
+
+    func testViewModelStateSpeakingDuringTTSEnablesMicButtonBargeIn() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:s5u")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("Hello")
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:s5u",
+            "state": "final",
+            "message": ["content": [["text": "Hello! This is a long response that will take a while to speak."]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // viewModel.state should be .speaking, which the view uses to decide
+        // whether mic button should bargeIn vs toggleConversationMode
+        XCTAssertEqual(viewModel.state, .speaking,
+                       "VM state should be .speaking during TTS so mic button can trigger barge-in")
+    }
+
+    func testStopSessionDuringTTSCompletesResponse() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:s5u")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("Tell me something")
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:s5u",
+            "state": "final",
+            "message": ["content": [["text": "Here is something interesting."]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Stop session during TTS
+        coordinator.stopSession()
+
+        // Response should be committed to log even though TTS was interrupted
+        XCTAssertEqual(viewModel.conversationLog.last?.text, "Here is something interesting.",
+                       "Stopping session during TTS should commit response to log")
+    }
+
+    func testToggleConversationModeOffDuringTTSCompletesResponse() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:s5u")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("Tell me something")
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:s5u",
+            "state": "final",
+            "message": ["content": [["text": "Here is a response."]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Toggle conversation mode off during TTS
+        coordinator.toggleConversationMode()
+
+        // Response should be committed to log
+        XCTAssertEqual(viewModel.conversationLog.last?.text, "Here is a response.",
+                       "Toggling conversation mode off during TTS should commit response to log")
+    }
+
+    func testNewUtteranceDuringTTSCompletesOldResponse() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:s5u")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("First question")
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:s5u",
+            "state": "final",
+            "message": ["content": [["text": "First answer."]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // User speaks while TTS is playing (barge-in via voice)
+        voiceEngine.onUtteranceComplete?("Second question")
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // First answer should be in the log, followed by the new user question
+        let logTexts = viewModel.conversationLog.map { $0.text }
+        XCTAssertTrue(logTexts.contains("First answer."),
+                      "Old response should be committed to log when user speaks over TTS")
+        XCTAssertTrue(logTexts.contains("Second question"),
+                      "New user utterance should be in the log")
     }
 }
