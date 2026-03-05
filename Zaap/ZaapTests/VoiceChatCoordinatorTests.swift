@@ -1,4 +1,11 @@
     @MainActor
+    func testAwakeSoundPlaysOnMicActivation() {
+        let viewModel = VoiceChatViewModel()
+        viewModel.tapMic()
+        XCTAssertEqual(viewModel.state, .listening)
+    }
+
+    @MainActor
     func testPartialResponseHandling() async {
         // Given
         let mockGateway = MockGatewayConnecting()
