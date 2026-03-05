@@ -1,0 +1,14 @@
+{:number "014"
+ :status :active
+ :stories [{:id "zaap-zxt" :title "Send Now silent errors — surface delivery failures in UI"}
+           {:id "zaap-ctx" :title "Add queryTimestamp to daily summary structs for accurate collection time"}
+           {:id "zaap-phs" :title "Play awake sound when mic becomes active"}]
+ :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
+              "No force unwraps (!) anywhere in codebase"
+              "Tests must pass before commit — run xcodebuild test first"
+              "No third-party dependencies — Apple frameworks only"
+              "Acceptance criteria in each bead MUST be verified before closing — no fake completions"]
+ :notes ["Theme: Polish & Telemetry Accuracy"
+         "zaap-zxt P1 — sendNow() errors are swallowed silently; user needs visible feedback (alert/banner)"
+         "zaap-ctx P2 — daily summaries lack fetch timestamp; delayed sends log wrong time in memory"
+         "zaap-phs P2 — awake sound gives immediate audio feedback on mic activation, especially useful on first press"]}
