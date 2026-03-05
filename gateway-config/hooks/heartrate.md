@@ -11,7 +11,7 @@ You received a JSON payload from Zaap. Parse it and append to today's memory (`m
 - `sampleCount`: number of samples (Int)
 
 ## Memory Format
-Append exactly this line, substituting values from the payload. Use ISO 8601 UTC timestamp from the message (format: YYYY-MM-DDTHH:MM:SSZ):
+Append exactly this line, substituting values. Use local time HH:MM (America/Phoenix) as TIMESTAMP:
 ```
 - TIMESTAMP — min=MINBPM max=MAXBPM avg=AVGBPM resting=RESTINGBPM BPM, samples=N (via Zaap)
 ```

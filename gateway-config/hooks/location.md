@@ -7,7 +7,7 @@ You received a JSON payload from Zaap. Append to today's memory (`memory/YYYY-MM
 - `longitude`: decimal degrees (Double)
 - `altitude`: meters above sea level (Double)
 - `speed`: meters/sec, -1 if unavailable (Double)
-- `timestamp`: ISO 8601 datetime
+- `timestamp`: ISO 8601 datetime (use local HH:MM as TIMESTAMP)
 
 ## Memory Format
 ```

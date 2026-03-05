@@ -12,4 +12,4 @@ You received a JSON payload from Zaap. Append to today's memory (`memory/YYYY-MM
 - TIMESTAMP — resting=RESTING BPM, samples=N (via Zaap)
 ```
 
-Use ISO 8601 UTC timestamp from the message (format: YYYY-MM-DDTHH:MM:SSZ) as TIMESTAMP.
+Use the local time (HH:MM, America/Phoenix) as TIMESTAMP.
