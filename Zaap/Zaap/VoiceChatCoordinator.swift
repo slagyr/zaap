@@ -70,6 +70,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     private var recentSpokenTexts: [String] = []
     private let maxSpokenTextHistory = 10
     private var operatorDelegate: OperatorGatewayDelegate?
+    private lazy var awakeSoundPlayer = AwakeSoundPlayer()
     /// When true, viewModel.handleResponseComplete() is deferred until TTS finishes
     /// so the response bubble stays visible and tappable for barge-in (zaap-s5u).
     private var pendingResponseCompletion = false
@@ -273,6 +274,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             }
         } else {
             isConversationModeOn = true
+            awakeSoundPlayer.play()
             voiceEngine.startListening()
             if viewModel.state == .idle {
                 viewModel.tapMic() // idle → listening
@@ -350,6 +352,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
                 return
             }
             logHandler("🎙️ [COORD] micRestart: restarting voice engine, vmState=\(viewModel.state)")
+            awakeSoundPlayer.play()
             voiceEngine.startListening()
             if viewModel.state == .idle {
                 viewModel.tapMic() // idle → listening
@@ -600,6 +603,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         }
         if !voiceEngine.isListening {
             logHandler("🎙️ [COORD] startVoiceEngineIfNeeded[\(context)]: calling voiceEngine.startListening()")
+            awakeSoundPlayer.play()
             voiceEngine.startListening()
         } else {
             logHandler("🎙️ [COORD] startVoiceEngineIfNeeded[\(context)]: already listening")
