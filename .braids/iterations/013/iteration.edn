@@ -1,8 +1,9 @@
 {:number "013"
- :status :complete
+ :status :active
  :stories [{:id "zaap-cb4" :title "First mic tap still does nothing — third attempt, device-only bug"}
            {:id "zaap-x62" :title "UI stuck in limbo after partial response — sonar loops, mic unresponsive"}
-           {:id "zaap-3mw" :title "Standardize webhook payload field names for HR, HRV, SpO2"}]
+           {:id "zaap-3mw" :title "Standardize webhook payload field names for HR, HRV, SpO2"}
+           {:id "zaap-g27" :title "Standardize webhook payload field names for RespiratoryRate and RestingHeartRate"}]
  :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
               "No force unwraps (!) anywhere in codebase"
               "Tests must pass before commit — run xcodebuild test first"
