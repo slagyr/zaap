@@ -294,7 +294,15 @@ final class MockResponseSpeaking: ResponseSpeaking {
 
     func interrupt() {
         interruptCalled = true
+        let oldState = state
         state = .idle
+        // Match real ResponseSpeaker behavior: interrupt() fires onStateChange
+        // when state actually changes (via didSet in the real implementation).
+        // This ensures tests catch interactions between interrupt's state
+        // transition and the coordinator's onStateChange handler. (zaap-2zg)
+        if oldState != .idle {
+            onStateChange?(.idle)
+        }
     }
 }
 

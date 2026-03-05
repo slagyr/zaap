@@ -376,5 +376,29 @@ final class ResponseSpeakerTests: XCTestCase {
 
         XCTAssertEqual(callCount, 0)
     }
+
+    // MARK: - Main Thread Dispatch (zaap-2zg)
+
+    func testDidFinishDispatchesToMainThreadWhenCalledOffMain() {
+        let synth = MockSpeechSynthesizer()
+        let speaker = ResponseSpeaker(synthesizer: synth)
+        speaker.speakImmediate("Hello world")
+        synth.isSpeakingValue = false
+
+        let expectation = XCTestExpectation(description: "onStateChange fires on main thread")
+        speaker.onStateChange = { newState in
+            XCTAssertTrue(Thread.isMainThread,
+                          "onStateChange must fire on main thread even when didFinish is called off-main")
+            XCTAssertEqual(newState, .idle)
+            expectation.fulfill()
+        }
+
+        // Simulate didFinish from a background thread (as can happen on real devices)
+        DispatchQueue.global(qos: .userInitiated).async {
+            speaker.speechSynthesizer(AVSpeechSynthesizer(), didFinish: AVSpeechUtterance(string: "Hello world"))
+        }
+
+        wait(for: [expectation], timeout: 2.0)
+    }
 }
 

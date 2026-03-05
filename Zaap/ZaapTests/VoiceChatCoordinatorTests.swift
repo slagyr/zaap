@@ -1623,16 +1623,36 @@ extension VoiceChatCoordinatorTests {
         try await Task.sleep(nanoseconds: 50_000_000)
 
         XCTAssertTrue(voiceEngine.startListeningCalled)
+        XCTAssertTrue(voiceEngine.isListening)
 
-        // Reset tracking flags
+        // Simulate gateway reconnect — conversation mode is still on.
+        // Engine is already listening (mic works during network blip), so
+        // no redundant restart should occur — just verify it stays listening.
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(voiceEngine.isListening,
+                      "Mic SHOULD remain listening on gateway reconnect when conversation mode is on")
+        XCTAssertEqual(viewModel.state, .listening,
+                       "View model should still be in listening state after reconnect")
+    }
+
+    func testGatewayReconnectStartsMicWhenItWasStopped() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Simulate mic being stopped (e.g., during TTS or interruption)
+        voiceEngine.isListening = false
         voiceEngine.startListeningCalled = false
 
-        // Simulate gateway reconnect — conversation mode is still on
+        // Gateway reconnects — should restart mic since it's not listening
         gateway.simulateConnect()
         try await Task.sleep(nanoseconds: 50_000_000)
 
         XCTAssertTrue(voiceEngine.startListeningCalled,
-                      "Mic SHOULD restart on gateway reconnect when conversation mode is on")
+                      "Mic SHOULD restart on gateway reconnect when it was stopped")
     }
 }
 
@@ -1956,5 +1976,224 @@ extension VoiceChatCoordinatorTests {
                       "Old response should be committed to log when user speaks over TTS")
         XCTAssertTrue(logTexts.contains("Second question"),
                       "New user utterance should be in the log")
+    }
+}
+
+// MARK: - First Mic Tap Fix (zaap-4bp)
+
+extension VoiceChatCoordinatorTests {
+
+    func testStartSessionProvidesImmediateFeedbackWhenGatewayConnecting() {
+        // Simulate gateway already in connecting state (eager connect from onAppear)
+        gateway.state = .connecting
+
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+
+        // User should see immediate feedback even though gateway isn't connected yet
+        XCTAssertEqual(viewModel.state, .listening,
+                       "View model should transition to listening immediately, regardless of gateway state")
+        XCTAssertTrue(coordinator.isSessionActive)
+        XCTAssertTrue(coordinator.isConversationModeOn)
+    }
+
+    func testStartSessionWhenGatewayConnectingDoesNotDoubleToggleOnConnect() async throws {
+        // Gateway is in connecting state
+        gateway.state = .connecting
+
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+
+        XCTAssertEqual(viewModel.state, .listening)
+
+        // Gateway finishes connecting
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Should still be listening (not toggled back to idle)
+        XCTAssertEqual(viewModel.state, .listening,
+                       "Gateway connect should not toggle viewModel back to idle")
+        XCTAssertTrue(voiceEngine.startListeningCalled,
+                      "Voice engine should start listening when gateway connects")
+    }
+
+    func testStartSessionWhenGatewayAlreadyConnectedStartsImmediately() async throws {
+        // Gateway already connected (eager connect completed before user tapped)
+        gateway.state = .connected
+
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+
+        XCTAssertEqual(viewModel.state, .listening,
+                       "View model should transition to listening immediately")
+        XCTAssertTrue(voiceEngine.startListeningCalled,
+                      "Voice engine should start listening immediately when gateway is connected")
+    }
+
+    func testStartSessionWhenGatewayDisconnectedStartsAfterConnect() async throws {
+        // Gateway is disconnected
+        gateway.state = .disconnected
+
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+
+        // Should show immediate visual feedback
+        XCTAssertEqual(viewModel.state, .listening,
+                       "View model should transition to listening immediately even when disconnected")
+        XCTAssertFalse(voiceEngine.startListeningCalled,
+                       "Voice engine should NOT start before gateway connects")
+
+        // Gateway connects
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(voiceEngine.startListeningCalled,
+                      "Voice engine should start after gateway connects")
+        XCTAssertEqual(viewModel.state, .listening,
+                       "View model should remain in listening state")
+    }
+
+    func testGatewayDidConnectDoesNotDoubleToggleViewModelFromListening() async throws {
+        // Simulate the exact on-device flow:
+        // 1. onAppear → connectGateway (eager)
+        // 2. user taps mic → startSession (gateway already connected)
+        // 3. gatewayDidConnect fires from a RECONNECT
+        let url = URL(string: "wss://gateway.local:18789")!
+        gateway.state = .connected
+        coordinator.startSession(gatewayURL: url)
+
+        XCTAssertEqual(viewModel.state, .listening)
+
+        // Simulate a gateway reconnect (e.g., network blip)
+        voiceEngine.startListeningCalled = false
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // viewModel should NOT have been toggled to idle and back
+        XCTAssertEqual(viewModel.state, .listening,
+                       "Gateway reconnect should not toggle viewModel state from listening")
+    }
+}
+
+// MARK: - Barge-In Device Fix: Race Condition (zaap-2zg)
+
+extension VoiceChatCoordinatorTests {
+
+    /// On real devices, AVSpeechSynthesizerDelegate.didFinish can fire on a
+    /// background thread, flipping speaker.state to .idle before the UI updates.
+    /// The user sees "Tap to interrupt" (viewModel.state is still .speaking)
+    /// but bargeIn() sees speaker.state == .idle and silently returns.
+    /// Fix: bargeIn() also accepts pendingResponseCompletion as a trigger.
+    func testBargeInWorksWhenSpeakerAlreadyIdleButResponsePending() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:2zg")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("Tell me a story")
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:2zg",
+            "state": "final",
+            "message": ["content": [["text": "Once upon a time in a faraway land."]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Simulate the device race condition: speaker.state goes .idle
+        // (e.g., didFinish on a background thread) but onStateChange hasn't
+        // run on the main thread yet, so pendingResponseCompletion is still true.
+        // We can't perfectly simulate async dispatch, but we can set up the
+        // equivalent state: speaker.state = .idle while viewModel.state = .speaking
+        speaker.state = .idle // Simulate didFinish setting state on background thread
+        // pendingResponseCompletion is still true (onStateChange(.idle) hasn't run)
+        XCTAssertEqual(viewModel.state, .speaking,
+                       "Setup: viewModel should still be .speaking (UI hasn't updated)")
+
+        voiceEngine.startListeningCalled = false
+
+        coordinator.bargeIn()
+
+        // bargeIn should work via pendingResponseCompletion even though speaker.state is .idle
+        XCTAssertTrue(voiceEngine.startListeningCalled,
+                      "bargeIn must activate mic even when speaker.state is .idle but response is pending")
+        XCTAssertEqual(viewModel.state, .listening,
+                       "bargeIn must transition to listening")
+
+        // Response text should be committed to conversation log
+        let logTexts = viewModel.conversationLog.map { $0.text }
+        XCTAssertTrue(logTexts.contains("Once upon a time in a faraway land."),
+                      "Response should be committed to log on barge-in")
+    }
+
+    func testBargeInStillWorksWhenSpeakerIsSpeaking() async throws {
+        // Ensure the original path (speaker.state == .speaking) still works
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:2zg2")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        viewModel.handleUtteranceComplete("Hello")
+
+        gateway.simulateEvent("chat", payload: [
+            "sessionKey": "agent:main:main:2zg2",
+            "state": "final",
+            "message": ["content": [["text": "Hello! This is a long response."]]]
+        ])
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Speaker is actively speaking (normal case)
+        XCTAssertEqual(speaker.state, .speaking)
+        voiceEngine.startListeningCalled = false
+
+        coordinator.bargeIn()
+
+        XCTAssertTrue(voiceEngine.startListeningCalled,
+                      "bargeIn must work when speaker is actively speaking")
+        XCTAssertEqual(viewModel.state, .listening)
+    }
+
+    func testBargeInDoesNothingWhenNoPendingResponseAndNotSpeaking() async throws {
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url, sessionKey: "agent:main:main:2zg3")
+        gateway.simulateConnect()
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // No TTS playing, no pending response
+        speaker.state = .idle
+        voiceEngine.startListeningCalled = false
+        speaker.interruptCalled = false
+
+        coordinator.bargeIn()
+
+        XCTAssertFalse(speaker.interruptCalled,
+                       "bargeIn should do nothing when no TTS and no pending response")
+        XCTAssertFalse(voiceEngine.startListeningCalled,
+                       "bargeIn should not start mic when nothing to interrupt")
+    }
+
+    func testMockInterruptFiresOnStateChange() async throws {
+        // Verify the mock now matches real ResponseSpeaker behavior:
+        // interrupt() should fire onStateChange when state changes.
+        var stateChanges: [SpeakerState] = []
+        speaker.onStateChange = { stateChanges.append($0) }
+
+        speaker.state = .speaking
+        stateChanges.removeAll() // clear the setup
+
+        speaker.interrupt()
+
+        XCTAssertEqual(stateChanges, [.idle],
+                       "Mock interrupt() must fire onStateChange when state changes from .speaking to .idle")
+    }
+
+    func testMockInterruptDoesNotFireOnStateChangeWhenAlreadyIdle() async throws {
+        var stateChanges: [SpeakerState] = []
+        speaker.onStateChange = { stateChanges.append($0) }
+
+        // speaker starts idle
+        speaker.interrupt()
+
+        XCTAssertTrue(stateChanges.isEmpty,
+                      "Mock interrupt() must NOT fire onStateChange when state is already .idle")
     }
 }

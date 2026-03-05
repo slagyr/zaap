@@ -175,15 +175,7 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
             Task { @MainActor in
                 guard let self = self else { return }
                 if let error = error {
-                    guard self.isListening, !self.isCancellationError(error) else { return }
-                    // During cold-start grace period (before any partial result arrives),
-                    // suppress recognition errors — the watchdog will restart recognition.
-                    guard self.hasReceivedPartial else {
-                        self.logHandler("🎙️ [STT] suppressing cold-start recognition error: \(error.localizedDescription)")
-                        return
-                    }
-                    self.logHandler("🎙️ [STT] recognition error: \(error.localizedDescription)")
-                    self.onError?(.recognitionFailed(error.localizedDescription))
+                    self.handleRecognitionError(error)
                     return
                 }
                 guard let result = result else { return }
@@ -239,6 +231,24 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
     }
 
     // MARK: - Private
+
+    /// Handle a recognition error from any recognition task callback.
+    /// Centralizes error handling: suppresses cold-start errors, finalizes
+    /// transcript on mid-speech errors, and restarts recognition to recover.
+    private func handleRecognitionError(_ error: Error) {
+        guard isListening, !isCancellationError(error) else { return }
+        // During cold-start grace period (before any partial result arrives),
+        // suppress recognition errors — the watchdog will restart recognition.
+        guard hasReceivedPartial else {
+            logHandler("🎙️ [STT] suppressing cold-start recognition error: \(error.localizedDescription)")
+            return
+        }
+        logHandler("🎙️ [STT] recognition error: \(error.localizedDescription)")
+        // Finalize any pending transcript so user speech is never lost (zaap-p6h).
+        // Without this, the engine hangs with a dead task and unsent transcript.
+        finalizeTranscriptOnError()
+        onError?(.recognitionFailed(error.localizedDescription))
+    }
 
     /// Returns true if this error should be silently ignored (e.g. cancellation errors).
     private func isCancellationError(_ error: Error) -> Bool {
@@ -306,6 +316,29 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
 
     /// Emit whatever is in pendingTranscript + currentTranscript (if the debounce timer fires
     /// without new speech cancelling it).
+    /// Finalize any pending transcript when a recognition error occurs.
+    /// Prevents the "mic cuts off mid-sentence and hangs" bug where the
+    /// recognition task dies but the partial transcript is never sent.
+    private func finalizeTranscriptOnError() {
+        silenceTimer?.invalidate()
+        silenceTimer = nil
+        finalDebounceTimer?.invalidate()
+        finalDebounceTimer = nil
+
+        let combined = buildFullTranscript()
+        if combined.count >= minimumTranscriptLength {
+            logHandler("🎙️ [STT] finalizing transcript on recognition error: \"\(combined.prefix(80))\"")
+            onUtteranceComplete?(combined)
+        }
+        pendingTranscript = ""
+        lastEmittedLength = 0
+
+        // Restart recognition to recover from the dead task
+        if isListening {
+            restartRecognition()
+        }
+    }
+
     private func emitPendingTranscript() {
         finalDebounceTimer?.invalidate()
         finalDebounceTimer = nil
@@ -384,16 +417,18 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
             Task { @MainActor in
                 guard let self = self else { return }
                 if let error = error {
-                    guard self.isListening, !self.isCancellationError(error) else { return }
-                    // During cold-start grace period, suppress errors — watchdog handles recovery
-                    guard self.hasReceivedPartial else {
-                        self.logHandler("🎙️ [STT] suppressing cold-start recognition error: \(error.localizedDescription)")
-                        return
-                    }
-                    self.onError?(.recognitionFailed(error.localizedDescription))
+                    self.handleRecognitionError(error)
                     return
                 }
                 guard let result = result else { return }
+
+                // Mark that this restarted task has received results,
+                // ending the cold-start grace period (zaap-p6h).
+                if !self.hasReceivedPartial {
+                    self.hasReceivedPartial = true
+                    self.watchdogTimer?.invalidate()
+                    self.watchdogTimer = nil
+                }
 
                 // New speech arrived — if we were debouncing after isFinal,
                 // cancel the debounce and let the pending transcript carry forward.

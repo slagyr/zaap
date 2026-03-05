@@ -1072,6 +1072,98 @@ final class VoiceEngineTests: XCTestCase {
                        "startListening should not call prepareRecognizer again — init already did it")
     }
 
+    // MARK: - Bug Fix: Mic cuts off mid-sentence and hangs (zaap-p6h)
+
+    @MainActor
+    func testRecognitionErrorAfterPartialsFinalizesTranscript() async {
+        // When recognition errors after partials were received, the partial
+        // transcript must be finalized (emitted) so it's not lost.
+        var emittedTranscript: String?
+        engine.onUtteranceComplete = { emittedTranscript = $0 }
+
+        engine.startListening()
+        await simulateResultAndWait("What's the weather in", isFinal: false)
+
+        // Recognition task dies with an error mid-sentence
+        let err = NSError(domain: "SFSpeech", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "Recognition failed"])
+        await simulateErrorAndWait(err)
+
+        XCTAssertEqual(emittedTranscript, "What's the weather in",
+                       "Partial transcript must be finalized when recognition errors — never lose user speech")
+    }
+
+    @MainActor
+    func testRecognitionErrorAfterPartialsRestartsRecognition() async {
+        // After an error with valid partials, recognition must restart
+        // so the engine doesn't hang with a dead task.
+        engine.onUtteranceComplete = { _ in }
+
+        engine.startListening()
+        XCTAssertEqual(speechRecognizer.taskCreationCount, 1)
+
+        await simulateResultAndWait("Tell me about", isFinal: false)
+
+        let err = NSError(domain: "SFSpeech", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "Recognition failed"])
+        await simulateErrorAndWait(err)
+
+        XCTAssertGreaterThan(speechRecognizer.taskCreationCount, 1,
+                             "Recognition must restart after error to prevent dead-task hang")
+        XCTAssertTrue(engine.isListening, "Engine must remain listening after error recovery")
+    }
+
+    @MainActor
+    func testRecognitionErrorWithPendingDebounceFinalizesAll() async {
+        // If isFinal set a pendingTranscript (debounce) and then the new task
+        // errors before producing results, the pending transcript must be emitted.
+        var emittedTranscript: String?
+        engine.onUtteranceComplete = { emittedTranscript = $0 }
+
+        engine.startListening()
+        // First partial, then isFinal → sets pendingTranscript
+        await simulateResultAndWait("I was saying", isFinal: true)
+
+        // Now on the restarted task — simulate an error before any partials
+        // Note: hasReceivedPartial was reset by restartRecognition, but pendingTranscript is set
+        let newTask = speechRecognizer.allCreatedTasks.last!
+
+        // Send a partial first so we exit cold-start grace period
+        newTask.simulateResult("something", isFinal: false)
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        // Now error — should finalize pending + current
+        let err = NSError(domain: "SFSpeech", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "Recognition failed"])
+        newTask.simulateError(err)
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(emittedTranscript, "I was saying something",
+                       "Both pending (from isFinal debounce) and current transcript must be finalized on error")
+    }
+
+    @MainActor
+    func testRecognitionErrorWithShortTranscriptDoesNotEmit() async {
+        // If the partial transcript is too short when error occurs, don't emit
+        // but still restart recognition.
+        var emittedTranscript: String?
+        engine.onUtteranceComplete = { emittedTranscript = $0 }
+
+        engine.startListening()
+        await simulateResultAndWait("Hi", isFinal: false)
+
+        let err = NSError(domain: "SFSpeech", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "Recognition failed"])
+        await simulateErrorAndWait(err)
+
+        XCTAssertNil(emittedTranscript,
+                     "Short transcript should not be emitted even on error")
+        XCTAssertGreaterThan(speechRecognizer.taskCreationCount, 1,
+                             "Recognition should still restart even when transcript is too short")
+    }
+
     // MARK: - Bug Fix: Silence timer dies after empty emission (zaap-6k2)
 
     @MainActor

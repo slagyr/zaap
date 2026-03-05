@@ -139,7 +139,16 @@ final class ResponseSpeaker: NSObject, AVSpeechSynthesizerDelegate {
     // MARK: - AVSpeechSynthesizerDelegate
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        handleDidFinish()
+        // AVSpeechSynthesizerDelegate callbacks may arrive on a background thread
+        // on some iOS versions/devices. Dispatch to main thread to ensure state
+        // changes and onStateChange callbacks run on the main actor. (zaap-2zg)
+        if Thread.isMainThread {
+            handleDidFinish()
+        } else {
+            DispatchQueue.main.async { [self] in
+                self.handleDidFinish()
+            }
+        }
     }
 
     /// Called when an utterance finishes (also used by mock).

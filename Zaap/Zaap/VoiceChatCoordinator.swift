@@ -205,14 +205,18 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         self.sessionKey = sessionKey ?? UUID().uuidString
         isSessionActive = true
         isConversationModeOn = true
-        if gateway.state == .connected {
-            // Already connected — go straight to listening
+        // Always provide immediate visual feedback (zaap-4bp)
+        if viewModel.state == .idle {
             viewModel.tapMic() // idle → listening
+        }
+        if gateway.state == .connected {
+            // Already connected — start capturing voice immediately
             voiceEngine.startListening()
-        } else {
-            // Connect first; gatewayDidConnect will start listening when ready
+        } else if gateway.state == .disconnected {
+            // Connect first; gatewayDidConnect will start voice engine when ready
             gateway.connect(to: gatewayURL)
         }
+        // If gateway is .connecting or .challenged, gatewayDidConnect handles the rest
     }
 
     func toggleConversationMode() {
@@ -239,8 +243,13 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     /// Interrupt TTS and immediately restart the mic so the user can speak.
     /// Called when the user taps during TTS playback (barge-in).
     func bargeIn() {
-        guard isSessionActive, speaker.state == .speaking else { return }
-        logHandler("🎙️ [COORD] bargeIn: interrupting TTS and restarting mic")
+        // Accept barge-in if the speaker is actively speaking OR if a response
+        // completion is pending (deferred while TTS plays). On real devices,
+        // AVSpeechSynthesizerDelegate.didFinish can fire on a background thread,
+        // flipping speaker.state to .idle before the main-thread UI updates.
+        // The pendingResponseCompletion check catches this race. (zaap-2zg)
+        guard isSessionActive, speaker.state == .speaking || pendingResponseCompletion else { return }
+        logHandler("🎙️ [COORD] bargeIn: interrupting TTS and restarting mic (speakerState=\(speaker.state) pending=\(pendingResponseCompletion))")
         speaker.interrupt()
         // Cancel any mic restart scheduled by the onStateChange callback during interrupt
         micRestartTask?.cancel()
@@ -374,9 +383,14 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
                 await sessionPicker?.loadSessions()
             }
             guard isSessionActive, isConversationModeOn else { return }
-            // Gateway is ready — transition UI to listening and start capturing voice
-            viewModel.tapMic() // idle → listening
-            voiceEngine.startListening()
+            // Start voice engine if not already listening (zaap-4bp)
+            if !voiceEngine.isListening {
+                voiceEngine.startListening()
+            }
+            // Ensure UI reflects listening state (may have been set by startSession already)
+            if viewModel.state == .idle {
+                viewModel.tapMic() // idle → listening
+            }
         }
     }
 
