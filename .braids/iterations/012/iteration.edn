@@ -1,5 +1,5 @@
 {:number "012"
- :status :active
+ :status :complete
  :stories [{:id "zaap-9bu" :title "First mic activation does not start conversation"}
            {:id "zaap-s5u" :title "Barge-in broken during long TTS responses"}
            {:id "zaap-x9d" :title "STT transcript resets mid-speech after ~3 exchanges"}
