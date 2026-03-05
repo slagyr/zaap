@@ -18,6 +18,13 @@ final class RestingHeartRateReader {
         let restingBPM: Double
         let sampleCount: Int
         let samples: [RestingHRSample]
+
+        enum CodingKeys: String, CodingKey {
+            case date
+            case restingBPM = "resting"
+            case sampleCount
+            case samples
+        }
     }
 
     enum RestingHRError: Error, LocalizedError, Equatable {

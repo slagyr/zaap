@@ -20,6 +20,15 @@ final class RespiratoryRateReader {
         let avgRate: Double
         let sampleCount: Int
         let samples: [RespiratoryRateSample]
+
+        enum CodingKeys: String, CodingKey {
+            case date
+            case minRate = "min"
+            case maxRate = "max"
+            case avgRate = "avg"
+            case sampleCount
+            case samples
+        }
     }
 
     enum RespiratoryRateError: Error, LocalizedError, Equatable {

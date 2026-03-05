@@ -118,6 +118,8 @@
 		Y10004 /* TTSDiagnosticsCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = Y20004 /* TTSDiagnosticsCoordinatorTests.swift */; };
 		Y10005 /* TTSDiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = Y20005 /* TTSDiagnosticsView.swift */; };
 		Z10001 /* DualDiagnosticsPanelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = Z20001 /* DualDiagnosticsPanelTests.swift */; };
+		RR0302 /* RespiratoryRateReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = RR0303 /* RespiratoryRateReaderTests.swift */; };
+		RH0302 /* RestingHeartRateReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = RH0303 /* RestingHeartRateReaderTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -246,6 +248,8 @@
 		Y20004 /* TTSDiagnosticsCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSDiagnosticsCoordinatorTests.swift; sourceTree = "<group>"; };
 		Y20005 /* TTSDiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSDiagnosticsView.swift; sourceTree = "<group>"; };
 		Z20001 /* DualDiagnosticsPanelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualDiagnosticsPanelTests.swift; sourceTree = "<group>"; };
+		RR0303 /* RespiratoryRateReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RespiratoryRateReaderTests.swift; sourceTree = "<group>"; };
+		RH0303 /* RestingHeartRateReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestingHeartRateReaderTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -415,6 +419,8 @@
 				Y20004 /* TTSDiagnosticsCoordinatorTests.swift */,
 				Z20001 /* DualDiagnosticsPanelTests.swift */,
 				AB20001 /* TTSAudioPlayerTests.swift */,
+				RR0303 /* RespiratoryRateReaderTests.swift */,
+				RH0303 /* RestingHeartRateReaderTests.swift */,
 			);
 			path = ZaapTests;
 			sourceTree = "<group>";
@@ -631,6 +637,8 @@
 				Y10004 /* TTSDiagnosticsCoordinatorTests.swift in Sources */,
 				Z10001 /* DualDiagnosticsPanelTests.swift in Sources */,
 				AB10001 /* TTSAudioPlayerTests.swift in Sources */,
+				RR0302 /* RespiratoryRateReaderTests.swift in Sources */,
+				RH0302 /* RestingHeartRateReaderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
