@@ -1,0 +1,163 @@
+2026-03-04 21:08:04 +0000 [MT] Initial pipeline context: <IDEDistributionProcessingPipelineContext: 0x7f850883ea60; archive(resolved)="<IDEArchive: 0x600003d4df80>", distributionTask(resolved)="2", distributionDestination(resolved)="1", distributionMethod(resolved)="<IDEDistributionMethodiOSAppStoreDistribution: 0x6000014bff10>", team(resolved)="<IDEProvisioningBasicTeam: 0x60000178cda0; teamID='PJTG44YLX5', teamName='(null)'>">
+	Chain (15, self inclusive):
+	<IDEDistributionProcessingPipelineContext: 0x7f850883ea60; archive = "<IDEArchive: 0x600003d4df80>", distributionMethod="<IDEDistributionMethodiOSAppStoreDistribution: 0x6000014bff10>", team="<IDEProvisioningBasicTeam: 0x60000178cda0; teamID='PJTG44YLX5', teamName='(null)'>">
+	<IDEDistributionProcessingPipelineContext: 0x7f850883e2f0; archive = "<IDEArchive: 0x600003d4df80>", distributionMethod="<IDEDistributionMethodiOSAppStoreDistribution: 0x6000014bff10>", team="<IDEProvisioningBasicTeam: 0x60000178cda0; teamID='PJTG44YLX5', teamName='(null)'>">
+	<IDEDistributionContext: 0x7f850883e0e0; archive = "<IDEArchive: 0x600003d4df80>", distributionMethod="<IDEDistributionMethodiOSAppStoreDistribution: 0x6000014bff10>", team="<IDEProvisioningBasicTeam: 0x60000178cda0; teamID='PJTG44YLX5', teamName='(null)'>">
+	<IDEDistributionContext: 0x7f8507f29ee0; archive = "<IDEArchive: 0x600003d4df80>", distributionMethod="<IDEDistributionMethodiOSAppStoreDistribution: 0x6000014bff10>", team="<IDEProvisioningBasicTeam: 0x60000178cda0; teamID='PJTG44YLX5', teamName='(null)'>">
+	<IDEDistributionContext: 0x7f85089b6f00; archive = "<IDEArchive: 0x600003d4df80>", distributionMethod="<IDEDistributionMethodiOSAppStoreDistribution: 0x6000014bff10>", team="<IDEProvisioningBasicTeam: 0x60000178cda0; teamID='PJTG44YLX5', teamName='(null)'>">
+	<IDEDistributionContext: 0x7f85089bf730; archive = "<IDEArchive: 0x600003d4df80>", distributionMethod="<IDEDistributionMethodiOSAppStoreDistribution: 0x6000014bff10>", team="<IDEProvisioningBasicTeam: 0x60000178cda0; teamID='PJTG44YLX5', teamName='(null)'>">
+	<IDEDistributionContext: 0x7f8508e20280; archive = "<IDEArchive: 0x600003d4df80>", distributionMethod="<IDEDistributionMethodiOSAppStoreDistribution: 0x6000014bff10>", team="<IDEProvisioningBasicTeam: 0x60000178cda0; teamID='PJTG44YLX5', teamName='(null)'>">
+	<IDEDistributionContext: 0x7f84d7f15a50; archive = "<IDEArchive: 0x600003d4df80>", distributionMethod="<IDEDistributionMethodiOSAppStoreDistribution: 0x6000014bff10>", team="<IDEProvisioningBasicTeam: 0x60000178cda0; teamID='PJTG44YLX5', teamName='(null)'>">
+	<IDEDistributionContext: 0x7f850899d700; archive = "<IDEArchive: 0x600003d4df80>", distributionMethod="<IDEDistributionMethodiOSAppStoreDistribution: 0x6000014bff10>", team="<IDEProvisioningBasicTeam: 0x60000178cda0; teamID='PJTG44YLX5', teamName='(null)'>">
+	<IDEDistributionContext: 0x7f8507f34460; archive = "<IDEArchive: 0x600003d4df80>", distributionMethod="<IDEDistributionMethodiOSAppStoreDistribution: 0x6000014bff10>", team="<IDEProvisioningBasicTeam: 0x60000178cda0; teamID='PJTG44YLX5', teamName='(null)'>">
+	<IDEDistributionContext: 0x7f8507f2f6d0; archive = "<IDEArchive: 0x600003d4df80>", distributionMethod="<IDEDistributionMethodiOSAppStoreDistribution: 0x6000014bff10>", team="<IDEProvisioningBasicTeam: 0x60000178cda0; teamID='PJTG44YLX5', teamName='(null)'>">
+	<IDEDistributionContext: 0x7f8508e1e2d0; archive = "<IDEArchive: 0x600003d4df80>", distributionMethod="<IDEDistributionMethodiOSAppStoreDistribution: 0x6000014bff10>", team="<IDEProvisioningBasicTeam: 0x60000178cda0; teamID='PJTG44YLX5', teamName='(null)'>">
+	<IDEDistributionContext: 0x7f8508a1b1d0; archive = "<IDEArchive: 0x600003d4df80>", distributionMethod="<IDEDistributionMethodiOSAppStoreDistribution: 0x6000014bff10>", team="(null)">
+	<IDEDistributionContext: 0x7f8508c0d930; archive = "<IDEArchive: 0x600003d4df80>", distributionMethod="<IDEDistributionMethodiOSAppStoreDistribution: 0x6000014bff10>", team="(null)">
+	<IDEDistributionContext: 0x7f850899ddd0; archive = "<IDEArchive: 0x600003d4df80>", distributionMethod="(null)", team="(null)">
+</IDEDistributionProcessingPipelineContext: 0x7f850883ea60>
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionCreateDestRootStep
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionCopyItemStep
+2026-03-04 21:08:04 +0000 [MT] Running /usr/bin/ditto '-V' '/Users/zane/Projects/zaap/Zaap40.xcarchive/Products/Applications/Zaap.app' '/var/folders/qg/_6_z1ks17_d6x8987lzcjc500000gp/T/XcodeDistPipeline.~~~GjHXVy/Root/Payload/Zaap.app'
+2026-03-04 21:08:04 +0000  >>> Copying /Users/zane/Projects/zaap/Zaap40.xcarchive/Products/Applications/Zaap.app 
+2026-03-04 21:08:04 +0000  copying file ./_CodeSignature/CodeResources ... 
+2026-03-04 21:08:04 +0000  2775 bytes for ./_CodeSignature/CodeResources
+2026-03-04 21:08:04 +0000  copying file ./AppIcon60x60@2x.png ... 
+2026-03-04 21:08:04 +0000  7897 bytes for ./AppIcon60x60@2x.png
+2026-03-04 21:08:04 +0000  copying file ./Assets.car ... 
+2026-03-04 21:08:04 +0000  1103992 bytes for ./Assets.car
+2026-03-04 21:08:04 +0000  copying file ./AppIcon76x76@2x~ipad.png ... 
+2026-03-04 21:08:04 +0000  11702 bytes for ./AppIcon76x76@2x~ipad.png
+2026-03-04 21:08:04 +0000  copying file ./Zaap ... 
+2026-03-04 21:08:04 +0000  1260288 bytes for ./Zaap
+2026-03-04 21:08:04 +0000  copying file ./embedded.mobileprovision ... 
+2026-03-04 21:08:04 +0000  16023 bytes for ./embedded.mobileprovision
+2026-03-04 21:08:04 +0000  copying file ./Info.plist ... 
+2026-03-04 21:08:04 +0000  2371 bytes for ./Info.plist
+2026-03-04 21:08:04 +0000  copying file ./PkgInfo ... 
+2026-03-04 21:08:04 +0000  8 bytes for ./PkgInfo
+2026-03-04 21:08:04 +0000 [MT] /usr/bin/ditto exited with 0
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionEmbedProfileStep
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionInfoPlistStep
+2026-03-04 21:08:04 +0000 [MT] Skipping setting DTXcodeBuildDistribution because toolsBuildVersionName was nil.
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionItemRemovalStep
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionAppThinningPlistStep
+2026-03-04 21:08:04 +0000 [MT] Skipping step: IDEDistributionAppThinningPlistStep because it said so
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionSymbolsStep
+2026-03-04 21:08:04 +0000 [MT] Writing /var/folders/qg/_6_z1ks17_d6x8987lzcjc500000gp/T/XcodeDistPipeline.~~~GjHXVy/Symbols/36464561-05F7-3FB3-A89F-67A9CC94EF42.symbols
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionCopyAppleProvidedContentStep
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionAppThinningStep
+2026-03-04 21:08:04 +0000 [MT] Skipping step: IDEDistributionAppThinningStep because it said so
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionArchThinningStep
+2026-03-04 21:08:04 +0000 [MT] Archs to thin for item /Users/zane/Projects/zaap/Zaap40.xcarchive/Products/Applications/Zaap.app are []
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionODRStep
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionStripXattrsStep
+2026-03-04 21:08:04 +0000 [MT] Skipping stripping extended attributes because the codesign step will strip them.
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionCodesignStep
+2026-03-04 21:08:04 +0000 [MT] Entitlements for <IDEDistributionItem: 0x6000032adf20; bundleID='co.airworthy.zaap', path='<DVTFilePath:0x600003256ac0:'/Users/zane/Projects/zaap/Zaap40.xcarchive/Products/Applications/Zaap.app'>', codeSigningInfo='<_DVTCodeSigningInformation_Path: 0x60000324b0c0; isSigned='1', isAdHocSigned='0', signingCertificate='<DVTSigningCertificate: 0x6000023c0c00; name='Apple Development: Micah Martin (G9CJNSV94T)', hash='25BB470171A9D937F5C64F332F0F6E2EAC7EC9CC', serialNumber='38DFC545C230353D34609185DA89566B', certificateKinds='(
+    "1.2.840.113635.100.6.1.12",
+    "1.2.840.113635.100.6.1.2"
+), issueDate='2026-02-19 03:13:26 +0000''>', entitlements='{
+    "application-identifier" = "PJTG44YLX5.co.airworthy.zaap";
+    "com.apple.developer.healthkit" = 1;
+    "com.apple.developer.healthkit.access" =     (
+        "health-records"
+    );
+    "com.apple.developer.team-identifier" = PJTG44YLX5;
+    "get-task-allow" = 1;
+}', teamID='PJTG44YLX5', identifier='co.airworthy.zaap', executablePath='<DVTFilePath:0x600003248720:'/Users/zane/Projects/zaap/Zaap40.xcarchive/Products/Applications/Zaap.app/Zaap'>', hardenedRuntime='0'>'>: {
+    "application-identifier" = "PJTG44YLX5.co.airworthy.zaap";
+    "beta-reports-active" = 1;
+    "com.apple.developer.healthkit" = 1;
+    "com.apple.developer.healthkit.access" =     (
+        "health-records"
+    );
+    "com.apple.developer.team-identifier" = PJTG44YLX5;
+    "get-task-allow" = 0;
+}
+2026-03-04 21:08:04 +0000 [MT] Associated App Clip Identifiers Filter: Skipping because "com.apple.developer.associated-appclip-app-identifiers" is not present
+2026-03-04 21:08:04 +0000 [MT] Entitlements for <IDEDistributionItem: 0x6000032adf20; bundleID='co.airworthy.zaap', path='<DVTFilePath:0x600003256ac0:'/Users/zane/Projects/zaap/Zaap40.xcarchive/Products/Applications/Zaap.app'>', codeSigningInfo='<_DVTCodeSigningInformation_Path: 0x60000324b0c0; isSigned='1', isAdHocSigned='0', signingCertificate='<DVTSigningCertificate: 0x6000023c0e40; name='Apple Development: Micah Martin (G9CJNSV94T)', hash='25BB470171A9D937F5C64F332F0F6E2EAC7EC9CC', serialNumber='38DFC545C230353D34609185DA89566B', certificateKinds='(
+    "1.2.840.113635.100.6.1.12",
+    "1.2.840.113635.100.6.1.2"
+), issueDate='2026-02-19 03:13:26 +0000''>', entitlements='{
+    "application-identifier" = "PJTG44YLX5.co.airworthy.zaap";
+    "com.apple.developer.healthkit" = 1;
+    "com.apple.developer.healthkit.access" =     (
+        "health-records"
+    );
+    "com.apple.developer.team-identifier" = PJTG44YLX5;
+    "get-task-allow" = 1;
+}', teamID='PJTG44YLX5', identifier='co.airworthy.zaap', executablePath='<DVTFilePath:0x600003248720:'/Users/zane/Projects/zaap/Zaap40.xcarchive/Products/Applications/Zaap.app/Zaap'>', hardenedRuntime='0'>'> are: {
+    "application-identifier" = "PJTG44YLX5.co.airworthy.zaap";
+    "beta-reports-active" = 1;
+    "com.apple.developer.healthkit" = 1;
+    "com.apple.developer.healthkit.access" =     (
+        "health-records"
+    );
+    "com.apple.developer.team-identifier" = PJTG44YLX5;
+    "get-task-allow" = 0;
+}
+2026-03-04 21:08:04 +0000 [MT] Writing entitlements for <IDEDistributionItem: 0x6000032adf20; bundleID='co.airworthy.zaap', path='<DVTFilePath:0x600003256ac0:'/Users/zane/Projects/zaap/Zaap40.xcarchive/Products/Applications/Zaap.app'>', codeSigningInfo='<_DVTCodeSigningInformation_Path: 0x60000324b0c0; isSigned='1', isAdHocSigned='0', signingCertificate='<DVTSigningCertificate: 0x6000023c0e40; name='Apple Development: Micah Martin (G9CJNSV94T)', hash='25BB470171A9D937F5C64F332F0F6E2EAC7EC9CC', serialNumber='38DFC545C230353D34609185DA89566B', certificateKinds='(
+    "1.2.840.113635.100.6.1.12",
+    "1.2.840.113635.100.6.1.2"
+), issueDate='2026-02-19 03:13:26 +0000''>', entitlements='{
+    "application-identifier" = "PJTG44YLX5.co.airworthy.zaap";
+    "com.apple.developer.healthkit" = 1;
+    "com.apple.developer.healthkit.access" =     (
+        "health-records"
+    );
+    "com.apple.developer.team-identifier" = PJTG44YLX5;
+    "get-task-allow" = 1;
+}', teamID='PJTG44YLX5', identifier='co.airworthy.zaap', executablePath='<DVTFilePath:0x600003248720:'/Users/zane/Projects/zaap/Zaap40.xcarchive/Products/Applications/Zaap.app/Zaap'>', hardenedRuntime='0'>'> to: /var/folders/qg/_6_z1ks17_d6x8987lzcjc500000gp/T/XcodeDistPipeline.~~~GjHXVy/entitlements~~~Gbkd5j
+2026-03-04 21:08:04 +0000 [MT] invoking codesign: <NSConcreteTask: 0x6000036563f0; launchPath='/usr/bin/codesign', arguments='(
+    "-f",
+    "-s",
+    2A8ED14A3CAC67CC7F03EA7A072B69069D9AD084,
+    "--entitlements",
+    "/var/folders/qg/_6_z1ks17_d6x8987lzcjc500000gp/T/XcodeDistPipeline.~~~GjHXVy/entitlements~~~Gbkd5j",
+    "--preserve-metadata=identifier,flags,runtime,launch-constraints,library-constraints",
+    "--generate-entitlement-der",
+    "--strip-disallowed-xattrs",
+    "-vvv",
+    "/var/folders/qg/_6_z1ks17_d6x8987lzcjc500000gp/T/XcodeDistPipeline.~~~GjHXVy/Root/Payload/Zaap.app"
+)'>
+2026-03-04 21:08:04 +0000 [MT] codesign output: /var/folders/qg/_6_z1ks17_d6x8987lzcjc500000gp/T/XcodeDistPipeline.~~~GjHXVy/Root/Payload/Zaap.app: replacing existing signature
+/var/folders/qg/_6_z1ks17_d6x8987lzcjc500000gp/T/XcodeDistPipeline.~~~GjHXVy/Root/Payload/Zaap.app: signed app bundle with Mach-O thin (arm64) [co.airworthy.zaap]
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionZipODRItemStep
+2026-03-04 21:08:04 +0000 [MT] Skipping step: IDEDistributionZipODRItemStep because it said so
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionCreateIPAStep
+2026-03-04 21:08:04 +0000 [MT] Running /usr/bin/rsync '-8aPhhE' '/var/folders/qg/_6_z1ks17_d6x8987lzcjc500000gp/T/XcodeDistPipeline.~~~GjHXVy/Symbols' '--link-dest' '/var/folders/qg/_6_z1ks17_d6x8987lzcjc500000gp/T/XcodeDistPipeline.~~~GjHXVy' '/var/folders/qg/_6_z1ks17_d6x8987lzcjc500000gp/T/XcodeDistPipeline.~~~GjHXVy/Root'
+2026-03-04 21:08:04 +0000  Symbols/
+._Symbols
+            163 170%    1.99MB/s   00:00:00 (xfer#1, to-check=0/4)
+2026-03-04 21:08:04 +0000  Symbols/36464561-05F7-3FB3-A89F-67A9CC94EF42.symbols
+Symbols/._36464561-05F7-3FB3-A89F-67A9CC94EF42.symbols
+            163   0%  135.84KB/s   00:00:00 (xfer#2, to-check=2/4)
+2026-03-04 21:08:04 +0000 [MT] /usr/bin/rsync exited with 0
+2026-03-04 21:08:04 +0000 [MT] Running /usr/bin/ditto '-V' '-c' '-k' '--norsrc' '/var/folders/qg/_6_z1ks17_d6x8987lzcjc500000gp/T/XcodeDistPipeline.~~~GjHXVy/Root' '/var/folders/qg/_6_z1ks17_d6x8987lzcjc500000gp/T/XcodeDistPipeline.~~~GjHXVy/Packages/Zaap.ipa'
+2026-03-04 21:08:04 +0000  >>> Copying /var/folders/qg/_6_z1ks17_d6x8987lzcjc500000gp/T/XcodeDistPipeline.~~~GjHXVy/Root 
+2026-03-04 21:08:04 +0000  copying file ./Payload/Zaap.app/_CodeSignature/CodeResources ... 
+2026-03-04 21:08:04 +0000  2775 bytes for ./Payload/Zaap.app/_CodeSignature/CodeResources
+2026-03-04 21:08:04 +0000  copying file ./Payload/Zaap.app/AppIcon60x60@2x.png ... 
+2026-03-04 21:08:04 +0000  7897 bytes for ./Payload/Zaap.app/AppIcon60x60@2x.png
+2026-03-04 21:08:04 +0000  copying file ./Payload/Zaap.app/Assets.car ... 
+2026-03-04 21:08:04 +0000  1103992 bytes for ./Payload/Zaap.app/Assets.car
+2026-03-04 21:08:04 +0000  copying file ./Payload/Zaap.app/AppIcon76x76@2x~ipad.png ... 
+2026-03-04 21:08:04 +0000  11702 bytes for ./Payload/Zaap.app/AppIcon76x76@2x~ipad.png
+2026-03-04 21:08:04 +0000  copying file ./Payload/Zaap.app/Zaap ... 
+2026-03-04 21:08:04 +0000  1260352 bytes for ./Payload/Zaap.app/Zaap
+2026-03-04 21:08:04 +0000  copying file ./Payload/Zaap.app/embedded.mobileprovision ... 
+2026-03-04 21:08:04 +0000  16746 bytes for ./Payload/Zaap.app/embedded.mobileprovision
+2026-03-04 21:08:04 +0000  copying file ./Payload/Zaap.app/Info.plist ... 
+2026-03-04 21:08:04 +0000  2371 bytes for ./Payload/Zaap.app/Info.plist
+copying file ./Payload/Zaap.app/PkgInfo ... 
+2026-03-04 21:08:04 +0000  8 bytes for ./Payload/Zaap.app/PkgInfo
+2026-03-04 21:08:04 +0000  copying file ./Symbols/36464561-05F7-3FB3-A89F-67A9CC94EF42.symbols ... 
+2026-03-04 21:08:04 +0000  3086068 bytes for ./Symbols/36464561-05F7-3FB3-A89F-67A9CC94EF42.symbols
+2026-03-04 21:08:04 +0000 [MT] /usr/bin/ditto exited with 0
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionAppStoreInformationStep
+2026-03-04 21:08:04 +0000 [MT] Skipping step: IDEDistributionAppStoreInformationStep because it said so
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionGenerateProcessedDistributionItems
+2026-03-04 21:08:04 +0000 [MT] IDEDistributionItem init <DVTFilePath:0x600003269800:'/var/folders/qg/_6_z1ks17_d6x8987lzcjc500000gp/T/XcodeDistPipeline.~~~GjHXVy/Root/Payload/Zaap.app'>
+2026-03-04 21:08:04 +0000 [MT] Processing step: IDEDistributionCreateManifestStep
+2026-03-04 21:08:04 +0000 [MT] Skipping step: IDEDistributionCreateManifestStep because it said so

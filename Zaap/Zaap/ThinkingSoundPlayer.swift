@@ -7,20 +7,23 @@ protocol ThinkingSoundPlaying: AnyObject {
     func stopPlaying()
 }
 
-/// Plays a subtle looping tone using AVAudioEngine to indicate processing.
-/// Generates a warm chord with gentle breathing pulsation — no bundled asset needed.
+/// Plays a sonar-style ping using AVAudioEngine to indicate processing.
+/// Generates a short sine burst at ~900 Hz with fast exponential decay,
+/// repeating every 2 seconds — no bundled asset needed.
 final class SystemThinkingSoundPlayer: ThinkingSoundPlaying {
 
     // MARK: - Sound characteristics (internal for testability)
 
-    /// C major triad frequencies for warm, consonant timbre
-    let frequencies: [Float] = [261.63, 329.63, 392.00]  // C4, E4, G4
-    /// Overall amplitude — subtle background presence
-    let amplitude: Float = 0.04
-    /// Slow breathing-like pulsation rate in Hz (~6.7 second cycle)
-    let pulseRate: Float = 0.15
-    /// Loop duration in seconds
-    let loopDuration: Double = 4.0
+    /// Sonar ping frequency in Hz
+    let pingFrequency: Float = 900.0
+    /// Duration of each ping burst in seconds
+    let pingDuration: Float = 0.15
+    /// Exponential decay rate — higher = faster fade
+    let decayRate: Float = 20.0
+    /// Time between pings in seconds (also the loop duration)
+    let pingInterval: Double = 2.0
+    /// Peak amplitude of the ping
+    let amplitude: Float = 0.08
 
     private(set) var isPlaying = false
     private var audioEngine: AVAudioEngine?
@@ -36,7 +39,7 @@ final class SystemThinkingSoundPlayer: ThinkingSoundPlaying {
         engine.attach(player)
 
         let sampleRate: Double = 44100
-        let frameCount = AVAudioFrameCount(sampleRate * loopDuration)
+        let frameCount = AVAudioFrameCount(sampleRate * pingInterval)
         guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1),
               let pcmBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else {
             isPlaying = false
@@ -49,19 +52,17 @@ final class SystemThinkingSoundPlayer: ThinkingSoundPlaying {
             return
         }
 
-        // Generate warm chord with breathing envelope
-        let perToneAmp = amplitude / Float(frequencies.count)
+        // Generate sonar ping with exponential decay, then silence
+        let pingSamples = Int(Float(sampleRate) * pingDuration)
         for i in 0..<Int(frameCount) {
-            let t = Float(i) / Float(sampleRate)
-            // Smooth breathing envelope: sine-based, never fully silent
-            let envelope = 0.4 + 0.6 * (1.0 + sin(2.0 * .pi * pulseRate * t)) / 2.0
-            // Sum chord tones with decreasing amplitude for higher partials
-            var sample: Float = 0
-            for (index, freq) in frequencies.enumerated() {
-                let weight: Float = 1.0 - Float(index) * 0.15  // root loudest
-                sample += weight * sin(2.0 * .pi * freq * t)
+            if i < pingSamples {
+                let t = Float(i) / Float(sampleRate)
+                let sine = sin(2.0 * .pi * pingFrequency * t)
+                let envelope = exp(-decayRate * t)
+                channelData[i] = amplitude * envelope * sine
+            } else {
+                channelData[i] = 0
             }
-            channelData[i] = perToneAmp * envelope * sample
         }
 
         engine.connect(player, to: engine.mainMixerNode, format: format)

@@ -45,31 +45,36 @@ final class ThinkingSoundPlayerTests: XCTestCase {
         XCTAssertFalse(player.isPlaying)
     }
 
-    // MARK: - Sound characteristics
+    // MARK: - Sonar ping characteristics
 
-    func testUsesWarmChordFrequenciesNotHarshSineWave() {
-        // A warm major triad (C4, E4, G4) instead of a harsh 440 Hz pure sine
+    func testUsesSonarPingFrequency() {
         let player = SystemThinkingSoundPlayer()
-        XCTAssertEqual(player.frequencies, [261.63, 329.63, 392.00],
-                       "Should use C major triad for warm timbre")
+        XCTAssertEqual(player.pingFrequency, 900.0, accuracy: 0.01,
+                       "Should use ~900 Hz sonar ping frequency")
+    }
+
+    func testUsesSonarPingDuration() {
+        let player = SystemThinkingSoundPlayer()
+        XCTAssertEqual(player.pingDuration, 0.15, accuracy: 0.001,
+                       "Should use short 150ms ping burst")
+    }
+
+    func testUsesSonarDecayRate() {
+        let player = SystemThinkingSoundPlayer()
+        XCTAssertEqual(player.decayRate, 20.0, accuracy: 0.1,
+                       "Should use fast exponential decay for sonar fade")
+    }
+
+    func testUsesSonarPingInterval() {
+        // Ping repeats every ~2 seconds
+        let player = SystemThinkingSoundPlayer()
+        XCTAssertEqual(player.pingInterval, 2.0, accuracy: 0.001,
+                       "Should repeat ping every 2 seconds")
     }
 
     func testUsesSubtleAmplitude() {
         let player = SystemThinkingSoundPlayer()
-        XCTAssertEqual(player.amplitude, 0.04, accuracy: 0.001,
-                       "Should use subtle amplitude")
-    }
-
-    func testUsesSlowBreathingPulsation() {
-        // 0.15 Hz = ~6.7 second breathing cycle, much gentler than 0.5 Hz
-        let player = SystemThinkingSoundPlayer()
-        XCTAssertEqual(player.pulseRate, 0.15, accuracy: 0.001,
-                       "Should pulse slowly like breathing")
-    }
-
-    func testUsesLongerLoopDuration() {
-        let player = SystemThinkingSoundPlayer()
-        XCTAssertEqual(player.loopDuration, 4.0, accuracy: 0.001,
-                       "Should use 4-second loop for smoother cycling")
+        XCTAssertEqual(player.amplitude, 0.08, accuracy: 0.001,
+                       "Should use subtle amplitude for brief ping")
     }
 }
