@@ -1,0 +1,17 @@
+{:number "012"
+ :status :active
+ :stories [{:id "zaap-9bu" :title "First mic activation does not start conversation"}
+           {:id "zaap-s5u" :title "Barge-in broken during long TTS responses"}
+           {:id "zaap-x9d" :title "STT transcript resets mid-speech after ~3 exchanges"}
+           {:id "zaap-fr6" :title "Update thinking tone to a sonar-style sound"}]
+ :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
+              "No force unwraps (!) anywhere in codebase"
+              "Tests must pass before commit — run xcodebuild test first"
+              "No third-party dependencies — Apple frameworks only"
+              "Acceptance criteria in each bead MUST be verified before closing — no fake completions"]
+ :notes ["Theme: Voice UX Polish — real device voice interaction bugs"
+         "zaap-9bu P1 — first mic tap does nothing, blocks new users"
+         "zaap-s5u P1 — can't barge in during long responses"
+         "zaap-x9d P1 — transcript resets after ~3rd exchange, sends partial sentences"
+         "zaap-fr6 P2 — thinking tone should sound like sonar (ping/pulse that fades)"
+         "Worker model: opus (anthropic/claude-opus-4-6)"]}
