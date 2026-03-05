@@ -5,7 +5,7 @@
  :autonomy :full
  :checkin :on-demand
  :channel "1472667753080160308"
- :max-workers 4
+ :max-workers 2
  :worker-timeout 3600
  :notifications {:iteration-start true
                  :bead-start true
