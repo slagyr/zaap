@@ -1,0 +1,15 @@
+{:number "013"
+ :status :active
+ :stories [{:id "zaap-cb4" :title "First mic tap still does nothing — third attempt, device-only bug"}
+           {:id "zaap-x62" :title "UI stuck in limbo after partial response — sonar loops, mic unresponsive"}
+           {:id "zaap-3mw" :title "Standardize webhook payload field names for HR, HRV, SpO2"}]
+ :guardrails ["TDD enforced — read ~/.openclaw/skills/tdd/SKILL.md before any implementation"
+              "No force unwraps (!) anywhere in codebase"
+              "Tests must pass before commit — run xcodebuild test first"
+              "No third-party dependencies — Apple frameworks only"
+              "Acceptance criteria in each bead MUST be verified before closing — no fake completions"
+              "Do NOT trust simulator for device-specific bugs — reason about real hardware differences"]
+ :notes ["Theme: Real Device Voice Stability — bugs that only manifest on physical hardware"
+         "zaap-cb4 P0 — first mic tap has failed 3 times; worker must dig deeper into device-specific paths"
+         "zaap-x62 P0 — UI hangs in limbo state; state machine likely not handling partial response correctly"
+         "zaap-3mw P1 — webhook field name mismatch causes blank HR/HRV/SpO2 values in memory logs"]}
