@@ -1,0 +1,145 @@
+{
+  "hooks": {
+    "enabled": true,
+    "path": "/hooks",
+    "token": "ed76d85475990ebd3becb1ce20ef41da78be485b3d0e0f5a",
+    "defaultSessionKey": "hooks:ingress",
+    "mappings": [
+      {
+        "match": {
+          "path": "location"
+        },
+        "action": "agent",
+        "agentId": "main",
+        "sessionKey": "hook:location",
+        "messageTemplate": "📍 Location update from Zaap — lat={{latitude}}, lng={{longitude}}, alt={{altitude}}m, speed={{speed}}m/s, timestamp={{timestamp}}\n\nRead ~/.openclaw/workspace/hooks/location.md and follow the instructions there.",
+        "deliver": false,
+        "model": "anthropic/claude-sonnet-4-6"
+      },
+      {
+        "match": {
+          "path": "sleep"
+        },
+        "action": "agent",
+        "agentId": "main",
+        "sessionKey": "hook:sleep",
+        "messageTemplate": "😴 Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/sleep.md and follow the instructions there.",
+        "deliver": false,
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      {
+        "match": {
+          "path": "heartrate"
+        },
+        "action": "agent",
+        "agentId": "main",
+        "sessionKey": "hook:heartrate",
+        "messageTemplate": "❤️ Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/heartrate.md and follow the instructions there.",
+        "deliver": false,
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      {
+        "match": {
+          "path": "activity"
+        },
+        "action": "agent",
+        "agentId": "main",
+        "sessionKey": "hook:activity",
+        "messageTemplate": "🏃 Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/activity.md and follow the instructions there.",
+        "deliver": false,
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      {
+        "match": {
+          "path": "workout"
+        },
+        "action": "agent",
+        "agentId": "main",
+        "sessionKey": "hook:workout",
+        "messageTemplate": "💪 Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/workout.md and follow the instructions there.",
+        "deliver": false,
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      {
+        "match": {
+          "path": "hrv"
+        },
+        "action": "agent",
+        "agentId": "main",
+        "sessionKey": "hook:hrv",
+        "messageTemplate": "💜 Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/hrv.md and follow the instructions there.",
+        "deliver": false,
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      {
+        "match": {
+          "path": "spo2"
+        },
+        "action": "agent",
+        "agentId": "main",
+        "sessionKey": "hook:spo2",
+        "messageTemplate": "🩺 Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/spo2.md and follow the instructions there.",
+        "deliver": false,
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      {
+        "match": {
+          "path": "respiratory-rate"
+        },
+        "action": "agent",
+        "agentId": "main",
+        "sessionKey": "hook:respiratory-rate",
+        "messageTemplate": "🌬️ Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/respiratory-rate.md and follow the instructions there.",
+        "deliver": false,
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      {
+        "match": {
+          "path": "resting-heart-rate"
+        },
+        "action": "agent",
+        "agentId": "main",
+        "sessionKey": "hook:resting-heart-rate",
+        "messageTemplate": "❤️ Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/resting-heart-rate.md and follow the instructions there.",
+        "deliver": false,
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      {
+        "match": {
+          "path": "sms"
+        },
+        "action": "agent",
+        "agentId": "main",
+        "sessionKey": "hook:sms",
+        "messageTemplate": "{{message}}",
+        "deliver": false,
+        "model": "anthropic/claude-sonnet-4-6"
+      },
+      {
+        "match": {
+          "path": "ping"
+        },
+        "action": "agent",
+        "agentId": "main",
+        "sessionKey": "hook:ping",
+        "messageTemplate": "{{message}}",
+        "deliver": false,
+        "model": "anthropic/claude-haiku-4-5"
+      }
+    ],
+    "internal": {
+      "enabled": true,
+      "entries": {
+        "boot-md": {
+          "enabled": true
+        },
+        "command-logger": {
+          "enabled": true
+        },
+        "session-memory": {
+          "enabled": true
+        }
+      }
+    }
+  }
+}
