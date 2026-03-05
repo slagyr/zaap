@@ -63,7 +63,10 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     let needsRepairingPublisher = PassthroughSubject<Void, Never>()
     var logHandler: (String) -> Void = { AppLog.shared.log($0) }
     var micRestartDelay: TimeInterval = 0.5
+    var gatewayReadyPollInterval: TimeInterval = 0.25
+    var gatewayReadyStartTimeout: TimeInterval = 5.0
     private var micRestartTask: Task<Void, Never>?
+    private var gatewayReadyTask: Task<Void, Never>?
     private var recentSpokenTexts: [String] = []
     private let maxSpokenTextHistory = 10
     private var operatorDelegate: OperatorGatewayDelegate?
@@ -151,6 +154,11 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     // MARK: - Session Management
 
     func updateSessionKey(_ key: String) {
+        guard key != sessionKey else {
+            logHandler("🎙️ [COORD] updateSessionKey: unchanged (\(key)), no-op")
+            return
+        }
+
         let wasActive = isSessionActive
         let wasConversationMode = isConversationModeOn
 
@@ -164,10 +172,29 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
         // If session is active, cleanly reset voice state for the new session (zaap-wiu)
         if wasActive {
+            // Seamless switch: if user just started listening and no speech/response is in flight,
+            // keep mic hot and only change the routing key.
+            let pending = voiceEngine.currentTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+            let canSeamlessSwitch = wasConversationMode &&
+                viewModel.state == .listening &&
+                pending.isEmpty &&
+                viewModel.partialTranscript.isEmpty &&
+                viewModel.responseText.isEmpty
+            if canSeamlessSwitch {
+                logHandler("🎙️ [COORD] updateSessionKey: seamless switch while listening, no mic reset")
+                viewModel.showSessionSwitchNotice = true
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 2_000_000_000)
+                    viewModel.showSessionSwitchNotice = false
+                }
+                return
+            }
+
             voiceEngine.stopListening()
             speaker.interrupt()
             micRestartTask?.cancel()
             micRestartTask = nil
+            cancelGatewayReadyTask()
             completePendingResponse()
 
             // Clear in-flight partial/response text and reset VM to idle
@@ -205,18 +232,30 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
         self.sessionKey = sessionKey ?? UUID().uuidString
         isSessionActive = true
         isConversationModeOn = true
+        cancelGatewayReadyTask()
+        logHandler("🎙️ [COORD] startSession: gatewayState=\(gateway.state) sessionKey=\(self.sessionKey)")
         // Always provide immediate visual feedback (zaap-4bp)
         if viewModel.state == .idle {
             viewModel.tapMic() // idle → listening
         }
-        if gateway.state == .connected {
-            // Already connected — start capturing voice immediately
-            voiceEngine.startListening()
-        } else if gateway.state == .disconnected {
-            // Connect first; gatewayDidConnect will start voice engine when ready
+        switch gateway.state {
+        case .connected:
+            logHandler("🎙️ [COORD] startSession: gateway already connected, starting voice engine now")
+            startVoiceEngineIfNeeded(context: "startSession.connected")
+        case .disconnected:
+            logHandler("🎙️ [COORD] startSession: gateway disconnected, connecting to \(gatewayURL.absoluteString)")
             gateway.connect(to: gatewayURL)
+            scheduleGatewayReadyWatchdog(context: "startSession.disconnected")
+        case .connecting:
+            logHandler("🎙️ [COORD] startSession: gateway is connecting; waiting for ready state")
+            scheduleGatewayReadyWatchdog(context: "startSession.connecting")
+        case .challenged:
+            logHandler("🎙️ [COORD] startSession: gateway is challenged; waiting for auth handshake")
+            scheduleGatewayReadyWatchdog(context: "startSession.challenged")
+        case .reconnecting(let attempt):
+            logHandler("🎙️ [COORD] startSession: gateway reconnecting (attempt \(attempt)); waiting for ready state")
+            scheduleGatewayReadyWatchdog(context: "startSession.reconnecting")
         }
-        // If gateway is .connecting or .challenged, gatewayDidConnect handles the rest
     }
 
     func toggleConversationMode() {
@@ -225,6 +264,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             isConversationModeOn = false
             micRestartTask?.cancel()
             micRestartTask = nil
+            cancelGatewayReadyTask()
             voiceEngine.stopListening()
             speaker.interrupt()
             completePendingResponse()
@@ -273,6 +313,7 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
     func stopSession() {
         let hasPending = flushPendingTranscript()
 
+        cancelGatewayReadyTask()
         voiceEngine.stopListening()
         speaker.interrupt()
         thinkingSoundPlayer?.stopPlaying()
@@ -378,25 +419,23 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
 
     nonisolated func gatewayDidConnect() {
         Task { @MainActor in
+            self.logHandler("🎙️ [COORD] gatewayDidConnect: sessionActive=\(self.isSessionActive) conversationMode=\(self.isConversationModeOn)")
             // Load sessions via operator gateway if no separate operator connection exists
             if operatorGateway == nil {
                 await sessionPicker?.loadSessions()
             }
             guard isSessionActive, isConversationModeOn else { return }
-            // Start voice engine if not already listening (zaap-4bp)
-            if !voiceEngine.isListening {
-                voiceEngine.startListening()
-            }
-            // Ensure UI reflects listening state (may have been set by startSession already)
-            if viewModel.state == .idle {
-                viewModel.tapMic() // idle → listening
-            }
+            cancelGatewayReadyTask()
+            startVoiceEngineIfNeeded(context: "gatewayDidConnect")
         }
     }
 
     nonisolated func gatewayDidDisconnect() {
         Task { @MainActor in
-            // Could trigger reconnection UI
+            self.logHandler("🎙️ [COORD] gatewayDidDisconnect: sessionActive=\(self.isSessionActive) conversationMode=\(self.isConversationModeOn)")
+            if self.isSessionActive, self.isConversationModeOn {
+                self.scheduleGatewayReadyWatchdog(context: "gatewayDidDisconnect")
+            }
         }
     }
 
@@ -515,6 +554,58 @@ final class VoiceChatCoordinator: ObservableObject, GatewayConnectionDelegate {
             viewModel.handleResponseComplete()
         default:
             logHandler("⚠️ [VOICE] unhandled chat state=\(state)")
+        }
+    }
+
+    // MARK: - Gateway Ready Watchdog
+
+    private func cancelGatewayReadyTask() {
+        gatewayReadyTask?.cancel()
+        gatewayReadyTask = nil
+    }
+
+    private func scheduleGatewayReadyWatchdog(context: String) {
+        cancelGatewayReadyTask()
+        guard isSessionActive, isConversationModeOn else { return }
+        let timeout = gatewayReadyStartTimeout
+        let poll = max(0.05, gatewayReadyPollInterval)
+        gatewayReadyTask = Task { @MainActor in
+            let started = Date()
+            var polls = 0
+            while !Task.isCancelled {
+                guard isSessionActive, isConversationModeOn else {
+                    logHandler("🎙️ [COORD] gatewayReadyWatchdog[\(context)]: stopping (session inactive)")
+                    return
+                }
+                polls += 1
+                if gateway.state == .connected {
+                    logHandler("🎙️ [COORD] gatewayReadyWatchdog[\(context)]: connected after \(polls) polls, starting voice engine")
+                    startVoiceEngineIfNeeded(context: "watchdog.\(context)")
+                    return
+                }
+                let elapsed = Date().timeIntervalSince(started)
+                if elapsed >= timeout {
+                    logHandler("⚠️ [COORD] gatewayReadyWatchdog[\(context)]: timed out after \(String(format: "%.2f", elapsed))s (state=\(gateway.state))")
+                    return
+                }
+                try? await Task.sleep(nanoseconds: UInt64(poll * 1_000_000_000))
+            }
+        }
+    }
+
+    private func startVoiceEngineIfNeeded(context: String) {
+        guard isSessionActive, isConversationModeOn else {
+            logHandler("🎙️ [COORD] startVoiceEngineIfNeeded[\(context)]: skipped (sessionActive=\(isSessionActive) conversationMode=\(isConversationModeOn))")
+            return
+        }
+        if !voiceEngine.isListening {
+            logHandler("🎙️ [COORD] startVoiceEngineIfNeeded[\(context)]: calling voiceEngine.startListening()")
+            voiceEngine.startListening()
+        } else {
+            logHandler("🎙️ [COORD] startVoiceEngineIfNeeded[\(context)]: already listening")
+        }
+        if viewModel.state == .idle {
+            viewModel.tapMic() // idle → listening
         }
     }
 }

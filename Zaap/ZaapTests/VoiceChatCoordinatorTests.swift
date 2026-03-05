@@ -2017,6 +2017,50 @@ extension VoiceChatCoordinatorTests {
                       "Voice engine should start listening when gateway connects")
     }
 
+    func testStartSessionWhenGatewayConnectingStartsListeningIfStateBecomesConnectedWithoutDelegateCallback() async throws {
+        gateway.state = .connecting
+        coordinator.gatewayReadyPollInterval = 0.01
+        coordinator.gatewayReadyStartTimeout = 0.2
+
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        XCTAssertFalse(voiceEngine.startListeningCalled,
+                       "Voice engine should not start before gateway is connected")
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 30_000_000)
+            gateway.state = .connected
+        }
+
+        try await Task.sleep(nanoseconds: 120_000_000)
+
+        XCTAssertTrue(voiceEngine.startListeningCalled,
+                      "Voice engine should start when gateway becomes connected even if delegate callback was missed")
+        XCTAssertEqual(viewModel.state, .listening)
+    }
+
+    func testStartSessionWhenGatewayChallengedStartsListeningIfStateBecomesConnectedWithoutDelegateCallback() async throws {
+        gateway.state = .challenged
+        coordinator.gatewayReadyPollInterval = 0.01
+        coordinator.gatewayReadyStartTimeout = 0.2
+
+        let url = URL(string: "wss://gateway.local:18789")!
+        coordinator.startSession(gatewayURL: url)
+        XCTAssertFalse(voiceEngine.startListeningCalled,
+                       "Voice engine should not start while gateway is challenged")
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 30_000_000)
+            gateway.state = .connected
+        }
+
+        try await Task.sleep(nanoseconds: 120_000_000)
+
+        XCTAssertTrue(voiceEngine.startListeningCalled,
+                      "Voice engine should start when challenged gateway becomes connected even if delegate callback was missed")
+        XCTAssertEqual(viewModel.state, .listening)
+    }
+
     func testStartSessionWhenGatewayAlreadyConnectedStartsImmediately() async throws {
         // Gateway already connected (eager connect completed before user tapped)
         gateway.state = .connected

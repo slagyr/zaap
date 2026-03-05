@@ -78,6 +78,7 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
     // Configuration
     let silenceThreshold: TimeInterval
     let watchdogInterval: TimeInterval
+    let coldStartWatchdogInterval: TimeInterval?
     let finalDebounceInterval: TimeInterval
     let minimumTranscriptLength = 3
 
@@ -102,6 +103,12 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
     private var hasReceivedPartial = false
     private var lastEmittedLength = 0
     private var pendingTranscript = ""
+    private var coldStartWatchdogMissCount = 0
+    private var coldStartHardRestartCount = 0
+    private let maxColdStartHardRestarts = 3
+    private var isPerformingInternalRecoveryRestart = false
+    private var hasSeenPartialInCurrentListen = false
+    private var useFastColdStartWatchdog = true
 
     init(speechRecognizer: any SpeechRecognizing,
          audioEngine: AudioEngine,
@@ -109,6 +116,7 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
          timerFactory: any TimerScheduling,
          silenceThreshold: TimeInterval = 1.5,
          watchdogInterval: TimeInterval = 3.0,
+         coldStartWatchdogInterval: TimeInterval? = nil,
          finalDebounceInterval: TimeInterval = 3.0) {
         self.speechRecognizer = speechRecognizer
         self.audioEngine = audioEngine
@@ -116,6 +124,7 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         self.timerFactory = timerFactory
         self.silenceThreshold = silenceThreshold
         self.watchdogInterval = watchdogInterval
+        self.coldStartWatchdogInterval = coldStartWatchdogInterval
         self.finalDebounceInterval = finalDebounceInterval
 
         speechRecognizer.prepareRecognizer()
@@ -138,6 +147,12 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         logHandler("🎙️ [STT] startListening: beginning setup")
         lastEmittedLength = 0
         currentTranscript = ""
+        if !isPerformingInternalRecoveryRestart {
+            coldStartWatchdogMissCount = 0
+            coldStartHardRestartCount = 0
+            hasSeenPartialInCurrentListen = false
+            useFastColdStartWatchdog = true
+        }
 
         guard speechRecognizer.authorizationStatus == .authorized else {
             logHandler("🎙️ [STT] startListening: notAuthorized (status=\(speechRecognizer.authorizationStatus))")
@@ -185,6 +200,10 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
                     self.hasReceivedPartial = true
                     self.watchdogTimer?.invalidate()
                     self.watchdogTimer = nil
+                    self.coldStartWatchdogMissCount = 0
+                    self.coldStartHardRestartCount = 0
+                    self.hasSeenPartialInCurrentListen = true
+                    self.useFastColdStartWatchdog = true
                 }
                 self.onPartialTranscript?(self.currentTranscript)
                 self.resetSilenceTimer()
@@ -228,6 +247,10 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
         currentTranscript = ""
         lastEmittedLength = 0
         pendingTranscript = ""
+        if !isPerformingInternalRecoveryRestart {
+            hasSeenPartialInCurrentListen = false
+            useFastColdStartWatchdog = true
+        }
     }
 
     // MARK: - Private
@@ -272,15 +295,45 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
     /// this and creates a fresh task.
     private func startWatchdog() {
         watchdogTimer?.invalidate()
-        watchdogTimer = timerFactory.scheduleTimer(interval: watchdogInterval) { [weak self] in
+        let interval: TimeInterval
+        if !hasSeenPartialInCurrentListen, useFastColdStartWatchdog {
+            interval = coldStartWatchdogInterval ?? watchdogInterval
+        } else {
+            interval = watchdogInterval
+        }
+        watchdogTimer = timerFactory.scheduleTimer(interval: interval) { [weak self] in
             Task { @MainActor in
                 guard let self = self, self.isListening, !self.hasReceivedPartial else { return }
-                self.logHandler("🎙️ [STT] watchdog: no partials after \(self.watchdogInterval)s, restarting recognition")
+                self.coldStartWatchdogMissCount += 1
+                self.logHandler("🎙️ [STT] watchdog: no partials after \(interval)s (miss \(self.coldStartWatchdogMissCount)), restarting recognition")
+                // If repeated watchdog misses occur with zero partials, perform a full
+                // stop/start cycle (same recovery as manual mic toggle on device).
+                if self.coldStartWatchdogMissCount >= 2, self.coldStartHardRestartCount < self.maxColdStartHardRestarts {
+                    self.coldStartHardRestartCount += 1
+                    // After one hard restart, back off to normal watchdog pacing
+                    // to avoid rapid restart thrash while user is speaking.
+                    self.useFastColdStartWatchdog = false
+                    self.logHandler("🎙️ [STT] watchdog: repeated cold-start misses, performing hard restart (\(self.coldStartHardRestartCount)/\(self.maxColdStartHardRestarts))")
+                    self.hardRestartListening()
+                    return
+                }
                 self.restartRecognition()
                 // Re-arm watchdog in case the model still isn't ready
                 self.startWatchdog()
             }
         }
+    }
+
+    /// Fully tear down and restart listening, matching manual mic toggle behavior.
+    /// Used when repeated watchdog misses indicate the recognizer/audio pipeline
+    /// is wedged in a cold-start state on real devices.
+    private func hardRestartListening() {
+        guard isListening else { return }
+        isPerformingInternalRecoveryRestart = true
+        defer { isPerformingInternalRecoveryRestart = false }
+        coldStartWatchdogMissCount = 0
+        stopListening()
+        startListening()
     }
 
     /// Handle Apple's isFinal by debouncing: save the transcript, restart recognition,
@@ -428,6 +481,9 @@ final class VoiceEngine<AudioEngine: AudioEngineProviding> {
                     self.hasReceivedPartial = true
                     self.watchdogTimer?.invalidate()
                     self.watchdogTimer = nil
+                    self.coldStartWatchdogMissCount = 0
+                    self.coldStartHardRestartCount = 0
+                    self.hasSeenPartialInCurrentListen = true
                 }
 
                 // New speech arrived — if we were debouncing after isFinal,

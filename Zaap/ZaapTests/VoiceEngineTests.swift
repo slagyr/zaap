@@ -55,6 +55,8 @@ final class MockAudioEngineProvider: AudioEngineProviding {
     var prepareCalled = false
     var startCalled = false
     var stopCalled = false
+    var startCallCount = 0
+    var stopCallCount = 0
     var tapInstalled = false
     var tapRemoved = false
 
@@ -62,11 +64,13 @@ final class MockAudioEngineProvider: AudioEngineProviding {
 
     func start() throws {
         startCalled = true
+        startCallCount += 1
         isRunning = true
     }
 
     func stop() {
         stopCalled = true
+        stopCallCount += 1
         isRunning = false
     }
 
@@ -1051,6 +1055,103 @@ final class VoiceEngineTests: XCTestCase {
 
         let hasWatchdogLog = logMessages.contains { $0.contains("watchdog") }
         XCTAssertTrue(hasWatchdogLog, "Watchdog restart should log. Got: \(logMessages)")
+    }
+
+    @MainActor
+    func testFastColdStartWatchdogBacksOffAfterHardRestart() async {
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5,
+            watchdogInterval: 3.0,
+            coldStartWatchdogInterval: 1.0
+        )
+
+        engine.startListening()
+        XCTAssertEqual(timerFactory.lastInterval, 1.0,
+                       "Initial cold-start watchdog should use fast interval")
+
+        // miss 1 -> restartRecognition (still fast path)
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        // miss 2 -> hard restart, then watchdog should back off to normal interval
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertEqual(timerFactory.lastInterval, 3.0,
+                       "After hard restart, watchdog should back off to normal interval")
+    }
+
+    @MainActor
+    func testRepeatedColdStartWatchdogTriggersHardRestart() async {
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5,
+            watchdogInterval: 3.0
+        )
+
+        engine.startListening()
+        XCTAssertEqual(audioEngine.startCallCount, 1)
+        XCTAssertEqual(audioEngine.stopCallCount, 0)
+
+        // First watchdog miss: normal recognition-task restart.
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        // Second consecutive watchdog miss with no partials: hard restart (stop/start).
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertGreaterThanOrEqual(audioEngine.stopCallCount, 1,
+                                    "Engine should perform a hard stop after repeated cold-start misses")
+        XCTAssertGreaterThanOrEqual(audioEngine.startCallCount, 2,
+                                    "Engine should perform a fresh start after hard cold-start recovery")
+        XCTAssertTrue(engine.isListening)
+    }
+
+    @MainActor
+    func testColdStartWatchdogCanHardRestartMoreThanOnce() async {
+        engine = VoiceEngine(
+            speechRecognizer: speechRecognizer,
+            audioEngine: audioEngine,
+            audioSession: audioSession,
+            timerFactory: timerFactory,
+            silenceThreshold: 1.5,
+            watchdogInterval: 3.0
+        )
+
+        engine.startListening()
+
+        // First hard-restart cycle (2 misses)
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        // Second hard-restart cycle (2 more misses)
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+        timerFactory.lastFireHandler?()
+        await Task.yield()
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.01))
+
+        XCTAssertGreaterThanOrEqual(audioEngine.stopCallCount, 2,
+                                    "Engine should be able to hard-restart multiple times if cold-start persists")
+        XCTAssertGreaterThanOrEqual(audioEngine.startCallCount, 3)
+        XCTAssertTrue(engine.isListening)
     }
 
     // MARK: - Speech Recognizer Pre-warm

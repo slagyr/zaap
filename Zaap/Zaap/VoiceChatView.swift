@@ -18,7 +18,8 @@ struct VoiceChatView: View {
             speechRecognizer: RealSpeechRecognizer(),
             audioEngine: RealAudioEngineProvider(),
             audioSession: RealAudioSessionConfigurator(),
-            timerFactory: RealTimerFactory()
+            timerFactory: RealTimerFactory(),
+            coldStartWatchdogInterval: 1.0
         )
         let pairingManager = NodePairingManager()
         let nodeGateway = GatewayConnection(
@@ -54,7 +55,8 @@ struct VoiceChatView: View {
             speechRecognizer: RealSpeechRecognizer(),
             audioEngine: sharedAudioEngine,
             audioSession: RealAudioSessionConfigurator(),
-            timerFactory: RealTimerFactory()
+            timerFactory: RealTimerFactory(),
+            coldStartWatchdogInterval: 1.0
         )
         let diagCoord = STTDiagnosticsCoordinator(
             diagnosticsViewModel: diagVM,
