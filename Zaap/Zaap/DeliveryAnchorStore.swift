@@ -31,4 +31,8 @@ final class UserDefaultsDeliveryAnchorStore: DeliveryAnchorStoring {
 final class NullDeliveryAnchorStore: DeliveryAnchorStoring {
     func lastDelivered(for dataType: DeliveryDataType) -> Date? { nil }
     func setLastDelivered(_ date: Date, for dataType: DeliveryDataType) {}
+
+    func lastSampleCount(for dataType: DeliveryDataType) -> Int? { nil }
+
+    func setLastSampleCount(_ count: Int, for dataType: DeliveryDataType) {}
 }
