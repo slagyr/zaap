@@ -105,8 +105,8 @@
 		W10004 /* RetryDrainServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20004 /* RetryDrainServiceTests.swift */; };
 		W10005 /* RetryingWebhookClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20005 /* RetryingWebhookClient.swift */; };
 		W10006 /* RetryingWebhookClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20006 /* RetryingWebhookClientTests.swift */; };
-		W10007 /* ThinkingSoundPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20007 /* ThinkingSoundPlayer.swift */; };
-		W10008 /* ThinkingSoundPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20008 /* ThinkingSoundPlayerTests.swift */; };
+		W10007 /* ThinkingSoundPlayer.swift in Sources */,
+				W10008 /* ThinkingSoundPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20008 /* ThinkingSoundPlayerTests.swift */; };
 		X10001 /* STTDiagnosticsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = X20001 /* STTDiagnosticsViewModel.swift */; };
 		X10002 /* STTDiagnosticsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = X20002 /* STTDiagnosticsViewModelTests.swift */; };
 		X10003 /* STTDiagnosticsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = X20003 /* STTDiagnosticsCoordinator.swift */; };
@@ -120,6 +120,7 @@
 		Z10001 /* DualDiagnosticsPanelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = Z20001 /* DualDiagnosticsPanelTests.swift */; };
 		RR0302 /* RespiratoryRateReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = RR0303 /* RespiratoryRateReaderTests.swift */; };
 		RH0302 /* RestingHeartRateReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = RH0303 /* RestingHeartRateReaderTests.swift */; };
+		1C8521B42B6346E2965DB9B9 /* AwakeSoundPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D683FFE09E9B491BA95E329D /* AwakeSoundPlayer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -250,6 +251,7 @@
 		Z20001 /* DualDiagnosticsPanelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualDiagnosticsPanelTests.swift; sourceTree = "<group>"; };
 		RR0303 /* RespiratoryRateReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RespiratoryRateReaderTests.swift; sourceTree = "<group>"; };
 		RH0303 /* RestingHeartRateReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestingHeartRateReaderTests.swift; sourceTree = "<group>"; };
+		D683FFE09E9B491BA95E329D /* AwakeSoundPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwakeSoundPlayer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -293,6 +295,7 @@
 				W20003 /* RetryDrainService.swift */,
 				W20005 /* RetryingWebhookClient.swift */,
 				W20007 /* ThinkingSoundPlayer.swift */,
+				D683FFE09E9B491BA95E329D /* AwakeSoundPlayer.swift */,
 				A20013 /* LocationDeliveryService.swift */,
 				B20001 /* HeartRateReader.swift */,
 				B20002 /* HeartRateDeliveryService.swift */,
@@ -528,6 +531,7 @@
 				W10003 /* RetryDrainService.swift in Sources */,
 				W10005 /* RetryingWebhookClient.swift in Sources */,
 				W10007 /* ThinkingSoundPlayer.swift in Sources */,
+				1C8521B42B6346E2965DB9B9 /* AwakeSoundPlayer.swift in Sources */,
 				A10010 /* LocationDeliveryService.swift in Sources */,
 				A10011 /* SleepDeliveryService.swift in Sources */,
 				D10001 /* WorkoutReader.swift in Sources */,
