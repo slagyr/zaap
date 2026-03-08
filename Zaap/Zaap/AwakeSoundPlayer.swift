@@ -14,30 +14,21 @@ class AwakeSoundPlayer {
 
         let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
 
-        sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList in
+        sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
 
             let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
-
-            let buffer = ablPointer[0]
-
-            let ptr = buffer.mData!.assumingMemoryBound(to: Float.self)
-
-            let sampleRate = 44100.0
-
-            let frequency = 1200.0
-
+            let ptr = ablPointer[0].mData!.assumingMemoryBound(to: Float.self)
+            let sampleRate: Double = 44100.0
+            let frequency: Double = 1200.0
             let amplitude: Float = 0.3
+            let twoPiF: Double = 2.0 * Double.pi * frequency
 
             for frame in 0..<Int(frameCount) {
-
-                let time = Double(frame) / sampleRate
-
-                ptr[frame] = amplitude * sin(2 * .pi * frequency * time)
-
+                let phase: Double = twoPiF * Double(frame) / sampleRate
+                ptr[frame] = amplitude * Float(sin(phase))
             }
 
             return noErr
-
         }
 
         engine.attach(sourceNode!)
