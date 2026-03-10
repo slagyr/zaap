@@ -1,6 +1,8 @@
 {:number "014"
  :status :active
  :stories [
+           {:id "zaap-duu" :title "HealthKit background delivery not firing — add diagnostics"}
+
            {:id "zaap-lzy" :title "Re-deliver health telemetry when new samples arrive — sampleCount-based dedup"}
 {:id "zaap-zxt" :title "Send Now silent errors — surface delivery failures in UI"}
            {:id "zaap-ctx" :title "Add queryTimestamp to daily summary structs for accurate collection time"}
