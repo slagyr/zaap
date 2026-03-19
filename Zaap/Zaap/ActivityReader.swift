@@ -90,7 +90,7 @@ final class ActivityReader {
             steps: Int(steps),
             distanceMeters: distance,
             activeEnergyKcal: energy,
-            timestamp: Date()
+            queryTimestamp: Date()
         )
 
         logger.info("Activity summary: \(summary.steps) steps, \(String(format: "%.0f", distance))m, \(String(format: "%.0f", energy))kcal")

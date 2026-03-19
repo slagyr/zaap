@@ -23,7 +23,7 @@
         "action": "agent",
         "agentId": "main",
         "sessionKey": "hook:sleep",
-        "messageTemplate": "😴 Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/sleep.md and follow the instructions there.",
+        "messageTemplate": "TIMESTAMP: {{queryTimestamp}} 😴 Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/sleep.md and follow the instructions there.",
         "deliver": false,
         "model": "anthropic/claude-haiku-4-5"
       },
@@ -34,7 +34,7 @@
         "action": "agent",
         "agentId": "main",
         "sessionKey": "hook:heartrate",
-        "messageTemplate": "❤️ Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/heartrate.md and follow the instructions there.",
+        "messageTemplate": "TIMESTAMP: {{queryTimestamp}} ❤️ Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/heartrate.md and follow the instructions there.",
         "deliver": false,
         "model": "anthropic/claude-haiku-4-5"
       },
@@ -45,7 +45,7 @@
         "action": "agent",
         "agentId": "main",
         "sessionKey": "hook:activity",
-        "messageTemplate": "🏃 Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/activity.md and follow the instructions there.",
+        "messageTemplate": "TIMESTAMP: {{queryTimestamp}} 🏃 Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/activity.md and follow the instructions there.",
         "deliver": false,
         "model": "anthropic/claude-haiku-4-5"
       },
@@ -56,7 +56,7 @@
         "action": "agent",
         "agentId": "main",
         "sessionKey": "hook:workout",
-        "messageTemplate": "💪 Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/workout.md and follow the instructions there.",
+        "messageTemplate": "TIMESTAMP: {{queryTimestamp}} 💪 Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/workout.md and follow the instructions there.",
         "deliver": false,
         "model": "anthropic/claude-haiku-4-5"
       },
@@ -67,7 +67,7 @@
         "action": "agent",
         "agentId": "main",
         "sessionKey": "hook:hrv",
-        "messageTemplate": "💜 Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/hrv.md and follow the instructions there.",
+        "messageTemplate": "TIMESTAMP: {{queryTimestamp}} 💜 Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/hrv.md and follow the instructions there.",
         "deliver": false,
         "model": "anthropic/claude-haiku-4-5"
       },
@@ -78,7 +78,7 @@
         "action": "agent",
         "agentId": "main",
         "sessionKey": "hook:spo2",
-        "messageTemplate": "🩺 Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/spo2.md and follow the instructions there.",
+        "messageTemplate": "TIMESTAMP: {{queryTimestamp}} 🩺 Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/spo2.md and follow the instructions there.",
         "deliver": false,
         "model": "anthropic/claude-haiku-4-5"
       },
@@ -89,7 +89,7 @@
         "action": "agent",
         "agentId": "main",
         "sessionKey": "hook:respiratory-rate",
-        "messageTemplate": "🌬️ Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/respiratory-rate.md and follow the instructions there.",
+        "messageTemplate": "TIMESTAMP: {{queryTimestamp}} 🌬️ Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/respiratory-rate.md and follow the instructions there.",
         "deliver": false,
         "model": "anthropic/claude-haiku-4-5"
       },
@@ -100,7 +100,7 @@
         "action": "agent",
         "agentId": "main",
         "sessionKey": "hook:resting-heart-rate",
-        "messageTemplate": "❤️ Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/resting-heart-rate.md and follow the instructions there.",
+        "messageTemplate": "TIMESTAMP: {{queryTimestamp}} ❤️ Zaap health data received. JSON body: {{body}}\n\nRead ~/.openclaw/workspace/hooks/resting-heart-rate.md and follow the instructions there.",
         "deliver": false,
         "model": "anthropic/claude-haiku-4-5"
       },

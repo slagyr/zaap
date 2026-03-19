@@ -149,6 +149,7 @@ final class RespiratoryRateReader {
 
         let summary = DailyRespiratoryRateSummary(
             date: dateFormatter.string(from: date),
+            queryTimestamp: Date(),
             minRate: minRate,
             maxRate: maxRate,
             avgRate: avgRate,

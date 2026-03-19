@@ -180,6 +180,7 @@ final class HeartRateReader {
 
         let summary = DailyHeartRateSummary(
             date: dateFormatter.string(from: date),
+            queryTimestamp: Date(),
             minBPM: minBPM,
             maxBPM: maxBPM,
             avgBPM: avgBPM,

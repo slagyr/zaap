@@ -143,6 +143,7 @@ final class RestingHeartRateReader {
 
         let summary = DailyRestingHRSummary(
             date: dateFormatter.string(from: date),
+            queryTimestamp: Date(),
             restingBPM: latestBPM,
             sampleCount: samples.count,
             samples: samples
