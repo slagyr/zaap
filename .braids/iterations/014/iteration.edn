@@ -1,5 +1,5 @@
 {:number "014"
- :status :active
+ :status :complete
  :stories [
            {:id "zaap-duu" :title "HealthKit background delivery not firing — add diagnostics"}
 
