@@ -43,7 +43,7 @@ final class PairingViewModel {
         if gatewayAddress.hasPrefix("wss://") || gatewayAddress.hasPrefix("ws://") {
             url = URL(string: gatewayAddress)!
         } else {
-            url = URL(string: "wss://\(gatewayAddress):18789")!
+            url = URL(string: "wss://\(gatewayAddress)")!
         }
 
         isConnecting = true

@@ -36,9 +36,9 @@ final class PairingViewModelTests: XCTestCase {
     }
 
     func testGatewayAddressLoadsFromPairingManager() throws {
-        try pairingManager.storeGatewayURL(URL(string: "wss://myhost.ts.net:18789")!)
+        try pairingManager.storeGatewayURL(URL(string: "wss://myhost.ts.net")!)
         let vm = PairingViewModel(pairingManager: pairingManager, gateway: mockGateway)
-        XCTAssertEqual(vm.gatewayAddress, "wss://myhost.ts.net:18789")
+        XCTAssertEqual(vm.gatewayAddress, "wss://myhost.ts.net")
     }
 
     // MARK: - Connect
@@ -47,7 +47,7 @@ final class PairingViewModelTests: XCTestCase {
         viewModel.gatewayAddress = "myhost.ts.net"
         viewModel.connect()
 
-        XCTAssertEqual(mockGateway.connectURL?.absoluteString, "wss://myhost.ts.net:18789")
+        XCTAssertEqual(mockGateway.connectURL?.absoluteString, "wss://myhost.ts.net")
     }
 
     func testConnectWithFullURLUsesItDirectly() {
