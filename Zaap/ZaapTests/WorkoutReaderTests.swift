@@ -33,9 +33,15 @@ final class WorkoutReaderTests: XCTestCase {
     // MARK: - Failure paths (HealthKit unavailable in simulator)
 
     func testRequestAuthorizationThrowsWhenHealthKitUnavailable() async {
-        let reader = WorkoutReader()
+        // Inject a nil healthStore to exercise the guard path explicitly.
+        // The simulator's HKHealthStore.isHealthDataAvailable() returns true,
+        // so a plain `WorkoutReader()` would skip the guard and call into
+        // HKHealthStore.requestAuthorization, which pops a system permission
+        // prompt and waits forever for user interaction.
+        let reader = WorkoutReader(healthStore: nil)
         do {
             try await reader.requestAuthorization()
+            XCTFail("Expected healthKitNotAvailable error")
         } catch {
             XCTAssertEqual(error as? WorkoutReader.WorkoutError, .healthKitNotAvailable)
         }

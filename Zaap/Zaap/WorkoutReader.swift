@@ -52,6 +52,13 @@ final class WorkoutReader {
         }
     }
 
+    /// Test-only initializer that lets us exercise the
+    /// `healthKitNotAvailable` guard path on simulators where
+    /// `HKHealthStore.isHealthDataAvailable()` returns true.
+    init(healthStore: HKHealthStore?) {
+        self.healthStore = healthStore
+    }
+
     // MARK: - Authorization
 
     /// Request read access to workout data.
