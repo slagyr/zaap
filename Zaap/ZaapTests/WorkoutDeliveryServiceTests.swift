@@ -106,12 +106,57 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
         let (service, reader, webhook, settings, _, _) = makeService()
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
-        reader.sessionsToReturn = []
+        reader.sessionsToReturn = [
+            WorkoutReader.WorkoutSession(
+                workoutType: "running",
+                startDate: Date(timeIntervalSince1970: 100),
+                endDate: Date(timeIntervalSince1970: 200),
+                durationMinutes: 30,
+                totalCalories: 300,
+                distanceMeters: 5000
+            )
+        ]
 
         try await service.sendNow()
 
         XCTAssertEqual(webhook.postCallCount, 1)
         XCTAssertEqual(webhook.lastPath, "/workout")
+    }
+
+    func testSendNowPostsEachWorkoutAsItsOwnPayload() async throws {
+        let (service, reader, webhook, settings, _, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        reader.sessionsToReturn = [
+            WorkoutReader.WorkoutSession(
+                workoutType: "running",
+                startDate: Date(timeIntervalSince1970: 100),
+                endDate: Date(timeIntervalSince1970: 200),
+                durationMinutes: 30,
+                totalCalories: 300,
+                distanceMeters: 5000
+            ),
+            WorkoutReader.WorkoutSession(
+                workoutType: "cycling",
+                startDate: Date(timeIntervalSince1970: 300),
+                endDate: Date(timeIntervalSince1970: 400),
+                durationMinutes: 45,
+                totalCalories: 450,
+                distanceMeters: 12000
+            )
+        ]
+
+        try await service.sendNow()
+
+        XCTAssertEqual(webhook.postCallCount, 2)
+        XCTAssertEqual(webhook.postedPaths.compactMap { $0 }, ["/workout", "/workout"])
+        XCTAssertEqual(webhook.postedPayloadData.count, 2)
+
+        let first = try JSONDecoder().decode(WorkoutReader.WorkoutSession.self, from: webhook.postedPayloadData[0])
+        let second = try JSONDecoder().decode(WorkoutReader.WorkoutSession.self, from: webhook.postedPayloadData[1])
+
+        XCTAssertEqual(first.workoutType, "running")
+        XCTAssertEqual(second.workoutType, "cycling")
     }
 
     func testSendNowThrowsWhenNotConfigured() async {
@@ -130,7 +175,16 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
         settings.webhookURL = "https://example.com"
         settings.authToken = "token"
         settings.workoutTrackingEnabled = false
-        reader.sessionsToReturn = []
+        reader.sessionsToReturn = [
+            WorkoutReader.WorkoutSession(
+                workoutType: "walking",
+                startDate: Date(timeIntervalSince1970: 500),
+                endDate: Date(timeIntervalSince1970: 650),
+                durationMinutes: 25,
+                totalCalories: 180,
+                distanceMeters: 2200
+            )
+        ]
 
         try await service.sendNow()
 
@@ -245,6 +299,41 @@ final class WorkoutDeliveryServiceTests: XCTestCase {
         XCTAssertEqual(log.records[0].dataType, .workout)
         XCTAssertFalse(log.records[0].success)
         XCTAssertNotNil(log.records[0].errorMessage)
+    }
+
+    func testDeliverLatestPostsEachWorkoutAsItsOwnPayload() {
+        let (service, reader, webhook, settings, _, _) = makeService()
+        settings.webhookURL = "https://example.com"
+        settings.authToken = "token"
+        settings.workoutTrackingEnabled = true
+        reader.sessionsToReturn = [
+            WorkoutReader.WorkoutSession(
+                workoutType: "running",
+                startDate: Date(timeIntervalSince1970: 100),
+                endDate: Date(timeIntervalSince1970: 200),
+                durationMinutes: 30,
+                totalCalories: 300,
+                distanceMeters: 5000
+            ),
+            WorkoutReader.WorkoutSession(
+                workoutType: "cycling",
+                startDate: Date(timeIntervalSince1970: 300),
+                endDate: Date(timeIntervalSince1970: 400),
+                durationMinutes: 45,
+                totalCalories: 450,
+                distanceMeters: 12000
+            )
+        ]
+
+        service.deliverLatest()
+
+        let exp = expectation(description: "delivered workouts")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { exp.fulfill() }
+        waitForExpectations(timeout: 2)
+
+        XCTAssertEqual(webhook.postCallCount, 2)
+        XCTAssertEqual(webhook.postedPaths.compactMap { $0 }, ["/workout", "/workout"])
+        XCTAssertEqual(webhook.postedPayloadData.count, 2)
     }
 
     // MARK: - Deduplication

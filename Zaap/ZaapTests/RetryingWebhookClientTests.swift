@@ -88,6 +88,21 @@ final class RetryingWebhookClientTests: XCTestCase {
         XCTAssertEqual(decoded?["name"], "test")
     }
 
+    func testFailedBackgroundPostDoesNotEnqueuePermanent400() async {
+        let webhook = MockWebhookClient()
+        webhook.shouldThrow = WebhookClient.WebhookError.invalidResponse(statusCode: 400)
+        let (client, _, queue, _) = makeClient(webhook: webhook)
+
+        do {
+            try await client.post(["key": "value"], to: "/workout")
+            XCTFail("Expected error")
+        } catch {
+            // expected
+        }
+
+        XCTAssertTrue(queue.isEmpty)
+    }
+
     // MARK: - Foreground failure does NOT enqueue
 
     func testFailedForegroundPostDoesNotEnqueue() async {

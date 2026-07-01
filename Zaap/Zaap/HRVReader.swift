@@ -140,7 +140,6 @@ final class HRVReader {
 
         let summary = DailyHRVSummary(
             date: dateFormatter.string(from: date),
-            queryTimestamp: Date(),
             minSDNN: minSDNN,
             maxSDNN: maxSDNN,
             avgSDNN: avgSDNN,

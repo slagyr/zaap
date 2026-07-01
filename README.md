@@ -152,18 +152,16 @@ To receive Zaap data in your OpenClaw instance, you need to register webhook hoo
 }
 ```
 
-**Workout** (`/hooks/workout`) — array of sessions:
+**Workout** (`/hooks/workout`) — one POST per session:
 ```json
-[
-  {
-    "workoutType": "running",
-    "startDate": "2026-02-19T06:30:00Z",
-    "endDate": "2026-02-19T07:15:00Z",
-    "durationMinutes": 45,
-    "totalCalories": 520.0,
-    "distanceMeters": 7200.0
-  }
-]
+{
+  "workoutType": "running",
+  "startDate": "2026-02-19T06:30:00Z",
+  "endDate": "2026-02-19T07:15:00Z",
+  "durationMinutes": 45,
+  "totalCalories": 520.0,
+  "distanceMeters": 7200.0
+}
 ```
 
 ## Privacy & Permissions

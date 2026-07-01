@@ -4,6 +4,25 @@ import os
 
 private let logger = Logger(subsystem: "com.zaap.app", category: "AppLaunch")
 
+enum AppLaunchPolicy {
+    static var shouldStartServices: Bool {
+        shouldStartServices(
+            environment: ProcessInfo.processInfo.environment,
+            isXCTestLoaded: NSClassFromString("XCTestCase") != nil
+        )
+    }
+
+    static func shouldStartServices(
+        environment: [String: String],
+        isXCTestLoaded: Bool
+    ) -> Bool {
+        if environment["ZAAP_DISABLE_SERVICE_STARTUP"] == "1" {
+            return false
+        }
+        return !isXCTestLoaded
+    }
+}
+
 @main
 struct ZaapApp: App {
 
@@ -45,6 +64,11 @@ struct ZaapApp: App {
     }
 
     private func startServices() {
+        guard AppLaunchPolicy.shouldStartServices else {
+            logger.info("Skipping delivery services during test launch")
+            return
+        }
+
         logger.info("Starting delivery services")
         guard let context = modelContainer?.mainContext else {
             logger.error("Cannot start services — no model context")
@@ -54,6 +78,11 @@ struct ZaapApp: App {
         // Set up retry queue — prune expired items on launch
         let retryQueue = WebhookRetryQueue()
         retryQueue.pruneExpired()
+        retryQueue.prune { item in
+            guard item.path == "/workout" else { return false }
+            guard let json = try? JSONSerialization.jsonObject(with: item.payload) else { return false }
+            return json is [Any]
+        }
         let drainService = RetryDrainService(queue: retryQueue, poster: WebhookClient.shared)
         let retryingClient = RetryingWebhookClient(
             inner: WebhookClient.shared,

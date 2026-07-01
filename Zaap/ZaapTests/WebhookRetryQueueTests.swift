@@ -174,6 +174,22 @@ final class WebhookRetryQueueTests: XCTestCase {
         XCTAssertEqual(queue.count, 0)
     }
 
+    func testPruneWhereRemovesMatchingMalformedWorkoutPayloads() {
+        let queue = WebhookRetryQueue(skipLoad: true)
+        queue.enqueue(path: "/workout", payload: Data("[{\"workoutType\":\"running\"}]".utf8))
+        queue.enqueue(path: "/workout", payload: Data("{\"workoutType\":\"cycling\"}".utf8))
+        queue.enqueue(path: "/sleep", payload: Data("{\"hoursAsleep\":8}".utf8))
+
+        queue.prune { item in
+            guard item.path == "/workout" else { return false }
+            return (try? JSONSerialization.jsonObject(with: item.payload)) is [Any]
+        }
+
+        XCTAssertEqual(queue.count, 2)
+        XCTAssertEqual(queue.items[0].path, "/workout")
+        XCTAssertEqual(queue.items[1].path, "/sleep")
+    }
+
     // MARK: - Dequeue
 
     func testDequeueReturnsOldestItem() {

@@ -2,6 +2,19 @@ import XCTest
 import CoreLocation
 @testable import Zaap
 
+private final class FakeAuthorizationLocationManager: CLLocationManager {
+    private let fakeAuthorizationStatus: CLAuthorizationStatus
+
+    init(fakeAuthorizationStatus: CLAuthorizationStatus) {
+        self.fakeAuthorizationStatus = fakeAuthorizationStatus
+        super.init()
+    }
+
+    override var authorizationStatus: CLAuthorizationStatus {
+        fakeAuthorizationStatus
+    }
+}
+
 @MainActor
 final class LocationManagerTests: XCTestCase {
 
@@ -55,10 +68,9 @@ final class LocationManagerTests: XCTestCase {
 
     func testAuthorizationChangeUpdatesStatus() {
         let manager = LocationManager()
-        let clManager = CLLocationManager()
+        let clManager = FakeAuthorizationLocationManager(fakeAuthorizationStatus: .authorizedAlways)
         manager.locationManagerDidChangeAuthorization(clManager)
-        // Just verifies it doesn't crash and updates the status
-        XCTAssertEqual(manager.authorizationStatus, clManager.authorizationStatus)
+        XCTAssertEqual(manager.authorizationStatus, .authorizedAlways)
     }
 
     func testStopMonitoringSetsIsMonitoringFalse() {

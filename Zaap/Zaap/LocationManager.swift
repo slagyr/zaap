@@ -36,7 +36,6 @@ final class LocationManager: NSObject {
     override init() {
         super.init()
         manager.delegate = self
-        authorizationStatus = manager.authorizationStatus
     }
 
     // MARK: - Public API

@@ -61,7 +61,7 @@ final class WorkoutDeliveryService {
         guard settings.isConfigured else { throw SendNowError.notConfigured }
         try await workoutReader.requestAuthorization()
         let sessions = try await workoutReader.fetchRecentSessions(from: nil, to: nil)
-        try await webhookClient.postForeground(sessions, to: "/workout")
+        try await deliverSessions(sessions, foreground: true)
         logger.info("Send Now: Workout data delivered")
         deliveryLog.record(dataType: .workout, timestamp: Date(), success: true, errorMessage: nil)
     }
@@ -82,13 +82,23 @@ final class WorkoutDeliveryService {
                     logger.info("Skipping workout delivery \u{2014} no new workouts since last delivery")
                     return
                 }
-                try await webhookClient.post(sessions, to: "/workout")
+                try await deliverSessions(sessions, foreground: false)
                 anchorStore.setLastDelivered(Date(), for: .workout)
                 logger.info("Delivered \(sessions.count) workout(s)")
                 deliveryLog.record(dataType: .workout, timestamp: Date(), success: true, errorMessage: nil)
             } catch {
                 logger.error("Workout delivery failed: \(error.localizedDescription, privacy: .public)")
                 deliveryLog.record(dataType: .workout, timestamp: Date(), success: false, errorMessage: error.localizedDescription)
+            }
+        }
+    }
+
+    private func deliverSessions(_ sessions: [WorkoutReader.WorkoutSession], foreground: Bool) async throws {
+        for session in sessions {
+            if foreground {
+                try await webhookClient.postForeground(session, to: "/workout")
+            } else {
+                try await webhookClient.post(session, to: "/workout")
             }
         }
     }

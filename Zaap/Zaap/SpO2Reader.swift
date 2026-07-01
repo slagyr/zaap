@@ -140,7 +140,6 @@ final class SpO2Reader {
 
         let summary = DailySpO2Summary(
             date: dateFormatter.string(from: date),
-            queryTimestamp: Date(),
             minSpO2: minSpO2,
             maxSpO2: maxSpO2,
             avgSpO2: avgSpO2,

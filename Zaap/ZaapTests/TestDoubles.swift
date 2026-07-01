@@ -10,12 +10,18 @@ final class MockWebhookClient: WebhookPosting, @unchecked Sendable {
     var postCallCount = 0
     var lastPath: String?
     var lastPayloadData: Data?
+    var postedPaths: [String?] = []
+    var postedPayloadData: [Data] = []
     var shouldThrow: Error?
 
     func post<T: Encodable>(_ payload: T, to path: String? = nil) async throws {
         postCallCount += 1
         lastPath = path
         lastPayloadData = try JSONEncoder().encode(payload)
+        postedPaths.append(path)
+        if let lastPayloadData {
+            postedPayloadData.append(lastPayloadData)
+        }
         if let error = shouldThrow {
             throw error
         }

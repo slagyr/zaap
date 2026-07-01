@@ -100,6 +100,13 @@ final class WebhookRetryQueue {
         onCountChange?(count)
     }
 
+    /// Remove any queued items that match the supplied predicate.
+    func prune(where shouldRemove: (RetryQueueItem) -> Bool) {
+        items.removeAll(where: shouldRemove)
+        save()
+        onCountChange?(count)
+    }
+
     // MARK: - Persistence
 
     private static var storageURL: URL {

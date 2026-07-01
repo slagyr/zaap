@@ -35,8 +35,10 @@ final class RetryingWebhookClient: WebhookPosting, @unchecked Sendable {
             // Success — trigger drain of any queued items
             await drainService.notifySuccess()
         } catch {
-            // Failure — encode and enqueue for later retry
-            enqueuePayload(payload, path: path)
+            // Permanent client-side failures should not accumulate in retry.
+            if shouldEnqueue(error) {
+                enqueuePayload(payload, path: path)
+            }
             throw error
         }
     }
@@ -54,6 +56,13 @@ final class RetryingWebhookClient: WebhookPosting, @unchecked Sendable {
     }
 
     // MARK: - Private
+
+    private func shouldEnqueue(_ error: Error) -> Bool {
+        guard case let WebhookClient.WebhookError.invalidResponse(statusCode) = error else {
+            return true
+        }
+        return statusCode == 429 || statusCode >= 500
+    }
 
     private func enqueuePayload<T: Encodable>(_ payload: T, path: String?) {
         let encoder = JSONEncoder()

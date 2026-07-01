@@ -47,33 +47,23 @@ final class WorkoutReaderTests: XCTestCase {
         }
     }
 
-    func testFetchWorkoutsThrowsInSimulatorEnvironment() async {
-        // In the simulator HealthKit IS available, so healthStore is non-nil and the
-        // HKSampleQuery runs. Without prior authorization it throws an HKError, not
-        // WorkoutError.healthKitNotAvailable. Accept any thrown error.
-        let reader = WorkoutReader()
+    func testFetchWorkoutsThrowsWhenHealthStoreUnavailable() async {
+        let reader = WorkoutReader(healthStore: nil)
         do {
             _ = try await reader.fetchWorkouts()
-            // If the simulator happens to satisfy the query (e.g. CI with HealthKit
-            // pre-authorized), a non-throw is also valid — the code path is covered.
+            XCTFail("Expected healthKitNotAvailable error")
         } catch {
-            XCTAssertNotNil(error)
+            XCTAssertEqual(error as? WorkoutReader.WorkoutError, .healthKitNotAvailable)
         }
     }
 
-    func testFetchRecentSessionsThrowsInSimulatorEnvironment() async {
-        // Same reasoning as testFetchWorkoutsThrowsInSimulatorEnvironment: the
-        // HKSampleQuery either throws an HKError (auth not granted) or returns empty
-        // results, at which point fetchRecentSessions throws WorkoutError.noData.
-        let reader = WorkoutReader()
+    func testFetchRecentSessionsThrowsWhenHealthStoreUnavailable() async {
+        let reader = WorkoutReader(healthStore: nil)
         do {
             _ = try await reader.fetchRecentSessions(from: nil, to: nil)
-        } catch let workoutError as WorkoutReader.WorkoutError {
-            // Empty result path: noData is the expected WorkoutError here.
-            XCTAssertEqual(workoutError, .noData)
+            XCTFail("Expected healthKitNotAvailable error")
         } catch {
-            // HKError thrown by the underlying query — also valid in this environment.
-            XCTAssertNotNil(error)
+            XCTAssertEqual(error as? WorkoutReader.WorkoutError, .healthKitNotAvailable)
         }
     }
 
